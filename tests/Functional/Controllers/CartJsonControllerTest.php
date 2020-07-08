@@ -979,8 +979,6 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'product_taxes' => 0,
                 'shipping_taxes' => 0,
                 'shipping_before_override' => 0,
-                'product_taxes_before_override' => 0,
-                'shipping_taxes_before_override' => 0,
             ],
             $decodedResponse['meta']['cart']['totals']
         );
@@ -1671,8 +1669,6 @@ class CartJsonControllerTest extends EcommerceTestCase
         );
 
         $params = [
-            'product_taxes_due_override' => rand(1, 100),
-            'shipping_taxes_due_override' => rand(1, 100),
             'shipping_due_override' => rand(1, 100),
             'order_items_due_overrides' => [
                 [
@@ -1683,10 +1679,10 @@ class CartJsonControllerTest extends EcommerceTestCase
         ];
 
         $productTotalDueExpected = $params['order_items_due_overrides'][0]['amount'] * $productQuantity;
-        $taxesExpected = $params['product_taxes_due_override'] + $params['shipping_taxes_due_override'];
         $shippingExpected = $params['shipping_due_override'];
+        $taxesExpected = 0;
 
-        $totalDueExpected = $productTotalDueExpected + $taxesExpected + $shippingExpected;
+        $totalDueExpected = $productTotalDueExpected + $shippingExpected;
 
         $response = $this->call(
             'PATCH',

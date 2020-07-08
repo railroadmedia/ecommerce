@@ -10,9 +10,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
-use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
@@ -50,6 +48,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
     protected $cartAddressService;
 
     /**
+     * @var TaxService
+     */
+    protected $taxService;
+
+    /**
      * @var MockObject|AuthManager
      */
     protected $authManagerMock;
@@ -65,6 +68,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->cartService = $this->app->make(CartService::class);
         $this->cartAddressService = $this->app->make(CartAddressService::class);
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     protected function getExpectedTaxes(float $price, string $billingCountry, string $billingRegion)
@@ -725,6 +729,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -816,13 +821,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($requestData['shipping_country'])][strtolower(
-                $requestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($requestData['shipping_country'], $requestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($requestData['shipping_country'])][strtolower(
-                $requestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($requestData['shipping_country'], $requestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
@@ -1016,7 +1021,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
-                'cardholder_name' => null,
+                'cardholder_name' => $fakerCard->name,
                 'company_name' => $fakerCard->brand,
                 'expiration_date' => Carbon::createFromDate(
                     $fakerCard->exp_year,
@@ -1147,6 +1152,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1209,12 +1215,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
-        $expectedTaxes = round($productTaxesDueOverride + $shippingTaxesDueOverride, 2);
+        $expectedTaxDueProduct = $this->taxService->getTaxesDueForProductCost(
+            $expectedTotalFromItems,
+            new Address(strtolower($country), strtolower($region))
+        );
+
+        $expectedTaxDueShipping = $this->taxService->getTaxesDueForShippingCost(
+            $shippingDueOverride,
+            new Address(strtolower($country), strtolower($region))
+        );
+
+        $expectedTaxes = round($expectedTaxDueProduct + $expectedTaxDueShipping, 2);
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingDueOverride + $expectedTaxes, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -1440,8 +1462,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'region' => $region,
                 'product_rate' => $expectedTaxRateProduct,
                 'shipping_rate' => $expectedTaxRateShipping,
-                'product_taxes_paid' => $productTaxesDueOverride,
-                'shipping_taxes_paid' => $shippingTaxesDueOverride,
+                'product_taxes_paid' => round($expectedTaxDueProduct, 2),
+                'shipping_taxes_paid' => round($expectedTaxDueShipping, 2),
             ]
         );
     }
@@ -1472,7 +1494,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productTaxesDueOverride = $this->faker->randomFloat(2, 5, 10);
         $orderItemOneDueOverride = $this->faker->randomFloat(2, 10, 50);
 
         $requestData = [
@@ -1484,7 +1505,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'gateway' => $brand,
             'card_token' => $fingerPrint,
             'currency' => $currency,
-            'product_taxes_due_override' => $productTaxesDueOverride,
             'order_items_due_overrides' => [
                 [
                     'sku' => $product['sku'],
@@ -1509,6 +1529,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1533,11 +1554,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $orderItemOneDueOverride;
 
-        $expectedTaxes = round($productTaxesDueOverride, 2);
+        $expectedTaxes =
+            $this->taxService->getTaxesDueTotal(
+                $expectedTotalFromItems,
+                0,
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedTaxes, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
@@ -1688,7 +1717,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'country' => $country,
                 'region' => $region,
                 'product_rate' => $expectedTaxRateProduct,
-                'product_taxes_paid' => $productTaxesDueOverride,
+                'product_taxes_paid' => $expectedTaxes,
             ]
         );
 
@@ -1704,8 +1733,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addYear(1)
                     ->toDateTimeString(),
-                'total_price' => round($expectedTotalFromItems + $productTaxesDueOverride, 2),
-                'tax' => $productTaxesDueOverride,
+                'total_price' => round($expectedTotalFromItems, 2),
+                'tax' => 0,
             ]
         );
     }
@@ -1797,6 +1826,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -1853,8 +1883,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTwoTotalPrice = $orderItemTwoDueOverride * $productTwoQuantity;
 
@@ -2318,28 +2354,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -2768,28 +2804,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice - $discount['amount'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -3222,28 +3258,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice - $discount['amount'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -3682,28 +3718,25 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice - $discount['amount'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($shippingAddress['country'])][strtolower(
-                $shippingAddress['region']
-            )];
+            $this->taxService->getProductTaxRate(new Address($shippingAddress['country'], $shippingAddress['region']));
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($shippingAddress['country'])][strtolower(
-                $shippingAddress['region']
-            )];
+            $this->taxService->getShippingTaxRate(new Address($shippingAddress['country'], $shippingAddress['region']));
+
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -4002,28 +4035,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice - $discount['amount'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -4301,6 +4334,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -4387,29 +4421,30 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedProductOneTotalPrice + $expectedProductTwoTotalPrice;
 
+
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -4605,7 +4640,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 'fingerprint' => $fingerPrint,
                 'last_four_digits' => $fakerCard->last4,
-                'cardholder_name' => null,
+                'cardholder_name' => $fakerCard->name,
                 'company_name' => $fakerCard->brand,
                 'expiration_date' => Carbon::createFromDate(
                     $fakerCard->exp_year,
@@ -4728,13 +4763,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $product['price'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -4931,28 +4966,28 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductDiscountedPrice;
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -5241,10 +5276,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteria['id'],
-            'product_id' => $product['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $product['id'],
+            ]
+        );
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
 
@@ -5258,28 +5295,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $expectedProductDiscountedPrice;
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
+
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderRequestData['shipping_country'])][strtolower(
-                $orderRequestData['shipping_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderRequestData['shipping_country'], $orderRequestData['shipping_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -5543,13 +5581,13 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems = $product['price'];
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($requestData['billing_country'])][strtolower(
-                $requestData['billing_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($requestData['billing_country'], $requestData['billing_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -5574,8 +5612,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'paid_until' => Carbon::now()
                     ->addDays($discountDaysAmount)
                     ->toDateTimeString(),
-                'total_price' => round($expectedTotalFromItems + $expectedProductTaxes, 2),
-                'tax' => $expectedProductTaxes,
+                'total_price' => round($expectedTotalFromItems, 2),
+                'tax' => 0,
             ]
         );
 
@@ -5701,17 +5739,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderData['billing_country'])][strtolower(
-                $orderData['billing_region']
-            )];
+            $this->taxService->getProductTaxRate(
+                new Address($orderData['billing_country'], $orderData['billing_region'])
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderData['billing_country'])][strtolower(
-                $orderData['billing_region']
-            )];
+            $this->taxService->getShippingTaxRate(
+                new Address($orderData['billing_country'], $orderData['billing_region'])
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
-        $expectedTotalPrice = round($expectedTotalFromItems + $expectedTaxRateProduct * $expectedTotalFromItems, 2);
+        $expectedTotalPrice = round($expectedTotalFromItems, 2);
 
         $response = $this->call(
             'PUT',
@@ -5735,7 +5773,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ->addYear(1)
                     ->toDateTimeString(),
                 'total_price' => $expectedTotalPrice,
-                'tax' => $expectedProductTaxes,
+                'tax' => 0,
             ]
         );
 
@@ -5843,8 +5881,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($product['price'] * $productQuantity - $discount['amount'], 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -5990,8 +6034,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems =
             round($totalFromItemsBeforeDiscount - $discount['amount'] / 100 * $totalFromItemsBeforeDiscount, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -6119,15 +6169,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedInitialProductPrice - $expectedProductDiscount, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedProductTaxes, 2);
 
-        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedProductTaxes), 2);
+        $expectedDiscountAmount =
+            round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedProductTaxes), 2);
 
         $results = $this->call(
             'PUT',
@@ -6269,15 +6326,22 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedInitialProductPrice - $expectedProductDiscount, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $expectedProductTaxes, 2);
 
-        $expectedDiscountAmount = round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedProductTaxes), 2);
+        $expectedDiscountAmount =
+            round($expectedInitialProductPrice - ($expectedOrderTotalDue - $expectedProductTaxes), 2);
 
         $results = $this->call(
             'PUT',
@@ -6437,27 +6501,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedShippingCostAmount = round($shippingCostAmount - $discount['amount'], 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $expectedShippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedShippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
@@ -6632,27 +6698,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedShippingCostAmount = round($shippingCostAmount - $expectedShippingDiscount, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $expectedShippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedShippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
@@ -6823,23 +6891,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedShippingCostAmount = $discount['amount'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $expectedShippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $expectedShippingCostAmount,
+            + $expectedShippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $expectedShippingCostAmount,
             2
         );
 
@@ -6993,8 +7067,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($product['price'] * $productQuantity - $discount['amount'], 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -7169,23 +7249,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems =
             round($expectedInitialProductOnePrice + $expectedInitialProductTwoPrice - $discount['amount'], 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -7624,8 +7710,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedInitialProductPrice, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -7870,7 +7962,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $brand = 'brand';
+        $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
         $country = 'Canada';
@@ -7924,13 +8016,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         // Assert a message was sent to the given users...
         Mail::assertSent(
             OrderInvoice::class,
-            function ($mail) {
+            function ($mail) use ($brand) {
                 $mail->build();
 
                 return $mail->hasTo(auth()->user()['email']) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.order_invoice.invoice_sender')) &&
+                    $mail->hasFrom(
+                        config('ecommerce.invoice_email_details.' . $brand . '.order_invoice.invoice_sender')
+                    ) &&
                     $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.order_invoice.invoice_email_subject')
+                        config('ecommerce.invoice_email_details.' . $brand . '.order_invoice.invoice_email_subject')
                     );
             }
         );
@@ -7969,6 +8063,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -8034,7 +8129,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $paymentPlanOption = $this->getPaymentPlanOption();
+        $paymentPlanOption = 5;
 
         $financeCharge = 1;
 
@@ -8042,39 +8137,76 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $expectedInitialProductPrice;
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
-            $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            $expectedProductTaxes
+            + $expectedShippingTaxes,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxes
-                + $financeCharge,
+            + $shippingCostAmount
+            + $expectedTaxes
+            + $financeCharge,
             2
         );
 
-        $totalToFinance = $expectedTotalFromItems + $expectedTaxes + $financeCharge;
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax +
+                $shippingCostAmount +
+                $expectedShippingTaxes,
+                2
+            ); // 33.1
+        $grandTotalDue =
+            $expectedTotalFromItems +
+            $financeCharge +
+            $shippingCostAmount +
+            $expectedProductTaxes +
+            $expectedShippingTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
 
-        $initialTotalDueBeforeShipping = $totalToFinance / $paymentPlanOption;
+        $initialPaymentAmount += $difference; // 31.66
 
-        if ($initialTotalDueBeforeShipping * $paymentPlanOption != $totalToFinance) {
+        $totalToFinanceWithoutTaxes = $expectedTotalFromItems + $financeCharge;
+        $totalToFinanceWithTaxes = $expectedTotalFromItems + $expectedTaxes + $financeCharge;
+
+        $initialTotalDueBeforeShipping = $totalToFinanceWithTaxes / $paymentPlanOption;
+
+        if ($initialTotalDueBeforeShipping * $paymentPlanOption != $totalToFinanceWithTaxes) {
             $initialTotalDueBeforeShipping += abs(
-                $initialTotalDueBeforeShipping * $paymentPlanOption - $totalToFinance
+                $initialTotalDueBeforeShipping * $paymentPlanOption - $totalToFinanceWithTaxes
             );
         }
 
-        $expectedTotalPaid = $initialTotalDueBeforeShipping + $shippingCostAmount;
+        $expectedTotalPaid = $initialPaymentAmount;
 
         $currencyService = $this->app->make(CurrencyService::class);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
 
         $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
 
@@ -8271,6 +8403,684 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_payment_plan_taxes_no_shipping()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = 'USD';
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(3);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->id = $this->faker->word;
+        $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $cardToken = $this->faker->word;
+
+        $country = 'Canada';
+        $region = 'Alberta';
+        $zip = $this->faker->postcode;
+
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 100,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $paymentPlanOption = 5;
+        $financeCharge = 1;
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = $expectedInitialProductPrice;
+
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+
+        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
+
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+            + $expectedProductTaxes
+            + $financeCharge,
+            2
+        );
+
+        // 106 / 5 = 21.2
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax +
+                2
+            ); // 33.1
+        $grandTotalDue = $expectedTotalFromItems + $financeCharge + $expectedProductTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
+
+        $initialPaymentAmount += $difference; // 31.66
+
+        $expectedTotalPaid = $initialPaymentAmount;
+
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedPaymentTotalPaid = $expectedTotalPaid;
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
+
+        $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'payment_plan_number_of_payments' => $paymentPlanOption,
+            'currency' => $currency
+        ];
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => 106,
+                        'product_due' => 100,
+                        'taxes_due' => 5,
+                        'shipping_due' => 0,
+                        'finance_due' => 1,
+                        'total_paid' => round($expectedTotalPaid, 2),
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'region' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()['included']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'type' => config('ecommerce.type_payment_plan'),
+                'brand' => $brand,
+                'user_id' => $userId,
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addMonth(1)
+                    ->toDateTimeString(),
+                'total_price' => $paymentPlanCostPerPayment,
+                'total_cycles_due' => $paymentPlanOption,
+                'total_cycles_paid' => 1,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => round($expectedOrderTotalDue, 2),
+                'product_due' => $expectedInitialProductPrice,
+                'taxes_due' => round($expectedProductTaxes, 2),
+                'shipping_due' => 0,
+                'finance_due' => $financeCharge,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => config('ecommerce.brand'),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $expectedPaymentTotalPaid,
+                'total_paid' => $expectedPaymentTotalPaid,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => Payment::TYPE_INITIAL_ORDER,
+                'external_id' => $fakerCharge->id,
+                'external_provider' => 'stripe',
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'currency' => $currency,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedProductTaxes,
+                'shipping_taxes_paid' => 0,
+            ]
+        );
+    }
+
+    public function test_payment_plan_taxes_and_shipping_totals()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $currency = 'USD';
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+
+        $fakerCustomer = new Customer();
+        $fakerCustomer->id = $this->faker->word . rand();
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card();
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(3);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->id = $this->faker->word;
+        $fakerCard->customer = $fakerCustomer->id;
+        $fakerCard->name = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+        $cardToken = $this->faker->word;
+
+        $country = 'Canada';
+        $region = 'Alberta';
+        $zip = $this->faker->postcode;
+
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
+
+        $shippingCostAmount = 5.00;
+
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 1,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
+
+        $product = $this->fakeProduct(
+            [
+                'price' => round(100, 2),
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 2.20,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => 0,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        // $expectedTotalFromItems=100
+        // $shippingCostAmount=5
+        // $expectedProductTaxes=5
+        // $expectedShippingTaxes=0.25
+        // $financeCharge=1
+        // total due in the end: 100 + 5 + 5 + 0.25 + 1 =
+
+        // payment plan price = (100 + 5 + 1) / 5 = = 21.20
+        // inital payment = ((100 + 5 + 1) / 5) + 5 + 0.25 = 26.45
+
+        // renewals:
+        // 26.45 inital
+        // 21.20 * 4 = recurring payments
+        // 26.45 + (21.20 * 4) = 111.25
+
+        $paymentPlanOption = 5;
+
+        $financeCharge = 1;
+
+        $expectedInitialProductPrice = $product['price'] * $productQuantity;
+
+        $expectedTotalFromItems = $expectedInitialProductPrice;
+
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+
+        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
+        $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
+
+//        var_dump('$expectedTotalFromItems=' . $expectedTotalFromItems);
+//        var_dump('$shippingCostAmount=' . $shippingCostAmount);
+//        var_dump('$expectedProductTaxes=' . $expectedProductTaxes);
+//        var_dump('$expectedShippingTaxes=' . $expectedShippingTaxes);
+//        var_dump('$financeCharge=' . $financeCharge);
+
+        $expectedOrderTotalDue = round(
+            $expectedTotalFromItems
+            + $shippingCostAmount
+            + $expectedProductTaxes
+            + $expectedShippingTaxes
+            + $financeCharge,
+            2
+        );
+
+        // 106 / 5 = 21.2
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $paymentPlanCostPerPaymentAfterTax =
+            round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+        $initialPaymentAmount =
+            round(
+                $paymentPlanCostPerPaymentAfterTax + $shippingCostAmount + $expectedShippingTaxes,
+                2
+            ); // 33.1
+        $grandTotalDue = $expectedTotalFromItems + $financeCharge + $expectedProductTaxes + $shippingCostAmount + $expectedShippingTaxes; // 123.5
+        $difference =
+            round(
+                $grandTotalDue -
+                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                2
+            ); // 116.5 - 116.54 = -0.04
+
+        $initialPaymentAmount += $difference; // 31.66
+
+        $expectedTotalPaid = $initialPaymentAmount;
+
+        $currencyService = $this->app->make(CurrencyService::class);
+
+        $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
+
+        $expectedPaymentTotalPaid = $currencyService->convertFromBase($expectedTotalPaid, $currency);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->assertEquals(
+            $grandTotalDue,
+            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+        );
+
+        $requestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'gateway' => $brand,
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->address,
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => $region,
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => $country,
+            'payment_plan_number_of_payments' => $paymentPlanOption,
+            'currency' => $currency
+        ];
+
+        $response = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $requestData
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertArraySubset(
+            [
+                'data' => [
+                    'type' => 'order',
+                    'attributes' => [
+                        'total_due' => $expectedOrderTotalDue,
+                        'product_due' => round($expectedTotalFromItems, 2),
+                        'taxes_due' => round($expectedProductTaxes + $expectedShippingTaxes, 2),
+                        'shipping_due' => $shippingCostAmount,
+                        'finance_due' => 1,
+                        'total_paid' => round($expectedTotalPaid, 2),
+                        'brand' => $brand,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ],
+                        'billingAddress' => [
+                            'data' => ['type' => 'address']
+                        ]
+                    ]
+                ],
+            ],
+            $response->decodeResponseJson()
+        );
+
+        $this->assertIncludes(
+            [
+                [
+                    'type' => 'product',
+                    'id' => $product['id'],
+                    'attributes' => array_diff_key(
+                        $product,
+                        [
+                            'id' => true,
+                        ]
+                    )
+                ],
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'attributes' => []
+                ],
+                [
+                    'type' => 'orderItem',
+                    'attributes' => [
+                        'quantity' => $productQuantity,
+                        'weight' => $product['weight'],
+                        'initial_price' => $product['price'],
+                        'total_discounted' => 0,
+                        'final_price' => $expectedInitialProductPrice,
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'product' => [
+                            'data' => [
+                                'type' => 'product',
+                                'id' => $product['id']
+                            ]
+                        ]
+                    ],
+                ],
+                [
+                    'type' => 'address',
+                    'attributes' => [
+                        'type' => \Railroad\Ecommerce\Entities\Address::BILLING_ADDRESS_TYPE,
+                        'brand' => $brand,
+                        'first_name' => null,
+                        'last_name' => null,
+                        'street_line_1' => null,
+                        'street_line_2' => null,
+                        'city' => null,
+                        'zip' => $requestData['billing_zip_or_postal_code'],
+                        'region' => $requestData['billing_region'],
+                        'country' => $requestData['billing_country'],
+                        'created_at' => Carbon::now()
+                            ->toDateTimeString(),
+                    ],
+                    'relationships' => [
+                        'user' => [
+                            'data' => [
+                                'type' => 'user',
+                                'id' => $userId,
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            $response->decodeResponseJson()['included']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'type' => config('ecommerce.type_payment_plan'),
+                'brand' => $brand,
+                'user_id' => $userId,
+                'start_date' => Carbon::now()
+                    ->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addMonth(1)
+                    ->toDateTimeString(),
+                'total_price' => $paymentPlanCostPerPayment,
+                'total_cycles_due' => $paymentPlanOption,
+                'total_cycles_paid' => 1,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        // order & based order prices
+        $this->assertDatabaseHas(
+            'ecommerce_orders',
+            [
+                'total_due' => round($expectedOrderTotalDue, 2),
+                'product_due' => $expectedInitialProductPrice,
+                'taxes_due' => round($expectedProductTaxes + $expectedShippingTaxes, 2),
+                'shipping_due' => $shippingCostAmount,
+                'finance_due' => $financeCharge,
+                'user_id' => $userId,
+                'customer_id' => null,
+                'brand' => config('ecommerce.brand'),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $expectedPaymentTotalPaid,
+                'total_paid' => $expectedPaymentTotalPaid,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => Payment::TYPE_INITIAL_ORDER,
+                'external_id' => $fakerCharge->id,
+                'external_provider' => 'stripe',
+                'status' => Payment::STATUS_PAID,
+                'message' => null,
+                'currency' => $currency,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $country,
+                'region' => $region,
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => $expectedTaxRateShipping,
+                'product_taxes_paid' => $expectedProductTaxes,
+                'shipping_taxes_paid' => $expectedShippingTaxes,
+            ]
+        );
+    }
+
     public function test_multiple_discounts()
     {
         $userId = $this->createAndLogInNewUser();
@@ -8379,10 +9189,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteriaOne['id'],
-            'product_id' => $productOne['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteriaOne['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
 
         $discountTwo = $this->fakeDiscount(
             [
@@ -8403,10 +9215,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteriaTwo['id'],
-            'product_id' => $productTwo['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteriaTwo['id'],
+                'product_id' => $productTwo['id'],
+            ]
+        );
 
         $discountThree = $this->fakeDiscount(
             [
@@ -8428,10 +9242,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteriaThree['id'],
-            'product_id' => $productOne['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteriaThree['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
 
         $productOneQuantity = 2;
 
@@ -8467,27 +9283,29 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = round($expectedTaxRateShipping * $shippingCostAmount, 2);
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $expectedOrderTotalDue = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * $expectedTotalFromItems
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
@@ -8691,25 +9509,27 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedTotalFromItems =
             round($productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower(
-            $region
-        )];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedTaxes = round(
             $expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount'])
-                + $expectedTaxRateShipping * $shippingCostAmount,
+            + $expectedTaxRateShipping * $shippingCostAmount,
             2
         );
 
         $totalDueExpected = round(
             $expectedTotalFromItems
-                + $shippingCostAmount
-                + $expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount'])
-                + $expectedTaxRateShipping * $shippingCostAmount
-                - $discount['amount'],
+            + $shippingCostAmount
+            + $expectedTaxRateProduct * ($expectedTotalFromItems - $discount['amount'])
+            + $expectedTaxRateShipping * $shippingCostAmount
+            - $discount['amount'],
             2
         );
 
@@ -8852,8 +9672,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $product['price'] * $productQuantity - $discount['amount'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -8987,8 +9813,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -9175,8 +10007,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
@@ -9304,13 +10142,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $totalProductPrice = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
         $expectedShippingTaxes = 0;
 
-        $expectedOrderTotalDue = round($totalProductPrice + $expectedTaxRateProduct * $totalProductPrice, 2);
+        $expectedOrderTotalDue = round($totalProductPrice + $expectedProductTaxes, 2);
 
         $orderData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
@@ -9401,8 +10245,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'total_cycles_paid' => 1,
                 'interval_type' => $product['subscription_interval_type'],
                 'interval_count' => $product['subscription_interval_count'],
-                'total_price' => $product['price'] + $expectedProductTaxes,
-                'tax' => $expectedProductTaxes,
+                'total_price' => $totalProductPrice,
+                'tax' => 0,
                 'canceled_on' => null
             ]
         );
@@ -9494,8 +10338,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $totalProductPrice = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
         $expectedShippingTaxes = 0;
@@ -9658,8 +10508,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $totalProductPrice = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
         $expectedShippingTaxes = 0;
@@ -9837,10 +10693,12 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteria['id'],
-            'product_id' => $product['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $product['id'],
+            ]
+        );
 
         // admin has user product required by discount criteria, the user does not
         $adminUserProduct = $this->fakeUserProduct(
@@ -9862,8 +10720,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $totalProductPrice = round($product['price'] * $productQuantity, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $totalProductPrice, 2);
         $expectedShippingTaxes = 0;
@@ -10077,8 +10941,14 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoDiscountedPrice, 2);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($country), strtolower($region))
+            );
 
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;

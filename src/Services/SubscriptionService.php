@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Exception;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\OrderPayment;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\PaymentTaxes;
@@ -383,8 +384,8 @@ class SubscriptionService
 
         $currency = $paymentMethod->getCurrency();
 
-        // support for legacy tax
-        $subscriptionPricePerPayment = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
+        // all taxes for recurring payments are now calculated on the fly
+        $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);
 
         $taxes = $this->taxService->getTaxesDueTotal(
             $subscriptionPricePerPayment,
@@ -457,7 +458,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('succeeded');
+                $payment->setStatus(Payment::STATUS_PAID);
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
@@ -471,7 +472,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('failed');
+                $payment->setStatus(Payment::STATUS_FAILED);
                 $payment->setMessage($exception->getMessage());
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
@@ -502,7 +503,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('succeeded');
+                $payment->setStatus(Payment::STATUS_PAID);
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
@@ -516,7 +517,7 @@ class SubscriptionService
                     $paymentMethod->getMethod()
                         ->getPaymentGatewayName()
                 );
-                $payment->setStatus('failed');
+                $payment->setStatus(Payment::STATUS_FAILED);
                 $payment->setMessage($exception->getMessage());
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
@@ -533,7 +534,7 @@ class SubscriptionService
                 $paymentMethod->getMethod()
                     ->getPaymentGatewayName()
             );
-            $payment->setStatus('failed');
+            $payment->setStatus(Payment::STATUS_FAILED);
             $payment->setMessage('Invalid payment method.');
             $payment->setCurrency($currency);
             $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency] ?? 0);
@@ -558,6 +559,26 @@ class SubscriptionService
         $subscriptionPayment->setPayment($payment);
 
         $this->entityManager->persist($subscriptionPayment);
+
+        // save to the order as well if its a payment plan
+        if ($subscription->getType() == Subscription::TYPE_PAYMENT_PLAN &&
+            empty($subscription->getProduct()) &&
+            !empty($subscription->getOrder())) {
+
+            // link the payment to the order
+            $orderPayment = new OrderPayment();
+            $orderPayment->setOrder($subscription->getOrder());
+            $orderPayment->setPayment($payment);
+
+            $this->entityManager->persist($orderPayment);
+
+            // update the order total paid
+            $subscription->getOrder()->setTotalPaid(
+                $subscription->getOrder()->getTotalPaid() + $payment->getTotalPaid()
+            );
+
+            $this->entityManager->persist($subscription->getOrder());
+        }
 
         $this->entityManager->flush();
 

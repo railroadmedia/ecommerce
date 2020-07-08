@@ -3,12 +3,12 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionCreated;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionDeleted;
@@ -17,12 +17,10 @@ use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\UserSubscriptionUpdated;
-use Railroad\Ecommerce\Exceptions\PaymentFailedException;
-use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\SubscriptionService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
@@ -30,9 +28,16 @@ use Stripe\Customer;
 
 class SubscriptionJsonControllerTest extends EcommerceTestCase
 {
+    /**
+     * @var TaxService
+     */
+    protected $taxService;
+
     public function setUp()
     {
         parent::setUp();
+
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     public function test_delete()
@@ -100,24 +105,28 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         // add soft deleted subscription, should not be returned in response
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'deleted_at' => Carbon::now(),
-            'cancellation_reason' => null
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'deleted_at' => Carbon::now(),
+                'cancellation_reason' => null
+            ]
+        );
 
         $subscriptions = [];
 
@@ -126,14 +135,16 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
-            $subscription = $this->fakeSubscription([
-                'product_id' => $product['id'],
-                'payment_method_id' => $paymentMethod['id'],
-                'user_id' => $userId,
-                'order_id' => $order['id'],
-                'updated_at' => null,
-                'cancellation_reason' => null
-            ]);
+            $subscription = $this->fakeSubscription(
+                [
+                    'product_id' => $product['id'],
+                    'payment_method_id' => $paymentMethod['id'],
+                    'user_id' => $userId,
+                    'order_id' => $order['id'],
+                    'updated_at' => null,
+                    'cancellation_reason' => null
+                ]
+            );
 
             if ($i < $limit) {
                 $subscriptions[] = [
@@ -211,24 +222,28 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         // add soft deleted subscription, should be returned in response
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'deleted_at' => Carbon::now(),
-            'cancellation_reason' => null
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'deleted_at' => Carbon::now(),
+                'cancellation_reason' => null
+            ]
+        );
 
         $subscriptions = [
             [
@@ -282,14 +297,16 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
-            $subscription = $this->fakeSubscription([
-                'product_id' => $product['id'],
-                'payment_method_id' => $paymentMethod['id'],
-                'user_id' => $userId,
-                'order_id' => $order['id'],
-                'updated_at' => null,
-                'cancellation_reason' => null
-            ]);
+            $subscription = $this->fakeSubscription(
+                [
+                    'product_id' => $product['id'],
+                    'payment_method_id' => $paymentMethod['id'],
+                    'user_id' => $userId,
+                    'order_id' => $order['id'],
+                    'updated_at' => null,
+                    'cancellation_reason' => null
+                ]
+            );
 
             if ($i < $limit - 1) {
                 $subscriptions[] = [
@@ -370,9 +387,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $subscriptions = [];
 
@@ -381,17 +400,21 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
 
-            $subscription = $this->fakeSubscription([
-                'product_id' => $product['id'],
-                'payment_method_id' => $paymentMethod['id'],
-                'user_id' => $this->faker->randomElement([
-                    $userId,
-                    $otherUser['id']
-                ]),
-                'order_id' => $order['id'],
-                'updated_at' => null,
-                'cancellation_reason' => null
-            ]);
+            $subscription = $this->fakeSubscription(
+                [
+                    'product_id' => $product['id'],
+                    'payment_method_id' => $paymentMethod['id'],
+                    'user_id' => $this->faker->randomElement(
+                        [
+                            $userId,
+                            $otherUser['id']
+                        ]
+                    ),
+                    'order_id' => $order['id'],
+                    'updated_at' => null,
+                    'cancellation_reason' => null
+                ]
+            );
 
             if (
                 count($subscriptions) < $limit &&
@@ -549,25 +572,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
+        $discount = $this->faker->discount(
+            [
+                'product_id' => $product['id']
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->faker->subscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null
-        ]);
+        $subscription = $this->faker->subscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]
+        );
 
         $this->expectsEvents([SubscriptionCreated::class]);
 
@@ -681,8 +710,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                        ->toDateTimeString(),
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -714,25 +743,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
+        $discount = $this->faker->discount(
+            [
+                'product_id' => $product['id']
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]
+        );
 
         $newPrice = $this->faker->numberBetween();
 
@@ -830,8 +865,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'quantity' => 1,
                 'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                                ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                                ->toDateTimeString(),
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -842,35 +877,43 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
+        $discount = $this->faker->discount(
+            [
+                'product_id' => $product['id']
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'canceled_on' => null,
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'canceled_on' => null,
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                    ->toDateTimeString(),
-            'quantity' => 1
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => Carbon::parse($subscription['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
+                'quantity' => 1
+            ]
+        );
 
         $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
@@ -967,8 +1010,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                            ->toDateTimeString(),
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                 ]
             )
         );
@@ -980,32 +1023,38 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'canceled_on' => null,
-            'is_active' => true,
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'canceled_on' => null,
+                'is_active' => true,
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                    ->toDateTimeString(),
-            'quantity' => 1
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => Carbon::parse($subscription['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
+                'quantity' => 1
+            ]
+        );
 
         $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
@@ -1100,8 +1149,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                            ->toDateTimeString(),
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                 ]
             )
         );
@@ -1113,9 +1162,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
@@ -1123,39 +1174,45 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $orderTwo = $this->fakeOrder();
 
         // 1st subscription is not active
-        $subscriptionOne = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $orderOne['id'],
-            'updated_at' => null,
-            'canceled_on' => null,
-            'is_active' => false,
-            'paid_until' => Carbon::now()
-                                    ->subMonths(5)
-        ]);
+        $subscriptionOne = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $orderOne['id'],
+                'updated_at' => null,
+                'canceled_on' => null,
+                'is_active' => false,
+                'paid_until' => Carbon::now()
+                    ->subMonths(5)
+            ]
+        );
 
         // 2nd subscription is active
-        $subscriptionTwo = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $orderTwo['id'],
-            'updated_at' => null,
-            'canceled_on' => null,
-            'is_active' => true,
-            'paid_until' => Carbon::now()
-                                    ->addDays(5)
-        ]);
+        $subscriptionTwo = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $orderTwo['id'],
+                'updated_at' => null,
+                'canceled_on' => null,
+                'is_active' => true,
+                'paid_until' => Carbon::now()
+                    ->addDays(5)
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'expiration_date' => Carbon::parse($subscriptionTwo['paid_until'])
-                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                            ->toDateTimeString(),
-            'quantity' => 1
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => Carbon::parse($subscriptionTwo['paid_until'])
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                    ->toDateTimeString(),
+                'quantity' => 1
+            ]
+        );
 
         // events not fired
         $this->doesntExpectEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
@@ -1256,25 +1313,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
+        $discount = $this->faker->discount(
+            [
+                'product_id' => $product['id']
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]
+        );
 
         $results = $this->call(
             'PATCH',
@@ -1329,31 +1392,39 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
-        $discount = $this->faker->discount([
-            'product_id' => $product['id']
-        ]);
+        $discount = $this->faker->discount(
+            [
+                'product_id' => $product['id']
+            ]
+        );
 
         $paymentMethod = $this->fakePaymentMethod();
 
         $order = $this->fakeOrder();
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'expiration_date' => $subscription['paid_until']
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'expiration_date' => $subscription['paid_until']
+            ]
+        );
 
         $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
@@ -1392,7 +1463,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                         ),
                         [
                             'paid_until' => Carbon::now()
-                                                ->toDateTimeString(),
+                                ->toDateTimeString(),
                             'updated_at' => Carbon::now()->toDateTimeString(),
                         ]
                     ),
@@ -1451,8 +1522,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::now()
-                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                            ->toDateTimeString(),
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                     'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
@@ -1474,63 +1545,79 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn(new Charge());
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'price' => 128.95,
+            ]
+        );
 
-        $creditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'brand',
-        ]);
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => 'drumeo',
+            ]
+        );
 
         $currency = $this->getCurrency();
 
-        $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'alberta',
+            ]
+        );
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $address['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $address['id'],
+                'currency' => $currency
+            ]
+        );
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getProductTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getShippingTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
 
         $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'type' => $this->faker->randomElement(
-                [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
-            ),
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->subDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
-            'tax' => $expectedSubscriptionTaxes
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'type' => $this->faker->randomElement(
+                    [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
+                ),
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_yearly'),
+                'total_price' => round($product['price'], 2),
+                'tax' => $expectedSubscriptionTaxes
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-            'expiration_date' => Carbon::now()
-                ->subDay(1)
-                ->toDateTimeString(),
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+            ]
+        );
 
         $response = $this->call(
             'POST',
@@ -1556,9 +1643,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo(auth()->user()['email']) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->hasFrom(
+                        config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_sender')
+                    ) &&
                     $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                        config(
+                            'ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_email_subject'
+                        )
                     );
             }
         );
@@ -1608,51 +1699,67 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn(new Charge());
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'price' => 128.95,
+            ]
+        );
 
-        $creditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'brand',
-        ]);
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => 'drumeo',
+            ]
+        );
 
         $currency = $this->getCurrency();
 
-        $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'alberta',
+            ]
+        );
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $address['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $address['id'],
+                'currency' => $currency
+            ]
+        );
+
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getProductTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getShippingTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
 
         $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->subDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
-            'tax' => $expectedSubscriptionTaxes
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'order_id' => null,
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_yearly'),
+                'total_price' => round($product['price'], 2),
+                'tax' => $expectedSubscriptionTaxes
+            ]
+        );
 
         $results = $this->call(
             'POST',
@@ -1666,9 +1773,13 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo(auth()->user()['email']) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->hasFrom(
+                        config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_sender')
+                    ) &&
                     $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                        config(
+                            'ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_email_subject'
+                        )
                     );
             }
         );
@@ -1739,50 +1850,62 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($this->faker->word);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'price' => 128.95,
+            ]
+        );
 
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement();
 
         $currency = $this->getCurrency();
 
-        $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'alberta',
+            ]
+        );
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
-            'billing_address_id' => $address['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
+                'billing_address_id' => $address['id'],
+                'currency' => $currency
+            ]
+        );
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getProductTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+            $this->taxService->getShippingTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
 
         $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->subDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $expectedSubscriptionTaxes, 2),
-            'tax' => $expectedSubscriptionTaxes,
-            'brand' => $brand,
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_yearly'),
+                'total_price' => round($product['price'], 2),
+                'tax' => $expectedSubscriptionTaxes,
+                'brand' => $brand,
+            ]
+        );
 
         $this->expectsEvents(
             [
@@ -1838,7 +1961,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
     public function test_renew_subscription_different_payment_method()
     {
-         $userEmail = $this->faker->email;
+        $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
         $this->permissionServiceMock->method('can')->willReturn(true);
@@ -1850,72 +1973,93 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn(new Charge());
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'price' => 128.95,
+            ]
+        );
 
-        $creditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'brand',
-        ]);
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => 'drumeo',
+            ]
+        );
 
         $currency = $this->getCurrency();
 
-        $addressOne = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
+        $addressOne = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'alberta',
+            ]
+        );
 
-        $paymentMethodOne = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $addressOne['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethodOne = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $addressOne['id'],
+                'currency' => $currency
+            ]
+        );
 
         $initialTaxRateProduct =
             config('ecommerce.product_tax_rate')[strtolower($addressOne['country'])][strtolower($addressOne['region'])];
 
         $initialSubscriptionTaxes = round($initialTaxRateProduct * $product['price'], 2);
 
-        $addressTwo = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'ontario',
-        ]);
+        $addressTwo = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'ontario',
+            ]
+        );
 
-        $paymentMethodTwo = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCard['id'],
-            'billing_address_id' => $addressTwo['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethodTwo = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $addressTwo['id'],
+                'currency' => $currency
+            ]
+        );
+
 
         $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($addressTwo['country'])][strtolower($addressTwo['region'])];
+            $this->taxService->getProductTaxRate(
+                new AddressStructure(strtolower($addressTwo['country']), strtolower($addressTwo['region']))
+            );
         $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($addressTwo['country'])][strtolower($addressTwo['region'])];
+            $this->taxService->getShippingTaxRate(
+                new AddressStructure(strtolower($addressTwo['country']), strtolower($addressTwo['region']))
+            );
 
         $expectedSubscriptionTaxes = round($expectedTaxRateProduct * $product['price'], 2);
 
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedPaymentTotalDue = $currencyService->convertFromBase(round($product['price'] + $expectedSubscriptionTaxes, 2), $currency);
+        $expectedPaymentTotalDue =
+            $currencyService->convertFromBase(round($product['price'] + $expectedSubscriptionTaxes, 2), $currency);
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethodTwo['id'], // *current* payment method is different from the one used to calculate subscription tax
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->subDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $initialSubscriptionTaxes, 2),
-            'tax' => $initialSubscriptionTaxes
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethodTwo['id'],
+                // *current* payment method is different from the one used to calculate subscription tax
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->subDay(1)
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_yearly'),
+                'total_price' => round($product['price'], 2),
+                'tax' => $initialSubscriptionTaxes
+            ]
+        );
 
         $results = $this->call(
             'POST',
@@ -1998,12 +2142,14 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 new \Exception($exceptionMessage)
             );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'price' => 128.95,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'price' => 128.95,
+            ]
+        );
 
         $paypalBillingAgreement = $this->fakePaypalBillingAgreement(
             [
@@ -2013,17 +2159,21 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $currency = $this->getCurrency();
 
-        $address = $this->fakeAddress([
-            'type' => Address::BILLING_ADDRESS_TYPE,
-            'country' => 'Canada',
-            'region' => 'alberta',
-        ]);
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => 'alberta',
+            ]
+        );
 
-        $paymentMethod = $this->fakePaymentMethod([
-            'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
-            'billing_address_id' => $address['id'],
-            'currency' => $currency
-        ]);
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'paypal_billing_agreement_id' => $paypalBillingAgreement['id'],
+                'billing_address_id' => $address['id'],
+                'currency' => $currency
+            ]
+        );
 
         $taxRate =
             config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower(
@@ -2032,29 +2182,33 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $tax = round($taxRate * $product['price'], 2);
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'paid_until' => Carbon::now()
-                        ->addDay(1)
-                        ->toDateTimeString(),
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_yearly'),
-            'total_price' => round($product['price'] + $tax, 2),
-            'tax' => $tax,
-            'brand' => $brand,
-            'renewal_attempt' => 0,
-            'note' => null,
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->addDay(1)
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_yearly'),
+                'total_price' => round($product['price'] + $tax, 2),
+                'tax' => $tax,
+                'brand' => $brand,
+                'renewal_attempt' => 0,
+                'note' => null,
+            ]
+        );
 
-        $userProduct = $this->fakeUserProduct([
-            'user_id' => $userId,
-            'product_id' => $product['id'],
-            'quantity' => 1,
-            'expiration_date' => $subscription['paid_until']
-        ]);
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $subscription['paid_until']
+            ]
+        );
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
@@ -2085,8 +2239,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 $userProduct,
                 [
                     'expiration_date' => Carbon::parse($subscription['paid_until'])
-                                            ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
-                                            ->toDateTimeString(),
+                        ->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5))
+                        ->toDateTimeString(),
                 ]
             )
         );
@@ -2115,9 +2269,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $subscriptionBrands = [$this->faker->word, $this->faker->word];
 
@@ -2130,15 +2286,17 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
             if ($i < $limit) {
                 // specific brand
-                $subscription = $this->fakeSubscription([
-                    'brand' => $this->faker->randomElement($subscriptionBrands),
-                    'product_id' => $product['id'],
-                    'payment_method_id' => $paymentMethod['id'],
-                    'user_id' => $userId,
-                    'order_id' => $order['id'],
-                    'updated_at' => null,
-                    'cancellation_reason' => null
-                ]);
+                $subscription = $this->fakeSubscription(
+                    [
+                        'brand' => $this->faker->randomElement($subscriptionBrands),
+                        'product_id' => $product['id'],
+                        'payment_method_id' => $paymentMethod['id'],
+                        'user_id' => $userId,
+                        'order_id' => $order['id'],
+                        'updated_at' => null,
+                        'cancellation_reason' => null
+                    ]
+                );
 
                 $subscriptions[] = [
                     'type' => 'subscription',
@@ -2186,13 +2344,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ];
             } else {
                 // default brand
-                $subscription = $this->fakeSubscription([
-                    'product_id' => $product['id'],
-                    'payment_method_id' => $paymentMethod['id'],
-                    'user_id' => $userId,
-                    'order_id' => $order['id'],
-                    'updated_at' => null
-                ]);
+                $subscription = $this->fakeSubscription(
+                    [
+                        'product_id' => $product['id'],
+                        'payment_method_id' => $paymentMethod['id'],
+                        'user_id' => $userId,
+                        'order_id' => $order['id'],
+                        'updated_at' => null
+                    ]
+                );
             }
         }
 
@@ -2244,27 +2404,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // an active subscription that should not be returned in response
-        $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => true,
-            'paid_until' => Carbon::now()->addDays(5),
-            'cancellation_reason' => null
-        ]);
+        $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => true,
+                'paid_until' => Carbon::now()->addDays(5),
+                'cancellation_reason' => null
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
@@ -2273,18 +2437,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         // an inactive payment plan that should not be returned in response
         $pastDate = Carbon::now()->subDays(rand(1, 28));
 
-        $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => $pastDate,
-            'is_active' => false,
-            'paid_until' => $pastDate,
-            'cancellation_reason' => null
-        ]);
+        $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => $pastDate,
+                'is_active' => false,
+                'paid_until' => $pastDate,
+                'cancellation_reason' => null
+            ]
+        );
 
         $subscriptions = [];
 
@@ -2396,27 +2562,31 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // an active payment plan that should not be returned in response
-        $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => null,
-            'is_active' => true,
-            'paid_until' => Carbon::now()->addDays(5),
-            'cancellation_reason' => null
-        ]);
+        $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => null,
+                'is_active' => true,
+                'paid_until' => Carbon::now()->addDays(5),
+                'cancellation_reason' => null
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
@@ -2425,18 +2595,20 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         // an inactive subscription that should not be returned in response
         $pastDate = Carbon::now()->subDays(rand(1, 28));
 
-        $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => $pastDate,
-            'is_active' => false,
-            'paid_until' => $pastDate,
-            'cancellation_reason' => null
-        ]);
+        $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => $pastDate,
+                'is_active' => false,
+                'paid_until' => $pastDate,
+                'cancellation_reason' => null
+            ]
+        );
 
         $subscriptions = [];
 
@@ -2548,135 +2720,161 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(33)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(35),
+                'paid_until' => Carbon::now()->subDays(33),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(34)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(34),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         // failed billing subscription with payment date in request interval, canceled
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(20)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(20)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => Carbon::now()->subDays(19),
-            'is_active' => false,
-            'stopped' => 0,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(21),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => Carbon::now()->subDays(19),
+                'is_active' => false,
+                'stopped' => 0,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(21),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         // failed billing subscription with payment date in request interval, stopped
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(20)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(20)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'stopped' => 1,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(21),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'stopped' => 1,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(21),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $subscriptions = [];
 
@@ -2779,10 +2977,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ];
             }
 
-            $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-                'subscription_id' => $subscription['id'],
-                'payment_id' => $payment['id'],
-            ]);
+            $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+                [
+                    'subscription_id' => $subscription['id'],
+                    'payment_id' => $payment['id'],
+                ]
+            );
         }
 
         $response = $this->call(
@@ -2815,135 +3015,161 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 10;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(33)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(35),
+                'paid_until' => Carbon::now()->subDays(33),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(34)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(34),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         // failed billing payment plan with payment date in request interval, canceled
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(20)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(20)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => Carbon::now()->subDays(19),
-            'is_active' => false,
-            'stopped' => 0,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(21),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => Carbon::now()->subDays(19),
+                'is_active' => false,
+                'stopped' => 0,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(21),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         // failed billing payment plan with payment date in request interval, stopped
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(20)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(20)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => null,
-            'is_active' => false,
-            'stopped' => 1,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(21),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => null,
+                'is_active' => false,
+                'stopped' => 1,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(21),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $subscriptions = [];
 
@@ -3046,10 +3272,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ];
             }
 
-            $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-                'subscription_id' => $subscription['id'],
-                'payment_id' => $payment['id'],
-            ]);
+            $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+                [
+                    'subscription_id' => $subscription['id'],
+                    'payment_id' => $payment['id'],
+                ]
+            );
         }
 
         $response = $this->call(
@@ -3077,125 +3305,157 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         // test asserts a failed billing subscription is not in result set if user has an other active
 
         // use one has one failed billing subscription
-        $userOne  = $this->fakeUser();
+        $userOne = $this->fakeUser();
 
-        $productOne = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCardOne = $this->fakeCreditCard();
-        $paymentMethodOne = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCardOne['id'],
-        ]);
+        $paymentMethodOne = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCardOne['id'],
+            ]
+        );
 
-        $orderOne = $this->fakeOrder([
-            'user_id' => $userOne['id']
-        ]);
+        $orderOne = $this->fakeOrder(
+            [
+                'user_id' => $userOne['id']
+            ]
+        );
 
-        $paymentOne = $this->fakePayment([
-            'payment_method_id' => $paymentMethodOne['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => Payment::STATUS_FAILED,
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(15)
-        ]);
+        $paymentOne = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethodOne['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => Payment::STATUS_FAILED,
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(15)
+            ]
+        );
 
-        $subscriptionOne = $this->fakeSubscription([
-            'product_id' => $productOne['id'],
-            'payment_method_id' => $paymentMethodOne['id'],
-            'user_id' => $userOne['id'],
-            'order_id' => $orderOne['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(15),
-            'failed_payment_id' => $paymentOne['id'],
-        ]);
+        $subscriptionOne = $this->fakeSubscription(
+            [
+                'product_id' => $productOne['id'],
+                'payment_method_id' => $paymentMethodOne['id'],
+                'user_id' => $userOne['id'],
+                'order_id' => $orderOne['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(35),
+                'paid_until' => Carbon::now()->subDays(15),
+                'failed_payment_id' => $paymentOne['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscriptionOne['id'],
-            'payment_id' => $paymentOne['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscriptionOne['id'],
+                'payment_id' => $paymentOne['id'],
+            ]
+        );
 
         // use two has one failed billing subscription and one active subscription for same brand
-        $userTwo  = $this->fakeUser();
+        $userTwo = $this->fakeUser();
 
-        $productTwo = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCardTwo = $this->fakeCreditCard();
-        $paymentMethodTwo = $this->fakePaymentMethod([
-            'credit_card_id' => $creditCardTwo['id'],
-        ]);
+        $paymentMethodTwo = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCardTwo['id'],
+            ]
+        );
 
-        $orderTwo = $this->fakeOrder([
-            'user_id' => $userTwo['id']
-        ]);
+        $orderTwo = $this->fakeOrder(
+            [
+                'user_id' => $userTwo['id']
+            ]
+        );
 
-        $paymentTwo = $this->fakePayment([
-            'payment_method_id' => $paymentMethodTwo['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => Payment::STATUS_FAILED,
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(14)
-        ]);
+        $paymentTwo = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethodTwo['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => Payment::STATUS_FAILED,
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(14)
+            ]
+        );
 
-        $subscriptionTwo = $this->fakeSubscription([
-            'product_id' => $productTwo['id'],
-            'payment_method_id' => $paymentMethodTwo['id'],
-            'user_id' => $userTwo['id'],
-            'order_id' => $orderTwo['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(14),
-            'failed_payment_id' => $paymentTwo['id'],
-        ]);
+        $subscriptionTwo = $this->fakeSubscription(
+            [
+                'product_id' => $productTwo['id'],
+                'payment_method_id' => $paymentMethodTwo['id'],
+                'user_id' => $userTwo['id'],
+                'order_id' => $orderTwo['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(35),
+                'paid_until' => Carbon::now()->subDays(14),
+                'failed_payment_id' => $paymentTwo['id'],
+            ]
+        );
 
-        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscriptionTwo['id'],
-            'payment_id' => $paymentTwo['id'],
-        ]);
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscriptionTwo['id'],
+                'payment_id' => $paymentTwo['id'],
+            ]
+        );
 
-        $orderThree = $this->fakeOrder([
-            'user_id' => $userTwo['id']
-        ]);
+        $orderThree = $this->fakeOrder(
+            [
+                'user_id' => $userTwo['id']
+            ]
+        );
 
-        $paymentThree = $this->fakePayment([
-            'payment_method_id' => $paymentMethodTwo['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => Payment::STATUS_PAID,
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(10)
-        ]);
+        $paymentThree = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethodTwo['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => Payment::STATUS_PAID,
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(10)
+            ]
+        );
 
-        $subscriptionThree = $this->fakeSubscription([
-            'product_id' => $productTwo['id'],
-            'payment_method_id' => $paymentMethodTwo['id'],
-            'user_id' => $userTwo['id'],
-            'order_id' => $orderThree['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => true,
-            'stopped' => false,
-            'start_date' => Carbon::now()->subDays(10),
-            'paid_until' => Carbon::now()->addDays(20),
-            'failed_payment_id' => null,
-        ]);
+        $subscriptionThree = $this->fakeSubscription(
+            [
+                'product_id' => $productTwo['id'],
+                'payment_method_id' => $paymentMethodTwo['id'],
+                'user_id' => $userTwo['id'],
+                'order_id' => $orderThree['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => true,
+                'stopped' => false,
+                'start_date' => Carbon::now()->subDays(10),
+                'paid_until' => Carbon::now()->addDays(20),
+                'failed_payment_id' => null,
+            ]
+        );
 
-        $subscriptionTwoPayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscriptionThree['id'],
-            'payment_id' => $paymentThree['id'],
-        ]);
+        $subscriptionTwoPayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscriptionThree['id'],
+                'payment_id' => $paymentThree['id'],
+            ]
+        );
 
         $response = $this->call(
             'GET',
@@ -3236,82 +3496,98 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $limit = 2;
         $nrSubscriptions = $this->faker->numberBetween(15, 25);
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing subscription with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(33)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(33)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_SUBSCRIPTION,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(35),
-            'paid_until' => Carbon::now()->subDays(33),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(35),
+                'paid_until' => Carbon::now()->subDays(33),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $creditCard = $this->fakeCreditCard();
         $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
         $order = $this->fakeOrder();
 
         // failed billing payment plan with payment date outside of request interval
-        $payment = $this->fakePayment([
-            'payment_method_id' => $paymentMethod['id'],
-            'total_refunded' => null,
-            'deleted_at' => null,
-            'status' => 'failed',
-            'total_paid' => 0,
-            'created_at' => Carbon::now()->subDays(34)
-        ]);
+        $payment = $this->fakePayment(
+            [
+                'payment_method_id' => $paymentMethod['id'],
+                'total_refunded' => null,
+                'deleted_at' => null,
+                'status' => 'failed',
+                'total_paid' => 0,
+                'created_at' => Carbon::now()->subDays(34)
+            ]
+        );
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => $paymentMethod['id'],
-            'user_id' => $userId,
-            'order_id' => $order['id'],
-            'updated_at' => null,
-            'type' => Subscription::TYPE_PAYMENT_PLAN,
-            'canceled_on' => null,
-            'is_active' => false,
-            'start_date' => Carbon::now()->subDays(36),
-            'paid_until' => Carbon::now()->subDays(34),
-            'failed_payment_id' => $payment['id'],
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'order_id' => $order['id'],
+                'updated_at' => null,
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'canceled_on' => null,
+                'is_active' => false,
+                'start_date' => Carbon::now()->subDays(36),
+                'paid_until' => Carbon::now()->subDays(34),
+                'failed_payment_id' => $payment['id'],
+            ]
+        );
 
-        $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-            'subscription_id' => $subscription['id'],
-            'payment_id' => $payment['id'],
-        ]);
+        $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+            [
+                'subscription_id' => $subscription['id'],
+                'payment_id' => $payment['id'],
+            ]
+        );
 
         $subscriptions = [];
 
         for ($i = 0; $i < $nrSubscriptions; $i++) {
-            $product = $this->fakeProduct([
-                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
-            ]);
+            $product = $this->fakeProduct(
+                [
+                    'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+                ]
+            );
             $creditCard = $this->fakeCreditCard();
             $paymentMethod = $this->fakePaymentMethod(['credit_card_id' => $creditCard['id']]);
             $order = $this->fakeOrder();
@@ -3372,10 +3648,12 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ];
             }
 
-            $subscriptionOnePayment = $this->fakeSubscriptionPayment([
-                'subscription_id' => $subscription['id'],
-                'payment_id' => $payment['id'],
-            ]);
+            $subscriptionOnePayment = $this->fakeSubscriptionPayment(
+                [
+                    'subscription_id' => $subscription['id'],
+                    'payment_id' => $payment['id'],
+                ]
+            );
         }
 
         $fp = fopen('php://temp', 'r+');

@@ -497,7 +497,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'validation_error' => null,
                 'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
-                'created_at' => Carbon::now(),
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 

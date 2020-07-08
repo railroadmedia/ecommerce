@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderFormControllerTest extends EcommerceTestCase
@@ -22,10 +23,16 @@ class OrderFormControllerTest extends EcommerceTestCase
      */
     protected $cartService;
 
+    /**
+     * @var TaxService
+     */
+    protected $taxService;
+
     protected function setUp()
     {
         parent::setUp();
         $this->cartService = $this->app->make(CartService::class);
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     public function test_submit_order()
@@ -69,62 +76,76 @@ class OrderFormControllerTest extends EcommerceTestCase
         $billingAddress->setCountry($country);
         $billingAddress->setRegion($region);
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $country,
-            'active' => 1,
-            'priority' => 1,
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $country,
+                'active' => 1,
+                'priority' => 1,
+            ]
+        );
 
         $shippingCostAmount = 5.50;
 
-        $shippingCost = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 0,
-            'max' => 10,
-            'price' => $shippingCostAmount,
-        ]);
+        $shippingCost = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 0,
+                'max' => 10,
+                'price' => $shippingCostAmount,
+            ]
+        );
 
-        $productOne = $this->fakeProduct([
-            'price' => 12.95,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 1,
-            'weight' => 0.20,
-            'subscription_interval_type' => '',
-            'subscription_interval_count' => '',
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 0.20,
+                'subscription_interval_type' => '',
+                'subscription_interval_count' => '',
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'price' => 247,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'price' => 247,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
-        $discount = $this->fakeDiscount([
-            'active' => true,
-            'amount' => 10,
-            'type' => 'product amount off',
-            'product_id' => $productOne['id'],
-        ]);
+        $discount = $this->fakeDiscount(
+            [
+                'active' => true,
+                'amount' => 10,
+                'type' => 'product amount off',
+                'product_id' => $productOne['id'],
+            ]
+        );
 
-        $discountCriteria = $this->fakeDiscountCriteria([
-            'discount_id' => $discount['id'],
-            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
-            'type' => 'product quantity requirement',
-            'min' => '1',
-            'max' => '2000000',
-        ]);
+        $discountCriteria = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discount['id'],
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY,
+                'type' => 'product quantity requirement',
+                'min' => '1',
+                'max' => '2000000',
+            ]
+        );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteria['id'],
-            'product_id' => $productOne['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteria['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
 
         $productOneQuantity = 1;
 
@@ -132,7 +153,8 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $expectedProductOneDiscountAmount = round($discount['amount'] * $productOneQuantity, 2);
 
-        $expectedProductOneDiscountedPrice = round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
+        $expectedProductOneDiscountedPrice =
+            round($expectedProductOneTotalPrice - $expectedProductOneDiscountAmount, 2);
 
         $productTwoQuantity = 1;
 
@@ -140,17 +162,21 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $expectedTotalFromItems = round($expectedProductOneDiscountedPrice + $expectedProductTwoTotalPrice, 2);
 
-        $expectedTaxRateProduct =
-            config('ecommerce.product_tax_rate')[strtolower($orderData['shipping_country'])][strtolower(
-                $orderData['shipping_region']
-            )];
-        $expectedTaxRateShipping =
-            config('ecommerce.shipping_tax_rate')[strtolower($orderData['shipping_country'])][strtolower(
-                $orderData['shipping_region']
-            )];
 
-        $expectedTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems
-            + $expectedTaxRateShipping * $shippingCostAmount, 2);
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new Address(strtolower($orderData['shipping_country']), strtolower($orderData['shipping_region']))
+            );
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(
+                new Address(strtolower($orderData['shipping_country']), strtolower($orderData['shipping_region']))
+            );
+
+        $expectedTaxes = round(
+            $expectedTaxRateProduct * $expectedTotalFromItems
+            + $expectedTaxRateShipping * $shippingCostAmount,
+            2
+        );
 
         $expectedOrderTotalDue = round($expectedTotalFromItems + $shippingCostAmount + $expectedTaxes, 2);
 
@@ -171,12 +197,12 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $billingAgreementId = rand(1,100);
+        $billingAgreementId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($billingAgreementId);
 
-        $transactionId = rand(1,100);
+        $transactionId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
@@ -400,31 +426,35 @@ class OrderFormControllerTest extends EcommerceTestCase
         $billingAddress->setCountry($country);
         $billingAddress->setRegion($region);
 
-        $subscriptionProduct = $this->fakeProduct([
-            'price' => 12.95,
-            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'brand' => 'drumeo',
-        ]);
+        $subscriptionProduct = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'brand' => 'drumeo',
+            ]
+        );
 
-        $lifetimeProduct = $this->fakeProduct([
-            'price' => 247,
-            'sku' => 'DRUMEO_MEMBERSHIP_LIFETIME',
-            'type' => Product::TYPE_DIGITAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => null,
-            'subscription_interval_count' => null,
-            'brand' => 'drumeo',
-        ]);
+        $lifetimeProduct = $this->fakeProduct(
+            [
+                'price' => 247,
+                'sku' => 'DRUMEO_MEMBERSHIP_LIFETIME',
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+                'brand' => 'drumeo',
+            ]
+        );
 
         $cart = Cart::fromSession();
 
@@ -435,12 +465,12 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $billingAgreementId = rand(1,100);
+        $billingAgreementId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($billingAgreementId);
 
-        $transactionId = rand(1,100);
+        $transactionId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
@@ -558,31 +588,35 @@ class OrderFormControllerTest extends EcommerceTestCase
         $billingAddress->setCountry($country);
         $billingAddress->setRegion($region);
 
-        $subscriptionProduct1 = $this->fakeProduct([
-            'price' => 12.95,
-            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_MONTHLY',
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-            'brand' => 'drumeo',
-        ]);
+        $subscriptionProduct1 = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_MONTHLY',
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+                'brand' => 'drumeo',
+            ]
+        );
 
-        $subscriptionProduct2 = $this->fakeProduct([
-            'price' => 222.95,
-            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'brand' => 'drumeo',
-        ]);
+        $subscriptionProduct2 = $this->fakeProduct(
+            [
+                'price' => 222.95,
+                'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'brand' => 'drumeo',
+            ]
+        );
 
         $cart = Cart::fromSession();
 
@@ -593,12 +627,12 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $billingAgreementId = rand(1,100);
+        $billingAgreementId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($billingAgreementId);
 
-        $transactionId = rand(1,100);
+        $transactionId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
@@ -750,31 +784,35 @@ class OrderFormControllerTest extends EcommerceTestCase
         $billingAddress->setCountry($country);
         $billingAddress->setRegion($region);
 
-        $packProduct = $this->fakeProduct([
-            'price' => 100.95,
-            'sku' => 'DRUMEO_PACK_PRODUCT',
-            'type' => Product::TYPE_DIGITAL_ONE_TIME,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => null,
-            'subscription_interval_count' => null,
-            'brand' => 'drumeo',
-        ]);
+        $packProduct = $this->fakeProduct(
+            [
+                'price' => 100.95,
+                'sku' => 'DRUMEO_PACK_PRODUCT',
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+                'brand' => 'drumeo',
+            ]
+        );
 
-        $subscriptionProduct2 = $this->fakeProduct([
-            'price' => 222.95,
-            'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'active' => 1,
-            'description' => $this->faker->word,
-            'is_physical' => 0,
-            'weight' => 0,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
-            'brand' => 'drumeo',
-        ]);
+        $subscriptionProduct2 = $this->fakeProduct(
+            [
+                'price' => 222.95,
+                'sku' => 'DRUMEO_MEMBERSHIP_RECURRING_YEARLY',
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+                'brand' => 'drumeo',
+            ]
+        );
 
         $cart = Cart::fromSession();
 
@@ -785,12 +823,12 @@ class OrderFormControllerTest extends EcommerceTestCase
 
         $cart->toSession();
 
-        $billingAgreementId = rand(1,100);
+        $billingAgreementId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($billingAgreementId);
 
-        $transactionId = rand(1,100);
+        $transactionId = rand(1, 100);
 
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);

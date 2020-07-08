@@ -17,13 +17,11 @@ use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
-use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\CurrencyService;
-use Railroad\Ecommerce\Services\ConfigService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\OrderClaimingService;
-use Railroad\Ecommerce\Services\ShippingService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderClaimingServiceTest extends EcommerceTestCase
@@ -33,16 +31,22 @@ class OrderClaimingServiceTest extends EcommerceTestCase
      */
     protected $orderClaimingService;
 
+    /**
+     * @var TaxService
+     */
+    protected $taxService;
+
     protected function setUp()
     {
         parent::setUp();
 
         $this->orderClaimingService = app()->make(OrderClaimingService::class);
+        $this->taxService = app()->make(TaxService::class);
     }
 
     public function test_claim_order()
     {
-        $brand = $this->faker->word;
+        $brand = 'drumeo';
         $country = 'canada';
         $region = 'alberta';
         $currency = 'USD';
@@ -173,7 +177,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
         $creditCard->setExternalId($this->faker->shuffleString());
         $creditCard->setFingerprint($this->faker->shuffleString());
         $creditCard->setLastFourDigits(rand(1000, 9999));
-        $creditCard->setPaymentGatewayName($this->faker->word);
+        $creditCard->setPaymentGatewayName($brand);
 
         $paymentMethod = new PaymentMethod();
 
@@ -186,8 +190,10 @@ class OrderClaimingServiceTest extends EcommerceTestCase
 
         $expectedTotalFromItems = $dueForProductOne + $dueForProductTwo;
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(new AddressStructure(strtolower($country), strtolower($region)));
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($country), strtolower($region)));
 
         $expectedProductTaxes = $expectedTaxRateProduct * $expectedTotalFromItems;
         $expectedShippingTaxes = $expectedTaxRateShipping * $shippingCost;

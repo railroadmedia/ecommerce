@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Services\TaxService;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\SubscriptionRepository")
@@ -773,5 +774,26 @@ class Subscription
     public function setLatestPayment(?Payment $latestPayment): void
     {
         $this->latestPayment = $latestPayment;
+    }
+
+    /**
+     * @return float
+     */
+    public function getTotalDueAfterTax()
+    {
+        /**
+         * @var $taxService TaxService
+         */
+        $taxService = app(TaxService::class);
+
+        if (!empty($this->getPaymentMethod()) && !empty($this->getPaymentMethod()->getBillingAddress())) {
+            $address = $this->getPaymentMethod()->getBillingAddress();
+
+            $taxRate = $taxService->getProductTaxRate($address->toStructure());
+
+            return round($this->getTotalPrice() * (1 + $taxRate), 2);
+        }
+
+        return $this->getTotalPrice();
     }
 }

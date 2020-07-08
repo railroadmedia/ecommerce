@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 
 class InvoiceService
 {
@@ -18,12 +19,19 @@ class InvoiceService
     private $taxService;
 
     /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * InvoiceService constructor.
      * @param TaxService $taxService
+     * @param SubscriptionRepository $subscriptionRepository
      */
-    public function __construct(TaxService $taxService)
+    public function __construct(TaxService $taxService, SubscriptionRepository $subscriptionRepository)
     {
         $this->taxService = $taxService;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
@@ -48,97 +56,25 @@ class InvoiceService
                 break;
         }
 
-        $showQst = false;
+        $addressToUseForTax =
+            !empty($order->getShippingAddress()) ? $order->getShippingAddress() : $order->getBillingAddress();
 
-        if (!empty($order->getShippingAddress()) && !empty(
-            $order->getShippingAddress()
-                ->getCountry()
-            )) {
+        $taxesPerType = $this->taxService->getTaxesDuePerType(
+            $order->getProductDue(),
+            $order->getShippingDue(),
+            !empty($addressToUseForTax) ? $addressToUseForTax->toStructure() : null
+        );
 
-            $gstRate = $this->taxService->getGSTTaxRate(
-                $order->getShippingAddress()
-                    ->toStructure()
-            );
-
-            $pstRate = $this->taxService->getPSTTaxRate(
-                $order->getShippingAddress()
-                    ->toStructure()
-            );
-
-            $qstRate = $this->taxService->getQSTTaxRate(
-                $order->getShippingAddress()
-                    ->toStructure()
-            );
-
-            $address = $order->getShippingAddress();
-
-            if (
-                strtolower($address->getCountry()) == 'canada'
-                && strtolower($address->getRegion()) == 'quebec'
-            ) {
-                $showQst = true;
-            }
-        } elseif (!empty($order->getBillingAddress()) && !empty(
-            $order->getBillingAddress()
-                ->getCountry()
-            )) {
-
-            $gstRate = $this->taxService->getGSTTaxRate(
-                $order->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $pstRate = $this->taxService->getPSTTaxRate(
-                $order->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $qstRate = $this->taxService->getQSTTaxRate(
-                $order->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $address = $order->getBillingAddress();
-
-            if (
-                strtolower($address->getCountry()) == 'canada'
-                && strtolower($address->getRegion()) == 'quebec'
-            ) {
-                $showQst = true;
-            }
-        } else {
-            $gstRate = 0;
-            $pstRate = 0;
-            $qstRate = 0;
-        }
-
-        if ($gstRate > 0) {
-            $gstPaid = round(($order->getProductDue() + $order->getShippingDue()) * $gstRate, 2);
-        } else {
-            $gstPaid = 0;
-        }
-
-        if ($pstRate > 0) {
-            $pstPaid = round(($order->getProductDue()) * $pstRate, 2);
-        } else {
-            $pstPaid = 0;
-        }
-
-        if ($qstRate > 0) {
-            $qstPaid = round(($order->getProductDue() + $order->getShippingDue()) * $qstRate, 2);
-        } else {
-            $qstPaid = 0;
-        }
+        $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
 
         return [
             'order' => $order,
+            'subscription' => $paymentPlan,
+            'paymentPlan' => $paymentPlan,
             'orderItems' => $order->getOrderItems(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
-            'gstPaid' => $gstPaid,
-            'pstPaid' => $pstPaid,
-            'qstPaid' => $qstPaid,
-            'showQst' => $showQst,
+            'taxesPerType' => $taxesPerType,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
@@ -198,80 +134,27 @@ class InvoiceService
                 break;
         }
 
-        $showQst = false;
-
-        $priceBeforeTaxes = round($subscription->getTotalPrice() - $subscription->getTax(), 2);
-
-        if ($subscription->getPaymentMethod() &&
-            !empty(
-            $subscription->getPaymentMethod()
+        $taxesPerType = $this->taxService->getTaxesDuePerType(
+            $subscription->getTotalPrice(),
+            0,
+            (!empty($subscription->getPaymentMethod()) &&
+                !empty($subscription->getPaymentMethod()->getBillingAddress())) ? $subscription->getPaymentMethod()
                 ->getBillingAddress()
-            ) && !empty(
-            $subscription->getPaymentMethod()
-                ->getBillingAddress()
-                ->getCountry()
-            )) {
+                ->toStructure() : null
+        );
 
-            $gstRate = $this->taxService->getGSTTaxRate(
-                $subscription->getPaymentMethod()
-                    ->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $pstRate = $this->taxService->getPSTTaxRate(
-                $subscription->getPaymentMethod()
-                    ->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $qstRate = $this->taxService->getQSTTaxRate(
-                $subscription->getPaymentMethod()
-                    ->getBillingAddress()
-                    ->toStructure()
-            );
-
-            $address = $subscription->getPaymentMethod()
-                ->getBillingAddress();
-
-            if (
-                strtolower($address->getCountry()) == 'canada'
-                && strtolower($address->getRegion()) == 'quebec'
-            ) {
-                $showQst = true;
-            }
-        } else {
-            $gstRate = 0;
-            $pstRate = 0;
-            $qstRate = 0;
-        }
-
-        if ($gstRate > 0) {
-            $gstPaid = round($priceBeforeTaxes * $gstRate, 2);
-        } else {
-            $gstPaid = 0;
-        }
-
-        if ($pstRate > 0) {
-            $pstPaid = round($priceBeforeTaxes * $pstRate, 2);
-        } else {
-            $pstPaid = 0;
-        }
-
-        if ($qstRate > 0) {
-            $qstPaid = round($priceBeforeTaxes * $qstRate, 2);
-        } else {
-            $qstPaid = 0;
+        if ($subscription->getType() == Subscription::TYPE_PAYMENT_PLAN) {
+            return $this->getViewDataForOrderInvoice($subscription->getOrder(), $payment);
         }
 
         return [
             'subscription' => $subscription,
+            'order' => $subscription->getOrder(),
+            'orderItems' => $subscription->getOrder()->getOrderItems(),
             'product' => $subscription->getProduct(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
-            'gstPaid' => $gstPaid,
-            'pstPaid' => $pstPaid,
-            'qstPaid' => $qstPaid,
-            'showQst' => $showQst,
+            'taxesPerType' => $taxesPerType,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
@@ -291,8 +174,11 @@ class InvoiceService
             // only try and send the email if its configured
             if (empty(
             config(
-                'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.subscription_renewal_invoice.invoice_sender'
-            ))) {
+                'ecommerce.invoice_email_details.' .
+                $payment->getGatewayName() .
+                '.subscription_renewal_invoice.invoice_sender'
+            )
+            )) {
                 return;
             }
 

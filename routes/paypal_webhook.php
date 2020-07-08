@@ -10,7 +10,7 @@ Route::group(
     function () {
 
         Route::post(
-            'paypal/webhook',
+            'paypal/webhook/{bypassVerification?}',
             \Railroad\Ecommerce\Controllers\PaypalWebhookController::class . '@process'
         );
 

@@ -40,26 +40,13 @@ class TaxService
         }
 
         $rate = 0;
+        $options = config('ecommerce.tax_rates_and_options', []);
 
-        if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.product_tax_rate'))) {
-            if (array_key_exists(
-                strtolower($address->getRegion()),
-                config('ecommerce.product_tax_rate')[strtolower($address->getCountry())]
-            )) {
-                $rate = config('ecommerce.product_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
-            }
-        }
+        $countryOptions = $options[strtolower($address->getCountry())] ?? [];
+        $regionOptions = $countryOptions[strtolower($address->getRegion())] ?? [];
 
-        if (
-            $address->getCountry() &&
-            $address->getRegion() &&
-            isset(config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower($address->getRegion())])
-        ) {
-            $rate += config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
+        foreach ($regionOptions as $regionOption) {
+            $rate += $regionOption['rate'];
         }
 
         return $rate;
@@ -80,114 +67,60 @@ class TaxService
         }
 
         $rate = 0;
+        $options = config('ecommerce.tax_rates_and_options', []);
 
-        if ($address && array_key_exists(strtolower($address->getCountry()), config('ecommerce.shipping_tax_rate'))) {
-            if (array_key_exists(
-                strtolower($address->getRegion()),
-                config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())]
-            )) {
-                $rate = config('ecommerce.shipping_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
+        $countryOptions = $options[strtolower($address->getCountry())] ?? [];
+        $regionOptions = $countryOptions[strtolower($address->getRegion())] ?? [];
+
+        foreach ($regionOptions as $regionOption) {
+
+            if (isset($regionOption['applies_to_shipping_costs']) &&
+                $regionOption['applies_to_shipping_costs'] == true) {
+
+                $rate += $regionOption['rate'];
             }
-        }
-
-        if (
-            $address->getCountry() &&
-            $address->getRegion() &&
-            isset(config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower($address->getRegion())])
-        ) {
-            $rate += config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
         }
 
         return $rate;
     }
 
     /**
-     * This is not used in calculating payment/orders totals, its only used to display GST on the invoice.
-     *
+     * @param $productCosts
+     * @param $shippingCosts
      * @param Address|null $address
-     * @return int
-     * @throws Exception
+     * @return array
      */
-    public function getGSTTaxRate(?Address $address)
+    public function getTaxesDuePerType($productCosts, $shippingCosts, ?Address $address)
     {
         if (empty($address) || empty($address->getCountry())) {
-            return 0;
+            return [];
         }
 
-        if ($address &&
-            array_key_exists(strtolower($address->getCountry()), config('ecommerce.gst_hst_tax_rate_display_only'))) {
-            if (array_key_exists(
-                strtolower($address->getRegion()),
-                config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())]
-            )) {
-                return config('ecommerce.gst_hst_tax_rate_display_only')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
+        $typeCosts = [];
+
+        $options = config('ecommerce.tax_rates_and_options', []);
+        $countryOptions = $options[strtolower($address->getCountry())] ?? [];
+        $regionOptions = $countryOptions[strtolower($address->getRegion())] ?? [];
+
+        if (empty($options) || empty($countryOptions) || empty($regionOptions)) {
+            return [];
+        }
+
+        foreach ($regionOptions as $regionOption) {
+            $typeCosts[$regionOption['type']] = 0;
+
+            if ($shippingCosts > 0 && isset($regionOption['applies_to_shipping_costs']) &&
+                $regionOption['applies_to_shipping_costs'] == true) {
+
+                $typeCosts[$regionOption['type']] += ($regionOption['rate'] * $shippingCosts);
             }
+
+            $typeCosts[$regionOption['type']] += ($regionOption['rate'] * $productCosts);
+
+            $typeCosts[$regionOption['type']] = round($typeCosts[$regionOption['type']], 2);
         }
 
-        return 0;
-    }
-
-
-    /**
-     * This is not used in calculating payment/orders totals, its only used to display PST on the invoice.
-     *
-     * @param Address|null $address
-     * @return int
-     * @throws Exception
-     */
-    public function getPSTTaxRate(?Address $address)
-    {
-        if (empty($address) || empty($address->getCountry())) {
-            return 0;
-        }
-
-        if ($address &&
-            array_key_exists(strtolower($address->getCountry()), config('ecommerce.pst_tax_rate_display_only', []))) {
-            if (array_key_exists(
-                strtolower($address->getRegion()),
-                config('ecommerce.pst_tax_rate_display_only')[strtolower($address->getCountry())]
-            )) {
-                return config('ecommerce.pst_tax_rate_display_only')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * This is not used in calculating payment/orders totals, its only used to display QST on the invoice.
-     *
-     * @param Address|null $address
-     * @return int
-     * @throws Exception
-     */
-    public function getQSTTaxRate(?Address $address)
-    {
-        if (empty($address) || empty($address->getCountry())) {
-            return 0;
-        }
-
-        if ($address &&
-            array_key_exists(strtolower($address->getCountry()), config('ecommerce.qst_tax_rate', []))) {
-            if (array_key_exists(
-                strtolower($address->getRegion()),
-                config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())]
-            )) {
-                return config('ecommerce.qst_tax_rate')[strtolower($address->getCountry())][strtolower(
-                    $address->getRegion()
-                )];
-            }
-        }
-
-        return 0;
+        return $typeCosts;
     }
 
     /**

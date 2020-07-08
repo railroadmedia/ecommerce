@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Mail;
 
 use Illuminate\Mail\Mailable;
+use Railroad\Ecommerce\Entities\Subscription;
 
 class SubscriptionInvoice extends Mailable
 {
@@ -35,6 +36,14 @@ class SubscriptionInvoice extends Mailable
      */
     public function build()
     {
+        $view = 'ecommerce::subscription_renewal_invoice';
+
+        // if its a payment plan we'll use the order invoice view
+        if (!empty($this->viewData['subscription']) &&
+            $this->viewData['subscription']->getType() == Subscription::TYPE_PAYMENT_PLAN) {
+            $view = 'ecommerce::order_invoice';
+        }
+
         return $this->from(
             config(
                 'ecommerce.invoice_email_details.' . $this->gateway . '.subscription_renewal_invoice.invoice_sender'
@@ -52,6 +61,6 @@ class SubscriptionInvoice extends Mailable
                     '.subscription_renewal_invoice.invoice_email_subject'
                 )
             )
-            ->view('ecommerce::subscription_renewal_invoice', $this->viewData);
+            ->view($view, $this->viewData);
     }
 }

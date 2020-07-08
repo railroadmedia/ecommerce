@@ -9,11 +9,13 @@ use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
+use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Mail\OrderInvoice;
 use Railroad\Ecommerce\Mail\SubscriptionInvoice;
 use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Stripe\Card;
 use Stripe\Charge;
@@ -21,13 +23,22 @@ use Stripe\Customer;
 
 class PaymentJsonControllerTest extends EcommerceTestCase
 {
+    /**
+     * @var CurrencyService
+     */
     protected $currencyService;
+
+    /**
+     * @var TaxService
+     */
+    protected $taxService;
 
     protected function setUp()
     {
         parent::setUp();
 
         $this->currencyService = $this->app->make(CurrencyService::class);
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     public function test_user_store_payment()
@@ -80,8 +91,10 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $productTax = $this->faker->numberBetween(1, 10);
         $shippingTax = $this->faker->numberBetween(1, 10);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+
+
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
 
         $response = $this->call(
             'PUT',
@@ -237,8 +250,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $productTax = $this->faker->numberBetween(1, 10);
         $shippingTax = $this->faker->numberBetween(1, 10);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
 
         $response = $this->call(
             'PUT',
@@ -383,8 +396,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $productTax = $this->faker->numberBetween(1, 10);
         $shippingTax = $this->faker->numberBetween(1, 10);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
 
         $response = $this->call(
             'PUT',
@@ -517,8 +530,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $productTax = $this->faker->numberBetween(1, 10);
         $shippingTax = $this->faker->numberBetween(1, 10);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
 
         $response = $this->call(
             'PUT',
@@ -1139,8 +1152,8 @@ class PaymentJsonControllerTest extends EcommerceTestCase
         $productTax = $this->faker->numberBetween(1, 10);
         $shippingTax = $this->faker->numberBetween(1, 10);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($address['country'])][strtolower($address['region'])];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($address['country']), strtolower($address['region'])));
 
         $response = $this->call(
             'PUT',
@@ -2422,7 +2435,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_send_subscription_payment_invoice()
     {
-        $brand = 'brand';
+        $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
         Mail::fake();
@@ -2477,9 +2490,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo($email) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_sender')) &&
                     $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                        config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_email_subject')
                     );
             }
         );
@@ -2487,7 +2500,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
     public function test_send_order_payment_invoice()
     {
-        $brand = 'brand';
+        $brand = 'drumeo';
         config()->set('ecommerce.brand', $brand);
 
         Mail::fake();
@@ -2544,9 +2557,9 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 $mail->build();
 
                 return $mail->hasTo($email) &&
-                    $mail->hasFrom(config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_sender')) &&
+                    $mail->hasFrom(config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_sender')) &&
                     $mail->subject(
-                        config('ecommerce.invoice_email_details.brand.subscription_renewal_invoice.invoice_email_subject')
+                        config('ecommerce.invoice_email_details.drumeo.subscription_renewal_invoice.invoice_email_subject')
                     );
             }
         );

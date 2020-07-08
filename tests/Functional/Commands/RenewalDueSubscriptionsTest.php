@@ -254,7 +254,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
-                    'status' => 'succeeded',
+                    'status' => Payment::STATUS_PAID,
                     'message' => '',
                     'currency' => $currency,
                     'created_at' => Carbon::now()
@@ -572,32 +572,6 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ->toDateTimeString()
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscription['id'],
-                'action_name' => Subscription::ACTION_DEACTIVATED,
-                'actor' => ActionLogService::ACTOR_COMMAND,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_COMMAND,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => Payment::ACTION_FAILED_RENEW,
-                'actor' => ActionLogService::ACTOR_COMMAND,
-                'actor_id' => null,
-                'actor_role' => ActionLogService::ROLE_COMMAND,
-            ]
-        );
     }
 
     public function test_command_no_addresses()
@@ -815,7 +789,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     'type' => config('ecommerce.renewal_payment_type'),
                     'external_id' => $fakerCharge->id,
                     'external_provider' => 'stripe',
-                    'status' => 'succeeded',
+                    'status' => Payment::STATUS_PAID,
                     'message' => '',
                     'currency' => $currency,
                     'created_at' => Carbon::now()

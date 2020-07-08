@@ -311,7 +311,7 @@
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td class="content-block">
-                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} Paid</h1>
+                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }} Paid</h1>
 
                                     </td>
                                 </tr>
@@ -329,9 +329,9 @@
                                                     {{ $order->getCreatedAt()->format('F j, Y') }}<br><br>
                                                     {{ config('ecommerce.company_name_on_invoice') }}
 
-                                                    @if($order->getTaxesDue() > 0)
+                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$order->getBrand()]))
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                        {{ config('ecommerce.canada_gst_hst_number')[$order->getBrand()] ?? '' }}
                                                     @endif
                                                     <br><br>
                                                 </td>
@@ -348,40 +348,86 @@
                                                             </tr>
                                                         @endforeach
 
-                                                        @if($order->getTaxesDue() > 0)
-                                                            @if($gstPaid > 0)
+                                                        @foreach($taxesPerType as $type => $amount)
                                                                 <tr>
-                                                                    <td>GST/HST</td>
+                                                                    <td>{{ strtoupper($type) }}</td>
                                                                     <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($gstPaid, 2) }}</td>
+                                                                        {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
                                                                 </tr>
-                                                            @endif
-                                                            @if($pstPaid > 0)
+                                                        @endforeach
+
+                                                        @if(!empty($order->getShippingDue()))
+                                                            <tr>
+                                                                <td>Shipping</td>
+                                                                <td class="alignright">
+                                                                    {{ $currencySymbol}}{{ number_format($order->getShippingDue(), 2) }} {{ $payment->getCurrency() }}
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+
+                                                        @if(!empty($order->getFinanceDue()))
+                                                            <tr>
+                                                                <td>Financing Fee</td>
+                                                                <td class="alignright">
+                                                                    {{ $currencySymbol}}{{ number_format($order->getFinanceDue(), 2) }} {{ $payment->getCurrency() }}
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+
+                                                        @if(!empty($paymentPlan) && $paymentPlan->getType() == \Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN)
                                                                 <tr>
-                                                                    <td>PST</td>
+                                                                    <td>Grand Total Due For Order</td>
                                                                     <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($pstPaid, 2) }}</td>
+                                                                        {{ $currencySymbol}}{{ number_format($order->getTotalDue(), 2) }} {{ $payment->getCurrency() }}
+                                                                    </td>
                                                                 </tr>
-                                                            @endif
-                                                            @if($showQst)
-                                                                <tr>
-                                                                    <td>QST</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($qstPaid, 2) }}</td>
-                                                                </tr>
-                                                            @endif
                                                         @endif
 
                                                         <tr class="total">
-                                                            @if($order->getTotalPaid() == $order->getTotalDue())
-                                                                <td class="alignright" width="80%">Total</td>
+                                                            @if(!empty($paymentPlan) && $paymentPlan->getType() == \Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN)
+                                                                <td width="70%">Total Paid Today </td>
                                                             @else
-                                                                <td class="alignright" width="80%">First Payment Total</td>
+                                                                <td width="70%">Total Paid </td>
                                                             @endif
 
                                                             <td class="alignright">
-                                                                {{ $currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }} {{ $payment->getCurrency() }}</td>
+                                                                {{ $currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }} {{ $payment->getCurrency() }}
+                                                            </td>
                                                         </tr>
+
+                                                        @if(!empty($paymentPlan) && $paymentPlan->getType() == \Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN)
+                                                            <tr><td><br></td></tr>
+
+                                                            <tr style="border-top: none;">
+                                                                <td width="50%" style="border-top: none;">
+                                                                    Payment Plan
+                                                                </td>
+                                                                <td class="alignright" style="border-top: none;">
+                                                                    {{ $currencySymbol}}{{ number_format($order->getTotalPaid(), 2) }}
+                                                                    / {{ $currencySymbol}}{{ number_format($order->getTotalDue(), 2) }}
+                                                                </td>
+                                                            </tr>
+
+                                                            @if($paymentPlan->getTotalCyclesDue() - $paymentPlan->getTotalCyclesPaid() > 0)
+                                                                <tr>
+                                                                    <td width="50%">
+                                                                        {{ $paymentPlan->getTotalCyclesDue() - $paymentPlan->getTotalCyclesPaid() }} payments of {{ $currencySymbol}}{{ number_format($paymentPlan->getTotalDueAfterTax(), 2) }} remaining
+                                                                    </td>
+                                                                    <td width="50%">
+                                                                        <p> </p>
+                                                                    </td>
+                                                                </tr>
+                                                            @elseif($paymentPlan->getTotalCyclesDue() - $paymentPlan->getTotalCyclesPaid() == 0)
+                                                                <tr>
+                                                                    <td width="50%">
+                                                                        Your payment plan is paid in full!
+                                                                    </td>
+                                                                    <td width="50%">
+                                                                        <p> </p>
+                                                                    </td>
+                                                                </tr>
+                                                            @endif
+                                                        @endif
                                                     </table>
                                                 </td>
                                             </tr>

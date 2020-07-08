@@ -1,11 +1,15 @@
 <?php
 
+namespace Railroad\Ecommerce\Tests\Functional\Services;
+
 use Carbon\Carbon;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\CreditCard;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -19,9 +23,16 @@ use Stripe\Customer;
 
 class SubscriptionServiceTest extends EcommerceTestCase
 {
+    /**
+     * @var TaxService
+     */
+    protected $taxService;
+
     protected function setUp()
     {
         parent::setUp();
+
+        $this->taxService = app()->make(TaxService::class);
     }
 
     public function test_renew_credit_card()
@@ -107,8 +118,10 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $taxService = $this->app->make(TaxService::class);
         $currencyService = $this->app->make(CurrencyService::class);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[strtolower($country)][strtolower($region)];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[strtolower($country)][strtolower($region)];
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(new AddressStructure(strtolower($country), strtolower($region)));
+        $expectedTaxRateShipping =
+            $this->taxService->getShippingTaxRate(new AddressStructure(strtolower($country), strtolower($region)));
 
         $subscriptionTaxes = $taxService->getTaxesDueForProductCost(
             $product->getPrice(),
@@ -125,8 +138,8 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $subscription->setUser($user);
         $subscription->setStartDate(Carbon::now());
         $subscription->setPaidUntil(Carbon::now()->subDay(1));
-        $subscription->setTotalPrice(round($product->getPrice() + $subscriptionTaxes, 2));
-        $subscription->setTax(round($subscriptionTaxes, 2));
+        $subscription->setTotalPrice(round($product->getPrice(), 2));
+        $subscription->setTax(0);
         $subscription->setCurrency($paymentMethod->getCurrency());
         $subscription->setIntervalType(config('ecommerce.interval_type_monthly'));
         $subscription->setIntervalCount(1);
@@ -144,7 +157,7 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $srv->renew($subscription);
 
         $chargePrice = $currencyService->convertFromBase(
-            $subscription->getTotalPrice(),
+            round($subscription->getTotalPrice() + $subscriptionTaxes, 2),
             $subscription->getCurrency()
         );
 
@@ -158,7 +171,7 @@ class SubscriptionServiceTest extends EcommerceTestCase
                 'type' => config('ecommerce.renewal_payment_type'),
                 'external_id' => $charge->id,
                 'external_provider' => 'stripe',
-                'status' => 'succeeded',
+                'status' => Payment::STATUS_PAID,
                 'payment_method_id' => $paymentMethod->getId(),
                 'currency' => $subscription->getCurrency(),
                 'created_at' => Carbon::now()->toDateTimeString(),
@@ -318,6 +331,8 @@ class SubscriptionServiceTest extends EcommerceTestCase
         $em->flush();
 
         $srv = $this->app->make(SubscriptionService::class);
+
+        $this->expectExceptionMessage("Subscription with ID: " . $subscription->getId() . " does not have an attached payment method.");
 
         try {
             $srv->renew($subscription);

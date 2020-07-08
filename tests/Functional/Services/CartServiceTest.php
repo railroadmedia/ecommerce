@@ -14,10 +14,16 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
+use Railroad\Ecommerce\Services\TaxService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CartServiceTest extends EcommerceTestCase
 {
+    /**
+     * @var TaxService
+     */
+    public $taxService;
+
     protected function setUp()
     {
         parent::setUp();
@@ -25,15 +31,19 @@ class CartServiceTest extends EcommerceTestCase
         $cartService = $this->app->make(CartService::class);
 
         $cartService->clearCart();
+
+        $this->taxService = $this->app->make(TaxService::class);
     }
 
     public function test_add_to_cart()
     {
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
         $quantity = $this->faker->numberBetween(1, 10);
 
@@ -59,11 +69,13 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_remove_from_cart()
     {
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
         $quantity = $this->faker->numberBetween(1, 10);
 
@@ -87,11 +99,13 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_update_item_quantity_to_cart()
     {
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
         $initialQuantity = $this->faker->numberBetween(1, 10);
 
@@ -120,11 +134,13 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_clear_cart()
     {
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
         $initialQuantity = $this->faker->numberBetween(1, 10);
 
@@ -149,17 +165,21 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_get_total_item_costs_no_discounts()
     {
-        $productOne = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20)
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20)
+            ]
+        );
 
         $quantityTwo = $this->faker->numberBetween(1, 10);
         $quantityOne = $this->faker->numberBetween(1, 10);
@@ -184,65 +204,80 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_get_total_item_costs_with_discounts()
     {
-        $productOne = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'category' => $this->faker->word,
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+                'category' => $this->faker->word,
+            ]
+        );
 
         $productOneQuantity = $this->faker->numberBetween(5, 10);
         $productTwoQuantity = $this->faker->numberBetween(1, 10);
 
-        $discountOne = $this->fakeDiscount([
-            'product_id' => $productOne['id'],
-            'product_category' => null,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => true,
-            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 5)
-        ]);
+        $discountOne = $this->fakeDiscount(
+            [
+                'product_id' => $productOne['id'],
+                'product_category' => null,
+                'updated_at' => null,
+                'active' => true,
+                'visible' => true,
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => $this->faker->numberBetween(1, 5)
+            ]
+        );
 
-        $discountCriteriaOne = $this->fakeDiscountCriteria([
-            'discount_id' => $discountOne['id'],
-            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
-            'min' => $this->faker->numberBetween(1, 3),
-            'max' => $this->faker->numberBetween(15, 20)
-        ]);
+        $discountCriteriaOne = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountOne['id'],
+                'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                'min' => $this->faker->numberBetween(1, 3),
+                'max' => $this->faker->numberBetween(15, 20)
+            ]
+        );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteriaOne['id'],
-            'product_id' => $productOne['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteriaOne['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
 
         $cartItemOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
 
-        $discountTwo = $this->fakeDiscount([
-            'product_id' => null,
-            'product_category' => $productTwo['category'],
-            'updated_at' => null,
-            'active' => true,
-            'visible' => false, // name not visible
-            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 10)
-        ]);
+        $discountTwo = $this->fakeDiscount(
+            [
+                'product_id' => null,
+                'product_category' => $productTwo['category'],
+                'updated_at' => null,
+                'active' => true,
+                'visible' => false, // name not visible
+                'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+                'amount' => $this->faker->numberBetween(1, 10)
+            ]
+        );
 
-        $discountCriteriaTwo = $this->fakeDiscountCriteria([
-            'discount_id' => $discountTwo['id'],
-            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'min' => Carbon::now()->subDay(1),
-            'max' => Carbon::now()->addDays(3),
-        ]);
+        $discountCriteriaTwo = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountTwo['id'],
+                'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+                'min' => Carbon::now()->subDay(1),
+                'max' => Carbon::now()->addDays(3),
+            ]
+        );
 
-        $cartItemTwoDiscountAmount = round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
+        $cartItemTwoDiscountAmount =
+            round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
 
         $totalItemCosts = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
 
@@ -266,69 +301,86 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_get_order_item_entities()
     {
-        $productOne = $this->fakeProduct([
-            'sku' => 'a' . $this->faker->word, // cart items are keyed by sku, this enables the order
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-        ]);
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'a' . $this->faker->word, // cart items are keyed by sku, this enables the order
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+            ]
+        );
 
-        $productTwo = $this->fakeProduct([
-            'sku' => 'b' . $this->faker->word, // cart items are keyed by sku, this enables the order
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'category' => $this->faker->word,
-        ]);
+        $productTwo = $this->fakeProduct(
+            [
+                'sku' => 'b' . $this->faker->word, // cart items are keyed by sku, this enables the order
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+                'category' => $this->faker->word,
+            ]
+        );
 
         $productOneQuantity = $this->faker->numberBetween(5, 10);
         $productTwoQuantity = $this->faker->numberBetween(1, 10);
 
-        $discountOne = $this->fakeDiscount([
-            'product_id' => $productOne['id'],
-            'product_category' => null,
-            'updated_at' => null,
-            'active' => true,
-            'visible' => true,
-            'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 5)
-        ]);
+        $discountOne = $this->fakeDiscount(
+            [
+                'product_id' => $productOne['id'],
+                'product_category' => null,
+                'updated_at' => null,
+                'active' => true,
+                'visible' => true,
+                'type' => DiscountService::PRODUCT_AMOUNT_OFF_TYPE,
+                'amount' => $this->faker->numberBetween(1, 5)
+            ]
+        );
 
-        $discountCriteriaOne = $this->fakeDiscountCriteria([
-            'discount_id' => $discountOne['id'],
-            'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
-            'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
-            'min' => $this->faker->numberBetween(1, 3),
-            'max' => $this->faker->numberBetween(15, 20)
-        ]);
+        $discountCriteriaOne = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountOne['id'],
+                'type' => DiscountCriteriaService::PRODUCT_QUANTITY_REQUIREMENT_TYPE,
+                'products_relation_type' => DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL,
+                'min' => $this->faker->numberBetween(1, 3),
+                'max' => $this->faker->numberBetween(15, 20)
+            ]
+        );
 
-        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct([
-            'discount_criteria_id' => $discountCriteriaOne['id'],
-            'product_id' => $productOne['id'],
-        ]);
+        $discountCriteriaProduct = $this->fakeDiscountCriteriaProduct(
+            [
+                'discount_criteria_id' => $discountCriteriaOne['id'],
+                'product_id' => $productOne['id'],
+            ]
+        );
 
-        $discountTwo = $this->fakeDiscount([
-            'product_id' => null,
-            'product_category' => $productTwo['category'],
-            'updated_at' => null,
-            'active' => true,
-            'visible' => false,
-            'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
-            'amount' => $this->faker->numberBetween(1, 10)
-        ]);
+        $discountTwo = $this->fakeDiscount(
+            [
+                'product_id' => null,
+                'product_category' => $productTwo['category'],
+                'updated_at' => null,
+                'active' => true,
+                'visible' => false,
+                'type' => DiscountService::PRODUCT_PERCENT_OFF_TYPE,
+                'amount' => $this->faker->numberBetween(1, 10)
+            ]
+        );
 
-        $discountCriteriaTwo = $this->fakeDiscountCriteria([
-            'discount_id' => $discountTwo['id'],
-            'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
-            'min' => Carbon::now()->subDay(1),
-            'max' => Carbon::now()->addDays(3),
-        ]);
+        $discountCriteriaTwo = $this->fakeDiscountCriteria(
+            [
+                'discount_id' => $discountTwo['id'],
+                'type' => DiscountCriteriaService::DATE_REQUIREMENT_TYPE,
+                'min' => Carbon::now()->subDay(1),
+                'max' => Carbon::now()->addDays(3),
+            ]
+        );
 
         $expectedProductOneDiscountAmount = round($discountOne['amount'] * $productOneQuantity, 2);
-        $expectedProductTwoDiscountAmount = round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
+        $expectedProductTwoDiscountAmount =
+            round($discountTwo['amount'] * $productTwo['price'] * $productTwoQuantity / 100, 2);
 
-        $expectedProductOnePrice = round($productOne['price'] * $productOneQuantity - $expectedProductOneDiscountAmount, 2);
-        $expectedProductTwoPrice = round($productTwo['price'] * $productTwoQuantity - $expectedProductTwoDiscountAmount, 2);
+        $expectedProductOnePrice =
+            round($productOne['price'] * $productOneQuantity - $expectedProductOneDiscountAmount, 2);
+        $expectedProductTwoPrice =
+            round($productTwo['price'] * $productTwoQuantity - $expectedProductTwoDiscountAmount, 2);
 
         $cart = Cart::fromSession();
 
@@ -400,28 +452,34 @@ class CartServiceTest extends EcommerceTestCase
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'is_physical' => true,
-            'weight' => $productWeight
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+                'is_physical' => true,
+                'weight' => $productWeight
+            ]
+        );
 
         $shippingCountry = 'canada';
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => true,
-            'priority' => 1
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $shippingCountry,
+                'active' => true,
+                'priority' => 1
+            ]
+        );
 
-        $shippingCosts = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 5,
-            'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
-        ]);
+        $shippingCosts = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 5,
+                'max' => 50,
+                'price' => $this->faker->randomFloat(2, 3, 5),
+            ]
+        );
 
         $quantity = $this->faker->numberBetween(1, 3);
 
@@ -432,7 +490,8 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion =
+            $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -441,15 +500,11 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
-
-        $expectedTaxDue = round($expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost, 2);
+        $expectedTaxDue =
+            round($expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost, 2);
 
         $cart = Cart::fromSession();
 
@@ -472,28 +527,34 @@ class CartServiceTest extends EcommerceTestCase
     {
         $productWeight = 5;
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => 100,
-            'is_physical' => true,
-            'price' => 15,
-            'weight' => $productWeight
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => 100,
+                'is_physical' => true,
+                'price' => 15,
+                'weight' => $productWeight
+            ]
+        );
 
         $shippingCountry = 'canada';
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => true,
-            'priority' => 1
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $shippingCountry,
+                'active' => true,
+                'priority' => 1
+            ]
+        );
 
-        $shippingCosts = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 2,
-            'max' => 50,
-            'price' => 3,
-        ]);
+        $shippingCosts = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 2,
+                'max' => 50,
+                'price' => 3,
+            ]
+        );
 
         $quantity = 2;
 
@@ -514,13 +575,8 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue =
             round($expectedTaxRateProduct * $expectedItemsCost, 2) +
@@ -549,30 +605,36 @@ class CartServiceTest extends EcommerceTestCase
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'weight' => $productWeight,
-            'is_physical' => true,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+                'weight' => $productWeight,
+                'is_physical' => true,
+            ]
+        );
 
         $shippingCountry = 'canada';
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => true,
-            'priority' => 1
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $shippingCountry,
+                'active' => true,
+                'priority' => 1
+            ]
+        );
 
-        $shippingCosts = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 5,
-            'max' => 50,
-            'price' => $this->faker->randomFloat(2, 3, 5),
-        ]);
+        $shippingCosts = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 5,
+                'max' => 50,
+                'price' => $this->faker->randomFloat(2, 3, 5),
+            ]
+        );
 
-        $quantity = $this->faker->numberBetween(1, 3);
+        $quantity = $this->faker->numberBetween(3, 5);
 
         $shippingRegion = 'british columbia';
 
@@ -581,7 +643,8 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion =
+            $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -590,28 +653,41 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedProductTaxes = round($expectedTaxRateProduct * $expectedItemsCost, 2);
+        $expectedShippingTaxes = round($expectedTaxRateShipping * $expectedShippingCost, 2);
 
-        $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost + $expectedTaxRateShipping * $expectedShippingCost;
+        $perPaymentPlanBeforeTax = round(($expectedItemsCost + config('ecommerce.financing_cost_per_order')) / 2, 2);
+        $perPaymentPlanAfterTax = round($perPaymentPlanBeforeTax * (1 + $expectedTaxRateProduct), 2);
 
-        $totalToFinance = $expectedItemsCost + $expectedTaxDue + config('ecommerce.financing_cost_per_order');
+        $grandTotalDue =
+            $expectedItemsCost +
+            $expectedShippingCost +
+            $expectedProductTaxes +
+            $expectedShippingTaxes +
+            config('ecommerce.financing_cost_per_order');
+
+//        echo('$expectedItemsCost=' . $expectedItemsCost . "\n");
+//        echo('$expectedShippingCost=' . $expectedShippingCost . "\n");
+//        echo('$expectedProductTaxes=' . $expectedProductTaxes . "\n");
+//        echo('$expectedShippingTaxes=' . $expectedShippingTaxes . "\n");
+//        echo('financing_cost_per_order=' . config('ecommerce.financing_cost_per_order') . "\n");
 
         $numberOfPayments = 2;
 
-        $initialTotalDueBeforeShipping = $totalToFinance / $numberOfPayments;
+        $initialTotalDueBeforeShipping = $perPaymentPlanAfterTax;
 
-        if ($initialTotalDueBeforeShipping * $numberOfPayments != $totalToFinance) {
+        $expectedInitialPayment =
+            round($initialTotalDueBeforeShipping + $expectedShippingCost + $expectedShippingTaxes, 2);
 
-            $initialTotalDueBeforeShipping += abs($initialTotalDueBeforeShipping * $numberOfPayments - $totalToFinance);
+        $totalAfterPlanIsComplete = $expectedInitialPayment + ($perPaymentPlanAfterTax *
+                (2 - 1));
+
+        if ($grandTotalDue != $totalAfterPlanIsComplete) {
+            $expectedInitialPayment += $grandTotalDue - $totalAfterPlanIsComplete;
         }
-
-        $expectedInitialPayment = round($initialTotalDueBeforeShipping + $expectedShippingCost, 2);
 
         $cart = Cart::fromSession();
 
@@ -622,23 +698,31 @@ class CartServiceTest extends EcommerceTestCase
 
         $cart->toSession();
 
+        /**
+         * @var $cartService CartService
+         */
         $cartService = $this->app->make(CartService::class);
 
         $cartService->refreshCart();
 
         $dueForInitialPayment = $cartService->getDueForInitialPayment();
 
+        $this->assertEquals($grandTotalDue, $cartService->getDueForOrder());
         $this->assertEquals($expectedInitialPayment, $dueForInitialPayment);
+
+        $this->assertEquals($grandTotalDue, $expectedInitialPayment + $perPaymentPlanAfterTax);
     }
 
     public function test_get_due_for_payment_plan_payments()
     {
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => $this->faker->numberBetween(20, 100),
-            'price' => $this->faker->randomFloat(2, 15, 20),
-            'is_physical' => true,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(20, 100),
+                'price' => $this->faker->randomFloat(2, 15, 20),
+                'is_physical' => true,
+            ]
+        );
 
         $quantity = $this->faker->numberBetween(1, 3);
 
@@ -651,7 +735,7 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setCountry($shippingCountry);
         $shippingAddress->setRegion($shippingRegion);
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
 
         $expectedTaxDue = $expectedTaxRateProduct * $expectedItemsCost;
 
@@ -660,7 +744,7 @@ class CartServiceTest extends EcommerceTestCase
         $numberOfPayments = 2;
 
         $expectedDueForPayment = round(
-            ($expectedItemsCost + $expectedTaxDue + $financeDue) / $numberOfPayments,
+            ($expectedItemsCost + $financeDue) / $numberOfPayments,
             2
         );
 
@@ -685,29 +769,35 @@ class CartServiceTest extends EcommerceTestCase
     {
         $productWeight = $this->faker->randomFloat(2, 5, 10);
 
-        $product = $this->fakeProduct([
-            'active' => 1,
-            'stock' => 10,
-            'price' => 18.02, // 36.04
-            'weight' => 6,
-            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
-            'is_physical' => true
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'active' => 1,
+                'stock' => 10,
+                'price' => 18.02, // 36.04
+                'weight' => 6,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'is_physical' => true
+            ]
+        );
 
         $shippingCountry = 'canada';
 
-        $shippingOption = $this->fakeShippingOption([
-            'country' => $shippingCountry,
-            'active' => true,
-            'priority' => 1
-        ]);
+        $shippingOption = $this->fakeShippingOption(
+            [
+                'country' => $shippingCountry,
+                'active' => true,
+                'priority' => 1
+            ]
+        );
 
-        $shippingCosts = $this->fakeShippingCost([
-            'shipping_option_id' => $shippingOption['id'],
-            'min' => 5,
-            'max' => 50,
-            'price' => 8.58,
-        ]);
+        $shippingCosts = $this->fakeShippingCost(
+            [
+                'shipping_option_id' => $shippingOption['id'],
+                'min' => 5,
+                'max' => 50,
+                'price' => 8.58,
+            ]
+        );
 
         // (36.04) + 8.58
         // 44.62 * 0.05
@@ -721,7 +811,8 @@ class CartServiceTest extends EcommerceTestCase
         $shippingAddress->setRegion($shippingRegion);
 
         $billingCountry = 'canada';
-        $billingRegion = $this->faker->randomElement(array_keys(config('ecommerce.product_tax_rate')[$billingCountry]));
+        $billingRegion =
+            $this->faker->randomElement(array_keys(config('ecommerce.tax_rates_and_options')[$billingCountry]));
 
         $billingAddress = new Address();
         $billingAddress->setCountry($billingCountry);
@@ -732,17 +823,12 @@ class CartServiceTest extends EcommerceTestCase
         $expectedItemsCost = $product['price'] * $quantity;
         $expectedShippingCost = $shippingCosts['price'];
 
-        $expectedTaxRateProduct = config('ecommerce.product_tax_rate')[$shippingCountry][$shippingRegion];
-        $expectedTaxRateShipping = config('ecommerce.shipping_tax_rate')[$shippingCountry][$shippingRegion];
-
-        if (isset(config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion])) {
-            $expectedTaxRateProduct += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-            $expectedTaxRateShipping += config('ecommerce.qst_tax_rate')[$shippingCountry][$shippingRegion];
-        }
+        $expectedTaxRateProduct = $this->taxService->getProductTaxRate($shippingAddress);
+        $expectedTaxRateShipping = $this->taxService->getShippingTaxRate($shippingAddress);
 
         $expectedTaxDue =
             (round($expectedTaxRateProduct * $expectedItemsCost, 2) +
-            round($expectedTaxRateShipping * $expectedShippingCost, 2));
+                round($expectedTaxRateShipping * $expectedShippingCost, 2));
 
         $finance = config('ecommerce.financing_cost_per_order');
 
