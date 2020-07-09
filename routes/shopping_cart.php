@@ -20,7 +20,7 @@ Route::group([
 
     Route::put('/json/add-to-cart',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@addCartItem')
-        ->name('shopping-cart.json.remove-from-cart');
+        ->name('shopping-cart.json.add-to-cart');
 
     Route::delete('/json/remove-from-cart/{productSku}',
         Railroad\Ecommerce\Controllers\CartJsonController::class . '@removeCartItem')
