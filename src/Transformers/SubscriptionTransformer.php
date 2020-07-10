@@ -6,10 +6,32 @@ use Doctrine\Common\Persistence\Proxy;
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Services\CurrencyService;
+use Railroad\Ecommerce\Services\TaxService;
 
 class SubscriptionTransformer extends TransformerAbstract
 {
+    /**
+     * @var TaxService
+     */
+    private $taxService;
+
+    /**
+     * @var CurrencyService
+     */
+    private $currencyService;
+
+    /**
+     * SubscriptionTransformer constructor.
+     */
+    public function __construct()
+    {
+        $this->taxService = app(TaxService::class);
+        $this->currencyService = app(CurrencyService::class);
+    }
+
     /**
      * @param Subscription $subscription
      *
@@ -49,6 +71,30 @@ class SubscriptionTransformer extends TransformerAbstract
             $this->defaultIncludes[] = 'failedPayment';
         }
 
+        /** @var $address Address */
+        if (!empty($subscription->getPaymentMethod()) &&
+            !empty($subscription->getPaymentMethod()->getBillingAddress())) {
+            $address = $subscription->getPaymentMethod()->getBillingAddress()->toStructure();
+        } else {
+            $address = new Address();
+        }
+
+        $currency = $subscription->getPaymentMethod()->getCurrency();
+
+        // all taxes for recurring payments are now calculated on the fly
+        $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);
+
+        $taxes = $this->taxService->getTaxesDueTotal(
+            $subscriptionPricePerPayment,
+            0,
+            $address
+        );
+
+        $chargePrice = $this->currencyService->convertFromBase(
+            round($subscriptionPricePerPayment + $taxes, 2),
+            $currency
+        );
+
         return [
             'id' => $subscription->getId(),
             'brand' => $subscription->getBrand(),
@@ -68,7 +114,7 @@ class SubscriptionTransformer extends TransformerAbstract
             'cancellation_reason' => $subscription->getCancellationReason(),
             'note' => $subscription->getNote(),
             'total_price' => $subscription->getTotalPrice(),
-            'tax' => $subscription->getTax(),
+            'tax' => $taxes,
             'currency' => $subscription->getCurrency(),
             'interval_type' => $subscription->getIntervalType(),
             'interval_count' => $subscription->getIntervalCount(),
@@ -132,8 +178,7 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'customer'
             );
-        }
-        else {
+        } else {
             return $this->item(
                 $subscription->getCustomer(),
                 new CustomerTransformer(),
@@ -183,8 +228,7 @@ class SubscriptionTransformer extends TransformerAbstract
                 new EntityReferenceTransformer(),
                 'payment'
             );
-        }
-        else {
+        } else {
             return $this->item(
                 $subscription->getFailedPayment(),
                 new PaymentTransformer(),
