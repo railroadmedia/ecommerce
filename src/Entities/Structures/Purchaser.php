@@ -4,6 +4,8 @@ namespace Railroad\Ecommerce\Entities\Structures;
 
 use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\User;
+use Stripe\Card as StripeCard;
+use Stripe\Customer as StripeCustomer;
 
 /**
  * This class represent either a user or a customer. We use it as an interface instead of having to always
@@ -37,6 +39,16 @@ class Purchaser
      * @var Customer
      */
     private $existingCustomerEntity;
+
+    /**
+     * @var StripeCustomer|null
+     */
+    private $stripeCustomer;
+
+    /**
+     * @var StripeCard|null
+     */
+    private $stripeCard;
 
     /**
      * Default to customer.
@@ -160,5 +172,37 @@ class Purchaser
     {
         $this->existingCustomerEntity = $customer;
         $this->id = $customer->getId();
+    }
+
+    /**
+     * @return StripeCustomer|null
+     */
+    public function getStripeCustomer(): ?StripeCustomer
+    {
+        return $this->stripeCustomer;
+    }
+
+    /**
+     * @param StripeCustomer|null $stripeCustomer
+     */
+    public function setStripeCustomer(?StripeCustomer $stripeCustomer): void
+    {
+        $this->stripeCustomer = $stripeCustomer;
+    }
+
+    /**
+     * @return StripeCard|null
+     */
+    public function getStripeCard(): ?StripeCard
+    {
+        return $this->stripeCard;
+    }
+
+    /**
+     * @param StripeCard|null $stripeCard
+     */
+    public function setStripeCard(?StripeCard $stripeCard): void
+    {
+        $this->stripeCard = $stripeCard;
     }
 }

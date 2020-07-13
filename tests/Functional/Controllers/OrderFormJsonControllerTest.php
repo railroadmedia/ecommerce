@@ -728,6 +728,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -1151,6 +1152,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -1528,6 +1530,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -1825,6 +1828,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -4333,6 +4337,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -4715,6 +4720,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -4898,6 +4904,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -5173,6 +5180,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -5510,6 +5518,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -5668,6 +5677,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -5813,6 +5823,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -5976,6 +5987,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6109,6 +6121,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6266,6 +6279,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6423,6 +6437,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6617,6 +6632,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6813,6 +6829,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -6999,6 +7016,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -7138,6 +7156,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -7661,6 +7680,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -7948,6 +7968,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -8062,6 +8083,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -8424,6 +8446,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -8740,6 +8763,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -9100,6 +9124,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -9606,6 +9631,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -9760,6 +9786,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -9901,6 +9928,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -10104,6 +10132,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -10300,6 +10329,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -10470,6 +10500,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -10646,6 +10677,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
@@ -10840,6 +10872,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
         $fakerCard->id = $this->faker->word;
+        $fakerCard->name = $this->faker->word;
 
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);

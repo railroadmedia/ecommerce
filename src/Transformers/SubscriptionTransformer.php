@@ -79,7 +79,7 @@ class SubscriptionTransformer extends TransformerAbstract
             $address = new Address();
         }
 
-        $currency = $subscription->getPaymentMethod()->getCurrency();
+        $currency = $subscription->getCurrency();
 
         // all taxes for recurring payments are now calculated on the fly
         $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);

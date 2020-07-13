@@ -150,7 +150,7 @@ class InvoiceService
         return [
             'subscription' => $subscription,
             'order' => $subscription->getOrder(),
-            'orderItems' => $subscription->getOrder()->getOrderItems(),
+            'orderItems' => !empty($subscription->getOrder()) ? $subscription->getOrder()->getOrderItems() : [],
             'product' => $subscription->getProduct(),
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,

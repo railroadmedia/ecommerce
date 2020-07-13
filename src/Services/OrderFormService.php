@@ -100,44 +100,59 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-        $purchaser = $request->getPurchaser();
-
-        // create and login the user or create the customer
-        $this->purchaserService->persist($purchaser);
-
-        if ($purchaser->getType() == Purchaser::USER_TYPE) {
-            DiscountCriteriaService::setPurchaser($purchaser->getUserObject());
-        }
-
-        // setup the cart
-        $cart = $request->getCart();
-        $this->cartService->setCart($cart);
-
-        // get the total due
-        $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
-
-        // if the paypal token is not set we must first redirect to paypal
-        if (
-            empty($cart->getPaymentMethodId())
-            && $request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL
-            && empty($request->get('token'))
-        ) {
-            $gateway = $request->get('gateway');
-            $config = config('ecommerce.payment_gateways')['paypal'];
-            $url = route($config[$gateway]['paypal_api_checkout_return_route']);
-
-            $checkoutUrl =
-                $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);
-
-            session()->put('order-form-input', $request->all());
-
-            return ['redirect' => $checkoutUrl];
-        }
-
-        $paymentMethod = null;
-
-        // try to make the payment
         try {
+
+            // setup the cart
+            $cart = $request->getCart();
+            $this->cartService->setCart($cart);
+
+            $purchaser = $request->getPurchaser();
+
+            $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
+
+            // if its a credit card we must validate inside the gateway to avoid spam bot accounts
+            if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD &&
+                empty($request->get('payment_method_id')) &&
+                empty(auth()->user())) {
+                $purchaser =
+                    $this->paymentService->validateCard(
+                        $purchaser,
+                        $request->get('gateway', config('ecommerce.default_gateway')),
+                        $request->get('card_token')
+                    );
+            }
+
+            // create and login the user or create the customer
+            $this->purchaserService->persist($purchaser);
+
+            if ($purchaser->getType() == Purchaser::USER_TYPE) {
+                DiscountCriteriaService::setPurchaser($purchaser->getUserObject());
+            }
+
+            // get the total due
+            $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
+
+            // if the paypal token is not set we must first redirect to paypal
+            if (
+                empty($cart->getPaymentMethodId())
+                && $request->get('payment_method_type') == PaymentMethod::TYPE_PAYPAL
+                && empty($request->get('token'))
+            ) {
+                $gateway = $request->get('gateway');
+                $config = config('ecommerce.payment_gateways')['paypal'];
+                $url = route($config[$gateway]['paypal_api_checkout_return_route']);
+
+                $checkoutUrl =
+                    $this->payPalPaymentGateway->getBillingAgreementExpressCheckoutUrl($gateway, $url);
+
+                session()->put('order-form-input', $request->all());
+
+                return ['redirect' => $checkoutUrl];
+            }
+
+            $paymentMethod = null;
+
+            // try to make the payment
 
             if (empty($cart->getPaymentMethodId()) &&
                 $request->get('payment_method_type') != PaymentMethod::TYPE_CREDIT_CARD &&
@@ -173,9 +188,7 @@ class OrderFormService
                 } else {
                     $paymentMethod = $this->paymentMethodRepository->byId($cart->getPaymentMethodId());
                 }
-            }
-
-            // use their existing payment method if they chose one
+            } // use their existing payment method if they chose one
             elseif (!empty($cart->getPaymentMethodId())) {
 
                 $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
@@ -187,9 +200,7 @@ class OrderFormService
                 );
 
                 $paymentMethod = $payment->getPaymentMethod();
-            }
-
-            // otherwise make a new payment method
+            } // otherwise make a new payment method
             else {
 
                 // credit cart
@@ -206,9 +217,7 @@ class OrderFormService
                         $request->get('set_as_default', true)
                     );
 
-                }
-
-                // paypal
+                } // paypal
                 else {
 
                     $payment = $this->paymentService->chargeNewPayPalPaymentMethod(
@@ -253,8 +262,7 @@ class OrderFormService
                             ['stripe' => $exceptionData['error']],
                         ],
                     ];
-                }
-                else {
+                } else {
                     // assume request not having redirect is json request
                     throw new StripeCardException($exceptionData['error']['message']);
                 }
@@ -282,8 +290,7 @@ class OrderFormService
                     $user = $purchaser->getUserObject();
 
                     $shippingAddress->setUser($user);
-                }
-                elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
+                } elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE && !empty($purchaser->getEmail())) {
                     $customer = $purchaser->getCustomerEntity();
 
                     $shippingAddress->setCustomer($customer);

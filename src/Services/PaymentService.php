@@ -281,18 +281,22 @@ class PaymentService
         $stripeCustomer = $this->getStripeCustomer($purchaser, $gateway);
 
         // make the stripe card
-        $card = $this->stripePaymentGateway->createCustomerCard(
-            $gateway,
-            $stripeCustomer,
-            $stripeToken
-        );
+        if (empty($purchaser->getStripeCard())) {
+            $stripeCard = $this->stripePaymentGateway->createCustomerCard(
+                $gateway,
+                $stripeCustomer,
+                $stripeToken
+            );
+        } else {
+            $stripeCard = $purchaser->getStripeCard();
+        }
 
         // charge the card
         $charge = $this->stripePaymentGateway->chargeCustomerCard(
             $gateway,
             $convertedPaymentAmount,
             $currency,
-            $card,
+            $stripeCard,
             $stripeCustomer
         );
 
@@ -304,7 +308,7 @@ class PaymentService
         $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
             $purchaser,
             $billingAddress,
-            $card,
+            $stripeCard,
             $stripeCustomer,
             $gateway,
             $currency,
@@ -436,6 +440,10 @@ class PaymentService
         string $gateway
     ): Customer {
         $stripeCustomer = null;
+
+        if (!empty($purchaser->getStripeCustomer())) {
+            return $purchaser->getStripeCustomer();
+        }
 
         if ($purchaser->getType() == Purchaser::USER_TYPE && !empty($purchaser->getId())) {
             $stripeCustomer = null;
@@ -622,5 +630,27 @@ class PaymentService
         }
 
         return $paymentMethod;
+    }
+
+    public function validateCard(Purchaser $purchaser, $gateway, $cardToken)
+    {
+        // first get the stripe customer
+        $stripeCustomer = $this->stripePaymentGateway->getOrCreateCustomer(
+            $gateway,
+            $purchaser->getEmail()
+        );
+
+        $purchaser->setStripeCustomer($stripeCustomer);
+
+        // make the stripe card
+        $stripeCard = $this->stripePaymentGateway->createCustomerCard(
+            $gateway,
+            $stripeCustomer,
+            $cardToken
+        );
+
+        $purchaser->setStripeCard($stripeCard);
+
+        return $purchaser;
     }
 }
