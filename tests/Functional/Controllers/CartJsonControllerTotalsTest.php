@@ -158,6 +158,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'stock' => $product['stock'],
                 'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
+                'subscription_renewal_price' => null,
                 'price_before_discounts' => $product['price'] * $initialQuantity,
                 'price_after_discounts' => $product['price'] * $initialQuantity,
                 'requires_shipping' => false,

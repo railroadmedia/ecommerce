@@ -419,6 +419,59 @@ class DiscountService
 
     /**
      * @param Cart $cart
+     * @param Product $product
+     * @param float $totalDueInItems
+     * @param float $totalDueInShipping
+     *
+     * @return float
+     *
+     * @throws Throwable
+     * @throws ORMException
+     */
+    public function getSubscriptionItemDiscountedRenewalAmount(
+        Cart $cart,
+        Product $product,
+        float $totalDueInItems,
+        float $totalDueInShipping
+    ): float
+    {
+        $activeDiscounts = $this->getApplicableDiscounts(
+            $this->discountRepository->getActiveCartItemDiscounts(),
+            $cart,
+            $totalDueInItems,
+            $totalDueInShipping
+        );
+
+        /** @var CartItem $productCartItem */
+        $productCartItem = $cart->getItemBySku($product->getSku());
+
+        $discountedAmount = 0;
+
+        if (!empty($product) && $product->getActive()) {
+
+            foreach ($activeDiscounts as $discount) {
+
+                /** @var Product $discountProduct */
+                $discountProduct = $discount->getProduct();
+
+                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                    ($discount->getProductCategory() && $product->getCategory() == $discount->getProductCategory())) {
+
+                    if ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
+                        $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
+                        $discountedAmount = round($discountedAmount + $discountAmount, 2);
+
+                    }
+
+                }
+            }
+        }
+
+        return $discountedAmount;
+    }
+
+    /**
+     * @param Cart $cart
      * @param float $totalDueInItems
      * @param float $totalDueInShipping
      *

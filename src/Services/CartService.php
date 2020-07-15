@@ -706,6 +706,17 @@ class CartService
                     $product->getSubscriptionIntervalType() : null,
                 'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
                     $product->getSubscriptionIntervalCount() : null,
+                'subscription_renewal_price' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                    round(
+                        ($product->getPrice() * $cartItem->getQuantity()) -
+                        $this->discountService->getSubscriptionItemDiscountedRenewalAmount(
+                            $this->cart,
+                            $product,
+                            $totalItemCostDue,
+                            $shippingDue
+                        ),
+                        2
+                    ) : null,
                 'price_before_discounts' => round($product->getPrice() * $cartItem->getQuantity(), 2),
                 'price_after_discounts' => max(
                     round(
