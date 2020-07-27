@@ -286,6 +286,8 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     'type' => 'userProduct',
                     'attributes' => [
                         'quantity' => $userProduct1['quantity'],
+                        'start_date' => $userProduct1['start_date'],
+                        'expiration_date' => $userProduct1['expiration_date'],
                     ],
                     'relationships' => [
                         'user' => [

@@ -70,9 +70,7 @@ class UserProductService
         foreach ($userProducts as $userProduct) {
             if ($userProduct->getProduct()
                     ->getId() == $productId &&
-                ($userProduct->getExpirationDate() == null ||
-                    Carbon::parse($userProduct->getExpirationDate()) >
-                    Carbon::now())) {
+                ($userProduct->isValid())) {
 
                 return true;
             }
@@ -99,9 +97,7 @@ class UserProductService
                         ->getId(),
                     $productIds
                 ) &&
-                ($userProduct->getExpirationDate() == null ||
-                    Carbon::parse($userProduct->getExpirationDate()) >
-                    Carbon::now())) {
+                ($userProduct->isValid())) {
 
                 return true;
             }

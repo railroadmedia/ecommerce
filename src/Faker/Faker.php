@@ -383,7 +383,8 @@ class Faker extends Generator
                 'user_id' => $this->randomNumber(),
                 'product_id' => $this->randomNumber(),
                 'quantity' => $this->numberBetween(1, 5),
-                'expiration_date' => null,
+                'start_date' => Carbon::now()->subDays(10)->toDateTimeString(),
+                'expiration_date' => Carbon::now()->addDays(10)->toDateTimeString(),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],

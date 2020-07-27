@@ -16,6 +16,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  *         @ORM\Index(name="ecommerce_user_products_user_id_index", columns={"user_id"}),
  *         @ORM\Index(name="ecommerce_user_products_product_id_index", columns={"product_id"}),
  *         @ORM\Index(name="ecommerce_user_products_quantity_index", columns={"quantity"}),
+ *         @ORM\Index(name="ecommerce_user_products_start_date_index", columns={"start_date"}),
  *         @ORM\Index(name="ecommerce_user_products_expiration_date_index", columns={"expiration_date"}),
  *         @ORM\Index(name="ecommerce_user_products_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_user_products_updated_on_index", columns={"updated_at"})
@@ -63,6 +64,13 @@ class UserProduct
     protected $expirationDate;
 
     /**
+     * @ORM\Column(type="datetime", name="start_date", nullable=true)
+     *
+     * @var DateTime
+     */
+    protected $startDate;
+
+    /**
      * @ORM\Column(type="datetime", name="deleted_at", nullable=true)
      *
      * @var DateTime
@@ -91,6 +99,22 @@ class UserProduct
     public function setQuantity(int $quantity)
     {
         $this->quantity = $quantity;
+    }
+
+    /**
+     * @return DateTimeInterface|null
+     */
+    public function getStartDate(): ?DateTimeInterface
+    {
+        return $this->startDate;
+    }
+
+    /**
+     * @param DateTimeInterface|null $startDate
+     */
+    public function setStartDate(?DateTimeInterface $startDate): void
+    {
+        $this->startDate = $startDate;
     }
 
     /**
@@ -165,6 +189,7 @@ class UserProduct
     public function isValid()
     {
         if ((empty($this->getExpirationDate()) || $this->getExpirationDate() > Carbon::now()) &&
+            (empty($this->getStartDate()) || $this->getStartDate() < Carbon::now()) &&
             empty($this->getDeletedAt())) {
             return true;
         }
