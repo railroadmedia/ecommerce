@@ -15,6 +15,194 @@ class UserProductServiceTest extends EcommerceTestCase
         parent::setUp();
     }
 
+    public function test_has_product_valid()
+    {
+        $em = $this->app->make(EcommerceEntityManager::class);
+        $srv = $this->app->make(UserProductService::class);
+
+        $userProvider = $this->app->make(UserProviderInterface::class);
+
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
+        );
+
+        $user = $userProvider->createUser($email, $password);
+
+        $product = new Product();
+
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
+
+        $em->persist($product);
+
+        $userProduct = new UserProduct();
+
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity(1);
+        $userProduct->setExpirationDate(Carbon::now()->addDay());
+        $userProduct->setStartDate(Carbon::now()->subDay());
+        $userProduct->setCreatedAt(Carbon::now());
+
+        $em->persist($userProduct);
+        $em->flush();
+
+        $result = $srv->hasProduct($user->getId(), $product->getId());
+
+        $this->assertEquals(
+            true,
+            $result
+        );
+    }
+
+    public function test_has_product_expired()
+    {
+        $em = $this->app->make(EcommerceEntityManager::class);
+        $srv = $this->app->make(UserProductService::class);
+
+        $userProvider = $this->app->make(UserProviderInterface::class);
+
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
+        );
+
+        $user = $userProvider->createUser($email, $password);
+
+        $product = new Product();
+
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
+
+        $em->persist($product);
+
+        $userProduct = new UserProduct();
+
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity(1);
+        $userProduct->setExpirationDate(Carbon::now()->subDay());
+        $userProduct->setStartDate(Carbon::now()->subDays(3));
+        $userProduct->setCreatedAt(Carbon::now());
+
+        $em->persist($userProduct);
+        $em->flush();
+
+        $result = $srv->hasProduct($user->getId(), $product->getId());
+
+        $this->assertEquals(
+            false,
+            $result
+        );
+    }
+
+    public function test_has_product_not_yet_started()
+    {
+        $em = $this->app->make(EcommerceEntityManager::class);
+        $srv = $this->app->make(UserProductService::class);
+
+        $userProvider = $this->app->make(UserProviderInterface::class);
+
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
+        );
+
+        $user = $userProvider->createUser($email, $password);
+
+        $product = new Product();
+
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
+
+        $em->persist($product);
+
+        $userProduct = new UserProduct();
+
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity(1);
+        $userProduct->setExpirationDate(Carbon::now()->addDays(3));
+        $userProduct->setStartDate(Carbon::now()->addDays(1));
+        $userProduct->setCreatedAt(Carbon::now());
+
+        $em->persist($userProduct);
+        $em->flush();
+
+        $result = $srv->hasProduct($user->getId(), $product->getId());
+
+        $this->assertEquals(
+            false,
+            $result
+        );
+    }
+
+    public function test_has_product_valid_never_expired()
+    {
+        $em = $this->app->make(EcommerceEntityManager::class);
+        $srv = $this->app->make(UserProductService::class);
+
+        $userProvider = $this->app->make(UserProviderInterface::class);
+
+        $email = $this->faker->email;
+        $password = $this->faker->shuffleString(
+            $this->faker->bothify('???###???###???###???###')
+        );
+
+        $user = $userProvider->createUser($email, $password);
+
+        $product = new Product();
+
+        $product->setBrand($this->faker->word);
+        $product->setName($this->faker->word);
+        $product->setSku($this->faker->word);
+        $product->setPrice($this->faker->randomNumber(4));
+        $product->setType(Product::TYPE_DIGITAL_SUBSCRIPTION);
+        $product->setActive(true);
+        $product->setIsPhysical(false);
+        $product->setAutoDecrementStock(false);
+
+        $em->persist($product);
+
+        $userProduct = new UserProduct();
+
+        $userProduct->setUser($user);
+        $userProduct->setProduct($product);
+        $userProduct->setQuantity(1);
+        $userProduct->setExpirationDate(null);
+        $userProduct->setStartDate(Carbon::now()->subDays(1));
+        $userProduct->setCreatedAt(Carbon::now());
+
+        $em->persist($userProduct);
+        $em->flush();
+
+        $result = $srv->hasProduct($user->getId(), $product->getId());
+
+        $this->assertEquals(
+            true,
+            $result
+        );
+    }
+
     public function test_get_user_product_null()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
@@ -340,16 +528,18 @@ class UserProductServiceTest extends EcommerceTestCase
         $newUserProductOneQuantity = 1;
         $newUserProductTwoQuantity = 1;
 
-        $productsCollection = collect([
+        $productsCollection = collect(
             [
-                'product' => $userProductOne,
-                'quantity' => $newUserProductOneQuantity
-            ],
-            [
-                'product' => $userProductTwo,
-                'quantity' => $newUserProductTwoQuantity
+                [
+                    'product' => $userProductOne,
+                    'quantity' => $newUserProductOneQuantity
+                ],
+                [
+                    'product' => $userProductTwo,
+                    'quantity' => $newUserProductTwoQuantity
+                ]
             ]
-        ]);
+        );
 
         $result = $srv->removeUserProducts(
             $user,

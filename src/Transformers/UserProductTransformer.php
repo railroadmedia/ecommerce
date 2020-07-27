@@ -25,6 +25,9 @@ class UserProductTransformer extends TransformerAbstract
         return [
             'id' => $userProduct->getId(),
             'quantity' => $userProduct->getQuantity(),
+            'start_date' => !empty($userProduct->getStartDate()) ?
+                $userProduct->getStartDate()
+                    ->toDateTimeString() : null,
             'expiration_date' => !empty($userProduct->getExpirationDate()) ?
                 $userProduct->getExpirationDate()
                     ->toDateTimeString() : null,

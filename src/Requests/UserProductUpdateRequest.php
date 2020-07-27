@@ -29,6 +29,7 @@ class UserProductUpdateRequest extends FormRequest
         return [
             'data.type' => 'in:userProduct',
             'data.attributes.quantity' => 'numeric',
+            'data.attributes.start_date' => 'date|nullable',
             'data.attributes.expiration_date' => 'date|nullable',
             'data.relationships.user.data.id' => 'integer',
             'data.relationships.product.data.id' => 'numeric|exists:' . 'ecommerce_products' . ',id',
@@ -44,6 +45,7 @@ class UserProductUpdateRequest extends FormRequest
             $this->only(
                 [
                     'data.attributes.quantity',
+                    'data.attributes.start_date',
                     'data.attributes.expiration_date',
                     'data.relationships.user',
                     'data.relationships.product',
