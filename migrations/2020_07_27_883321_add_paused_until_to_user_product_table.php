@@ -14,7 +14,7 @@ class AddPausedUntilToUserProductTable extends Migration
     public function up()
     {
         Schema::table('ecommerce_user_products', function (Blueprint $table) {
-            $table->dateTime('start_date')->before('expiration_date')->nullable();
+            $table->dateTime('start_date')->after('quantity')->nullable();
         });
     }
 
