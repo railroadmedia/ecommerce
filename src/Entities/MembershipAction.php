@@ -48,15 +48,24 @@ class MembershipAction
     protected $actionAmount = null;
 
     /**
-     * @var User
+     * @ORM\Column(type="string", nullable=true)
+     *
+     * @var string|null
+     */
+    protected $actionReason = null;
+
+    /**
+     * @var User|null
      *
      * @ORM\Column(type="user", name="user_id", nullable=true)
      */
     protected $user;
 
     /**
+     * @var Subscription|null
+     *
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Subscription")
-     * @ORM\JoinColumn(name="subscription_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="subscription_id", referencedColumnName="id", nullable=true)
      */
     protected $subscription;
 
@@ -67,11 +76,11 @@ class MembershipAction
      */
     protected $brand;
 
-    public const ACTION_PAUSE_FOR_AMOUNT_OF_DAYS = 'pause for amount of days';
-    public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS = 'extend for amount of days';
-    public const ACTION_SWITCH_TO_NEW_PRICE = 'switch to new price';
-    public const ACTION_SWITCH_BILLING_INTERVAL_TO_MONTHLY = 'switch billing interval to monthly';
-    public const ACTION_SWITCH_BILLING_INTERVAL_TO_YEARLY = 'switch billing interval to yearly';
+    public const ACTION_PAUSE_FOR_AMOUNT_OF_DAYS = 'paused for amount of days';
+    public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS = 'extended for amount of days';
+    public const ACTION_SWITCH_TO_NEW_PRICE = 'switched to new price';
+    public const ACTION_SWITCH_BILLING_INTERVAL_TO_MONTHLY = 'switched billing interval to monthly';
+    public const ACTION_SWITCH_BILLING_INTERVAL_TO_YEARLY = 'switched billing interval to yearly';
     public const ACTION_REQUESTED_HELP = 'requested help';
     public const ACTION_REQUESTED_TECHNICAL_SUPPORT = 'requested technical support';
     public const ACTION_CANCELLED = 'cancelled';
@@ -82,5 +91,109 @@ class MembershipAction
     public function __construct()
     {
         $this->brand = config('ecommerce.brand');
+    }
+
+    /**
+     * @return int
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAction()
+    {
+        return $this->action;
+    }
+
+    /**
+     * @param string $action
+     */
+    public function setAction($action)
+    {
+        $this->action = $action;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getActionAmount()
+    {
+        return $this->actionAmount;
+    }
+
+    /**
+     * @param int|null $actionAmount
+     */
+    public function setActionAmount($actionAmount = null)
+    {
+        $this->actionAmount = $actionAmount;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getActionReason()
+    {
+        return $this->actionReason;
+    }
+
+    /**
+     * @param string|null $actionReason
+     */
+    public function setActionReason($actionReason): void
+    {
+        $this->actionReason = $actionReason;
+    }
+
+    /**
+     * @return User|null
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param User|null $user
+     */
+    public function setUser(User $user = null)
+    {
+        $this->user = $user;
+    }
+
+    /**
+     * @return Subscription|null
+     */
+    public function getSubscription()
+    {
+        return $this->subscription;
+    }
+
+    /**
+     * @param Subscription|null $subscription
+     */
+    public function setSubscription(Subscription $subscription = null)
+    {
+        $this->subscription = $subscription;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBrand()
+    {
+        return $this->brand;
+    }
+
+    /**
+     * @param string $brand
+     */
+    public function setBrand($brand)
+    {
+        $this->brand = $brand;
     }
 }

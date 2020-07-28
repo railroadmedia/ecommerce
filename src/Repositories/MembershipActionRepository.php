@@ -1,0 +1,187 @@
+<?php
+
+namespace Railroad\Ecommerce\Repositories;
+
+use Illuminate\Http\Request;
+use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
+use Railroad\Ecommerce\Entities\MembershipAction;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+
+/**
+ * Class MembershipActionRepository
+ *
+ * @method MembershipAction find($id, $lockMode = null, $lockVersion = null)
+ * @method MembershipAction findOneBy(array $criteria, array $orderBy = null)
+ * @method MembershipAction[] findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method MembershipAction[] findAll()
+ *
+ * @package Railroad\Ecommerce\Repositories
+ */
+class MembershipActionRepository extends RepositoryBase
+{
+    use UseFormRequestQueryBuilder;
+
+    /**
+     * RefundRepository constructor.
+     *
+     * @param EcommerceEntityManager $em
+     */
+    public function __construct(EcommerceEntityManager $em)
+    {
+        parent::__construct($em, $em->getClassMetadata(MembershipAction::class));
+    }
+
+    /**
+     * @param Request $request
+     *
+     * @return ResultsQueryBuilderComposite
+     */
+    public function indexByRequest(Request $request): ResultsQueryBuilderComposite
+    {
+        if ($this->getEntityManager()
+            ->getFilters()
+            ->isEnabled('soft-deleteable')) {
+
+            $this->getEntityManager()
+                ->getFilters()
+                ->disable('soft-deleteable');
+        }
+
+        $alias = 'm';
+
+        $qb = $this->createQueryBuilder($alias);
+
+        $qb->paginateByRequest($request)
+            ->orderByRequest($request, $alias)
+            ->restrictBrandsByRequest($request, $alias);
+
+        if ($request->has('user_id')) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq($alias . '.user', ':userId')
+            )
+                ->setParameter('userId', $request->has('user_id'));
+        }
+
+        if ($request->has('subscription_id')) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq($alias . '.subscription', ':subscriptionId')
+            )
+                ->setParameter('subscriptionId', $request->has('subscription_id'));
+        }
+
+        $results = $qb->getQuery()
+            ->getResult();
+
+        return new ResultsQueryBuilderComposite($results, $qb);
+    }
+
+
+    /**
+     * @param string $userId
+     * @param string|null $brand // looks at all brands if null
+     * @return MembershipAction|null
+     */
+    public function getUsersLatestMembershipAction($userId, $brand = null)
+    {
+        return $this->getAllUsersMembershipActions($userId, $brand)[0] ?? null;
+    }
+
+    /**
+     * @param integer $userId
+     * @param string|null $brand // gets for all brands if null
+     * @param string $orderByColumn
+     * @param string $orderByDirection
+     *
+     * @return MembershipAction[]
+     */
+    public function getAllUsersMembershipActions(
+        $userId,
+        $brand = null,
+        $orderByColumn = 'created_at',
+        $orderByDirection = 'dec'
+    )
+    {
+        $qb = $this->createQueryBuilder('m');
+
+        $qb->select(['b'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )
+            ->orderBy($orderByColumn, $orderByDirection);
+
+        if (!empty($brand)) {
+            $qb->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            );
+        }
+
+        $q = $qb->getQuery();
+
+        $q->setParameter('userId', $userId);
+
+        if (!empty($brand)) {
+            $q->setParameter('brand', $brand);
+        }
+
+        return $q->getResult();
+    }
+
+    /**
+     * @param integer $subscriptionId
+     * @param string|null $brand // gets for all brands if null
+     * @param string $orderByColumn
+     * @param string $orderByDirection
+     *
+     * @return MembershipAction[]
+     */
+    public function getAllSubscriptionsMembershipActions(
+        $subscriptionId,
+        $brand = null,
+        $orderByColumn = 'created_at',
+        $orderByDirection = 'dec'
+    )
+    {
+        $qb = $this->createQueryBuilder('m');
+
+        $qb->select(['b'])
+            ->where(
+                $qb->expr()
+                    ->eq('s.subscription', ':subscriptionId')
+            )
+            ->orderBy($orderByColumn, $orderByDirection);
+
+        if (!empty($brand)) {
+            $qb->where(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            );
+        }
+
+        $q = $qb->getQuery();
+
+        $q->setParameter('subscriptionId', $subscriptionId);
+
+        if (!empty($brand)) {
+            $q->setParameter('brand', $brand);
+        }
+
+        return $q->getResult();
+    }
+
+    /**
+     * @param MembershipAction $membershipAction
+     *
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function persist(MembershipAction $membershipAction)
+    {
+        $this->getEntityManager()->persist($membershipAction);
+        $this->getEntityManager()->flush($membershipAction);
+    }
+}
