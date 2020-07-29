@@ -17,6 +17,7 @@ return [
     'database_password' => env('DB_PASSWORD'),
     'database_host' => env('DB_HOST'),
     'database_driver' => 'pdo_mysql',
+    'database_charset' => 'UTF8',
     'database_in_memory' => false,
     'enable_query_log' => false,
 

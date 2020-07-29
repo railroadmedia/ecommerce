@@ -223,6 +223,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 'user' => config('ecommerce.database_user'),
                 'password' => config('ecommerce.database_password'),
                 'host' => config('ecommerce.database_host'),
+                'charset' => config('ecommerce.charset', 'UTF8'),
             ];
         }
         else {
