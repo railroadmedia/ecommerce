@@ -92,7 +92,7 @@ class MembershipActionRepository extends RepositoryBase
     /**
      * @param integer $userId
      * @param string|null $brand // gets for all brands if null
-     * @param string $orderByColumn
+     * @param string $orderByAttribute
      * @param string $orderByDirection
      *
      * @return MembershipAction[]
@@ -100,23 +100,23 @@ class MembershipActionRepository extends RepositoryBase
     public function getAllUsersMembershipActions(
         $userId,
         $brand = null,
-        $orderByColumn = 'created_at',
-        $orderByDirection = 'dec'
+        $orderByAttribute = 'createdAt',
+        $orderByDirection = 'desc'
     )
     {
         $qb = $this->createQueryBuilder('m');
 
-        $qb->select(['b'])
+        $qb->select(['m'])
             ->where(
                 $qb->expr()
-                    ->eq('s.user', ':userId')
+                    ->eq('m.user', ':userId')
             )
-            ->orderBy($orderByColumn, $orderByDirection);
+            ->orderBy('m.'. $orderByAttribute, $orderByDirection);
 
         if (!empty($brand)) {
             $qb->where(
                 $qb->expr()
-                    ->eq('s.brand', ':brand')
+                    ->eq('m.brand', ':brand')
             );
         }
 
@@ -134,7 +134,7 @@ class MembershipActionRepository extends RepositoryBase
     /**
      * @param integer $subscriptionId
      * @param string|null $brand // gets for all brands if null
-     * @param string $orderByColumn
+     * @param string $orderByAttribute
      * @param string $orderByDirection
      *
      * @return MembershipAction[]
@@ -142,23 +142,23 @@ class MembershipActionRepository extends RepositoryBase
     public function getAllSubscriptionsMembershipActions(
         $subscriptionId,
         $brand = null,
-        $orderByColumn = 'created_at',
-        $orderByDirection = 'dec'
+        $orderByAttribute = 'createdAt',
+        $orderByDirection = 'desc'
     )
     {
         $qb = $this->createQueryBuilder('m');
 
-        $qb->select(['b'])
+        $qb->select(['m'])
             ->where(
                 $qb->expr()
-                    ->eq('s.subscription', ':subscriptionId')
+                    ->eq('m.subscription', ':subscriptionId')
             )
-            ->orderBy($orderByColumn, $orderByDirection);
+            ->orderBy($orderByAttribute, $orderByDirection);
 
         if (!empty($brand)) {
             $qb->where(
                 $qb->expr()
-                    ->eq('s.brand', ':brand')
+                    ->eq('m.brand', ':brand')
             );
         }
 
