@@ -6,6 +6,7 @@ use Doctrine\ORM\ORMException;
 use Exception;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
+use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 
 class TaxService
 {
@@ -14,15 +15,22 @@ class TaxService
      */
     private $shippingService;
 
+    /**
+     * @var PaymentMethodRepository
+     */
+    private $paymentMethodRepository;
+
     const TAXABLE_COUNTRY = 'canada';
 
     /**
      * TaxService constructor.
      * @param ShippingService $shippingService
+     * @param PaymentMethodRepository $paymentMethodRepository
      */
-    public function __construct(ShippingService $shippingService)
+    public function __construct(ShippingService $shippingService, PaymentMethodRepository $paymentMethodRepository)
     {
         $this->shippingService = $shippingService;
+        $this->paymentMethodRepository = $paymentMethodRepository;
     }
 
     /**
@@ -194,6 +202,15 @@ class TaxService
             strtolower($billingAddress->getCountry()) == strtolower(self::TAXABLE_COUNTRY)) {
 
             $taxableAddress = $billingAddress;
+        }
+
+        // if not found and the user is going to use an existing payment method, use that methods address
+        if (empty($taxableAddress) && !empty($cart->getPaymentMethodId())) {
+            $paymentMethod = $this->paymentMethodRepository->byId($cart->getPaymentMethodId());
+
+            if (!empty($paymentMethod) && !empty($paymentMethod->getBillingAddress())) {
+                $taxableAddress = $paymentMethod->getBillingAddress()->toStructure();
+            }
         }
 
         return $taxableAddress;
