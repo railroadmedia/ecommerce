@@ -62,7 +62,8 @@ class EcommerceTestCase extends BaseTestCase
         'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
         'appleReceipts' => 'ecommerce_apple_receipts',
         'membershipStats' => 'ecommerce_membership_stats',
-        'retentionStats' => 'ecommerce_retention_stats'
+        'retentionStats' => 'ecommerce_retention_stats',
+        'membershipActions' => 'ecommerce_membership_actions',
     ];
 
     /**
@@ -570,6 +571,24 @@ class EcommerceTestCase extends BaseTestCase
         $address['id'] = $addressId;
 
         return $address;
+    }
+
+
+    /**
+     * @param array $membershipActionStub
+     * @return array
+     */
+    public function fakeMembershipAction($membershipActionStub = []): array
+    {
+        $membershipAction = $this->faker->membershipAction($membershipActionStub);
+
+        $addressId =
+            $this->databaseManager->table(self::TABLES['membershipActions'])
+                ->insertGetId($membershipAction);
+
+        $membershipAction['id'] = $addressId;
+
+        return $membershipAction;
     }
 
     /**

@@ -4,10 +4,8 @@ namespace Railroad\Ecommerce\Faker;
 
 use Carbon\Carbon;
 use Faker\Generator;
-use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Location\Services\LocationService;
 
 class Faker extends Generator
 {
@@ -87,26 +85,17 @@ class Faker extends Generator
         );
     }
 
-    public function address(array $override = [])
+    public function membershipAction(array $override = [])
     {
         return array_merge(
             [
-                'type' => $this->randomElement(
-                    [
-                        Address::BILLING_ADDRESS_TYPE,
-                        Address::SHIPPING_ADDRESS_TYPE,
-                    ]
-                ),
+                'action' => $this->word,
+                'action_amount' => $this->randomNumber(),
+                'action_reason' => $this->words(3, true),
+                'user_id' => $this->randomNumber(),
+                'subscription_id' => $this->randomNumber(),
                 'brand' => config('ecommerce.brand'),
-                'first_name' => $this->firstName,
-                'last_name' => $this->lastName,
-                'street_line_1' => $this->streetAddress,
-                'street_line_2' => null,
-                'city' => $this->city,
-                'zip' => $this->postcode,
-                'region' => $this->word,
-                'country' => $this->randomElement(LocationService::countries()),
-                'note' => $this->text,
+                'note' => $this->words(3, true),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
                 'updated_at' => Carbon::now()
@@ -350,6 +339,8 @@ class Faker extends Generator
                 'renewal_attempt' => 0,
                 'payment_method_id' => $this->randomNumber(),
                 'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
                     ->toDateTimeString(),
                 'deleted_at' => null,
                 'cancellation_reason' => null,

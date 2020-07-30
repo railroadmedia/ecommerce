@@ -39,29 +39,22 @@ class MembershipActionRepository extends RepositoryBase
      */
     public function indexByRequest(Request $request): ResultsQueryBuilderComposite
     {
-        if ($this->getEntityManager()
-            ->getFilters()
-            ->isEnabled('soft-deleteable')) {
-
-            $this->getEntityManager()
-                ->getFilters()
-                ->disable('soft-deleteable');
-        }
-
         $alias = 'm';
 
         $qb = $this->createQueryBuilder($alias);
 
-        $qb->paginateByRequest($request)
+        $qb->select(['m', 's'])
+            ->paginateByRequest($request)
             ->orderByRequest($request, $alias)
-            ->restrictBrandsByRequest($request, $alias);
+            ->restrictBrandsByRequest($request, $alias)
+            ->leftJoin('m.subscription', 's');
 
         if ($request->has('user_id')) {
             $qb->andWhere(
                 $qb->expr()
                     ->eq($alias . '.user', ':userId')
             )
-                ->setParameter('userId', $request->has('user_id'));
+                ->setParameter('userId', $request->get('user_id'));
         }
 
         if ($request->has('subscription_id')) {
@@ -69,7 +62,15 @@ class MembershipActionRepository extends RepositoryBase
                 $qb->expr()
                     ->eq($alias . '.subscription', ':subscriptionId')
             )
-                ->setParameter('subscriptionId', $request->has('subscription_id'));
+                ->setParameter('subscriptionId', $request->get('subscription_id'));
+        }
+
+        if ($request->has('brand')) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq($alias . '.brand', ':brand')
+            )
+                ->setParameter('brand', $request->get('brand'));
         }
 
         $results = $qb->getQuery()

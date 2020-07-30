@@ -24,6 +24,7 @@ use Railroad\Ecommerce\Transformers\DiscountCriteriaTransformer;
 use Railroad\Ecommerce\Transformers\DiscountTransformer;
 use Railroad\Ecommerce\Transformers\FulfillmentTransformer;
 use Railroad\Ecommerce\Transformers\GoogleReceiptTransformer;
+use Railroad\Ecommerce\Transformers\MembershipActionTransformer;
 use Railroad\Ecommerce\Transformers\MembershipEndStatsTransformer;
 use Railroad\Ecommerce\Transformers\MembershipStatsTransformer;
 use Railroad\Ecommerce\Transformers\OrderTransformer;
@@ -94,6 +95,28 @@ class ResponseService extends FractalResponseService
             $entityOrEntities,
             'accessCode',
             new AccessCodeTransformer(),
+            new JsonApiSerializer(),
+            $queryBuilder
+        )
+            ->parseIncludes($includes);
+    }
+
+    /**
+     * @param $entityOrEntities
+     * @param QueryBuilder|null $queryBuilder
+     * @param array $includes
+     * @return Fractal
+     */
+    public static function membershipActions(
+        $entityOrEntities,
+        QueryBuilder $queryBuilder = null,
+        array $includes = []
+    )
+    {
+        return self::create(
+            $entityOrEntities,
+            'membershipAction',
+            new MembershipActionTransformer(),
             new JsonApiSerializer(),
             $queryBuilder
         )
