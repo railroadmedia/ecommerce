@@ -4,8 +4,10 @@ namespace Railroad\Ecommerce\Faker;
 
 use Carbon\Carbon;
 use Faker\Generator;
+use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Location\Services\LocationService;
 
 class Faker extends Generator
 {
@@ -79,6 +81,35 @@ class Faker extends Generator
                 'brand' => config('ecommerce.brand'),
                 'note' => $this->text,
                 'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
+    public function address(array $override = [])
+    {
+        return array_merge(
+            [
+                'type' => $this->randomElement(
+                    [
+                        Address::BILLING_ADDRESS_TYPE,
+                        Address::SHIPPING_ADDRESS_TYPE,
+                    ]
+                ),
+                'brand' => config('ecommerce.brand'),
+                'first_name' => $this->firstName,
+                'last_name' => $this->lastName,
+                'street_line_1' => $this->streetAddress,
+                'street_line_2' => null,
+                'city' => $this->city,
+                'zip' => $this->postcode,
+                'region' => $this->word,
+                'country' => $this->randomElement(LocationService::countries()),
+                'note' => $this->text,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override
