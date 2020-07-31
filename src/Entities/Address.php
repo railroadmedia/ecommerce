@@ -8,6 +8,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Services\TaxService;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AddressRepository")
@@ -275,6 +276,17 @@ class Address implements AddressInterface
      */
     public function getRegion(): ?string
     {
+        // we may need to convert the province name from 2 letter abbreviation to the full name
+        if (strtolower($this->getCountry()) == strtolower(TaxService::TAXABLE_COUNTRY)) {
+            $countryProvinceCodes =
+                config('ecommerce.country_province_codes')[strtolower($this->getCountry())] ?? [];
+
+            if (!empty($countryProvinceCodes) &&
+                !empty($countryProvinceCodes[strtolower($this->region)])) {
+                $this->setRegion($countryProvinceCodes[strtolower($this->region)]);
+            }
+        }
+
         return $this->region;
     }
 

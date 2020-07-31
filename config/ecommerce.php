@@ -71,6 +71,25 @@ return [
     'route_middleware_logged_in_groups' => ['ecommerce_logged_in'],
 
     // tax config
+    'country_province_codes' => [
+        'canada' => [
+            'ab' => 'Alberta',
+            'bc' => 'British Columbia',
+            'mb' => 'Manitoba',
+            'nb' => 'New Brunswick',
+            'nl' => 'Newfoundland and Labrador',
+            'nt' => 'Northwest Territories',
+            'ns' => 'Nova Scotia',
+            'nu' => 'Nunavut',
+            'on' => 'Ontario',
+            'pe' => 'Prince Edward Island',
+            'pei' => 'Prince Edward Island',
+            'qc' => 'Quebec',
+            'sk' => 'Saskatchewan',
+            'yt' => 'Yukon',
+        ]
+    ],
+
     'tax_rates_and_options' => [
         'canada' => [
             'alberta' => [
