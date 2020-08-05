@@ -158,16 +158,34 @@ class AccountingService
             $paidPhysical = [];
             $freePhysical = [];
 
+            // sometimes the productDue is way higher than the sum of the order item prices, so instead we'll just add
+            // them up to make the order item ratio
+            $sumOfOrderItemPrices = 0;
+
+            foreach ($orderData['items'] as $productId => $productData) {
+                $sumOfOrderItemPrices += $productData['finalPrice'];
+            }
+
+            // if its a payment plan we must also multiply by the paid ratio
+            // must exclude shipping since its always charged on the first payment
+            if ($orderData['totalDue'] != $orderData['totalPaid'] &&
+                $orderData['totalDue'] > 0
+            ) {
+                $paidRatio = ($orderData['totalPaid'] - $orderData['shippingDue']) / ($orderData['totalDue'] - $orderData['shippingDue']);
+            } else {
+                $paidRatio = 1;
+            }
+
             foreach ($orderData['items'] as $productId => $productData) {
 
-                $oderItemRatio = 0;
+                $orderItemRatio = 0;
 
                 if (
-                    $orderData['productDue'] != 0
-                    && $orderData['productDue'] != null
+                    $sumOfOrderItemPrices != 0
+                    && $sumOfOrderItemPrices != null
                     && $productData['finalPrice']
                 ) {
-                    $oderItemRatio = $productData['finalPrice'] / $orderData['productDue'];
+                    $orderItemRatio = $productData['finalPrice'] / $sumOfOrderItemPrices;
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -188,7 +206,7 @@ class AccountingService
 
                 $finance = 0;
 
-                $tax = $oderItemRatio * $orderData['taxesDue'];
+                $tax = $orderItemRatio * $orderData['taxesDue'] * $paidRatio;
                 $productsMap[$productId]['taxPaid'] += $tax;
 
                 if ((float)$orderData['shippingDue'] > 0 && $productData['productType'] == Product::TYPE_PHYSICAL_ONE_TIME) {
@@ -200,18 +218,27 @@ class AccountingService
                 }
 
                 if ((float)$orderData['financeDue'] > 0) {
-                    $finance = $oderItemRatio * $orderData['financeDue'];
+                    $finance = $orderItemRatio * $orderData['financeDue'] * $paidRatio;
                     $productsMap[$productId]['financePaid'] += $finance;
                 }
 
-                $productsMap[$productId]['netProduct'] += $productData['finalPrice'];
-                $productsMap[$productId]['netPaid'] += $productData['finalPrice'] + $tax + $finance;
+                $productsMap[$productId]['netProduct'] += $productData['finalPrice'] * $paidRatio;
+                $productsMap[$productId]['netPaid'] += ($productData['finalPrice'] * $paidRatio) + $tax + $finance;
                 $productsMap[$productId]['quantity'] += $productData['quantity'];
 
                 if ($productData['finalPrice'] == 0) {
                     $productsMap[$productId]['freeQuantity'] += $productData['quantity'];
                 }
             }
+
+            // testing only
+//            if ($orderData['productDue'] != $sumOfOrderItemPrices) {
+//                var_dump($orderId);
+//                var_dump($paidRatio);
+//                var_dump($orderItemRatio);
+//                var_dump($productData);
+//                dd($orderData);
+//            }
 
             if ((float)$orderData['shippingDue'] > 0) {
                 $shippingProducts = empty($paidPhysical) ? $freePhysical : $paidPhysical;
@@ -260,14 +287,14 @@ class AccountingService
 
             foreach ($orderData['items'] as $productId => $productData) {
 
-                $oderItemRatio = 0;
+                $orderItemRatio = 0;
 
                 if (
                     $orderData['productDue'] != 0
                     && $orderData['productDue'] != null
                     && $productData['finalPrice']
                 ) {
-                    $oderItemRatio = $productData['finalPrice'] / $orderData['productDue'];
+                    $orderItemRatio = $productData['finalPrice'] / $orderData['productDue'];
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -286,7 +313,7 @@ class AccountingService
                     ];
                 }
 
-                $paidForOrderItem = ($orderData['totalPrice'] - $orderData['tax']) * $oderItemRatio;
+                $paidForOrderItem = ($orderData['totalPrice'] - $orderData['tax']) * $orderItemRatio;
 
                 $productsMap[$productId]['netProduct'] += $paidForOrderItem;
                 $productsMap[$productId]['netPaid'] += $paidForOrderItem;
@@ -377,7 +404,7 @@ class AccountingService
 
             foreach ($refundOrderData['items'] as $productId => $productData) {
 
-                $oderItemRatio = 0;
+                $orderItemRatio = 0;
 
                 if ($refundOrderData['hasPaidItems']) {
                     if (
@@ -385,11 +412,11 @@ class AccountingService
                         && $refundOrderData['productDue'] != null
                         && $productData['finalPrice']
                     ) {
-                        $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                        $orderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
                     }
                 } else {
                     $orderItemsCount = count($refundOrderData['items']) > 0 ? count($refundOrderData['items']) : 1;
-                    $oderItemRatio = 1 / $orderItemsCount;
+                    $orderItemRatio = 1 / $orderItemsCount;
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -411,7 +438,7 @@ class AccountingService
                 $refundQuantityProcessed = false;
 
                 foreach ($refundOrderData['refunds'] as $refundId => $refundedAmount) {
-                    $refundedForProduct = $oderItemRatio * $refundedAmount;
+                    $refundedForProduct = $orderItemRatio * $refundedAmount;
                     $productsMap[$productId]['refunded'] += $refundedForProduct;
                     $productsMap[$productId]['netPaid'] -= $refundedForProduct;
 
@@ -498,7 +525,7 @@ class AccountingService
 
             foreach ($refundOrderData['items'] as $productId => $productData) {
 
-                $oderItemRatio = 0;
+                $orderItemRatio = 0;
 
                 if ($refundOrderData['hasPaidItems']) {
                     if (
@@ -506,11 +533,11 @@ class AccountingService
                         && $refundOrderData['productDue'] != null
                         && $productData['finalPrice']
                     ) {
-                        $oderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
+                        $orderItemRatio = $productData['finalPrice'] / $refundOrderData['productDue'];
                     }
                 } else {
                     $orderItemsCount = count($refundOrderData['items']) > 0 ? count($refundOrderData['items']) : 1;
-                    $oderItemRatio = 1 / $orderItemsCount;
+                    $orderItemRatio = 1 / $orderItemsCount;
                 }
 
                 if (!isset($productsMap[$productId])) {
@@ -530,7 +557,7 @@ class AccountingService
                 }
 
                 foreach ($refundOrderData['refunds'] as $refundId => $refundedAmount) {
-                    $refundedForProduct = $oderItemRatio * $refundedAmount;
+                    $refundedForProduct = $orderItemRatio * $refundedAmount;
                     $productsMap[$productId]['refunded'] += $refundedForProduct;
                     $productsMap[$productId]['netPaid'] -= $refundedForProduct;
                 }

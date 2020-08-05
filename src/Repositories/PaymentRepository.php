@@ -165,6 +165,10 @@ class PaymentRepository extends RepositoryBase
                 $qb->expr()
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
+            ->where(
+                $qb->expr()
+                    ->between('o.createdAt', ':smallDateTime', ':bigDateTime')
+            )
             ->andWhere(
                 $qb->expr()
                     ->eq('p.gatewayName', ':brand')
