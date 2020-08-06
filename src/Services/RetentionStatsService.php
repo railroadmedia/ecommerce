@@ -131,7 +131,7 @@ class RetentionStatsService
                         ->get();
 
                 // remove upgrades or people who purchased a different subscription
-                $upgradedOrChangedUsers =
+                $upgradedOrChangedUserIds =
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_subscriptions')
                         ->select(
@@ -159,7 +159,57 @@ class RetentionStatsService
                             }
                         )
                         ->groupBy('ecommerce_subscriptions.user_id')
-                        ->get();
+                        ->get()
+                        ->pluck('user_id')
+                        ->unique();
+
+                // changed to lifetime or other type of access
+                $membershipProductSkus = config('ecommerce.membership_product_skus', [])[$brand] ?? [];
+                $userIdsWhoSwitchedToLifetime = [];
+
+                if (!empty($membershipProductSkus)) {
+                    $userIdsWhoSwitchedToLifetime =
+                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            ->table('ecommerce_user_products')
+                            ->join(
+                                'ecommerce_products',
+                                'ecommerce_products.id',
+                                '=',
+                                'ecommerce_user_products.product_id'
+                            )
+                            ->whereIn(
+                                'ecommerce_user_products.user_id',
+                                $subscriptionsAtStart->pluck('user_id')->toArray()
+                            )
+                            ->whereIn(
+                                'ecommerce_user_products.user_id',
+                                $subscriptionsAtStart->pluck('user_id')->toArray()
+                            )
+                            ->whereIn('sku', $membershipProductSkus)
+                            ->where(
+                                function (Builder $builder) use ($bigDateTime) {
+                                    return $builder->whereNull('expiration_date');
+                                }
+                            )
+                            ->whereNull('ecommerce_user_products.deleted_at')
+//                            ->where(
+//                                function (Builder $builder) use ($smallDateTime, $bigDateTime) {
+//                                    return $builder->whereBetween(
+//                                        'ecommerce_user_products.created_at',
+//                                        [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
+//                                    )
+//                                        ->orWhereBetween(
+//                                            'ecommerce_user_products.updated_at',
+//                                            [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
+//                                        );
+//                                }
+//                            )
+                            ->get(['user_id'])
+                            ->pluck('user_id')
+                            ->unique();
+                }
+
+                $upgradedOrChangedUserIds = $upgradedOrChangedUserIds->merge($userIdsWhoSwitchedToLifetime);
 
                 $totalUsersWhoFellOff = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_subscriptions')
@@ -175,7 +225,10 @@ class RetentionStatsService
                         ]
                     )
                     ->whereIn('id', $subscriptionsAtStart->pluck('id')->toArray())
-                    ->whereNotIn('user_id', $upgradedOrChangedUsers->pluck('user_id')->toArray())
+                    ->whereNotIn(
+                        'user_id',
+                        $upgradedOrChangedUserIds->toArray()
+                    )
                     ->where(
                         function (Builder $builder) use ($bigDateTime, $smallDateTime) {
                             $builder
@@ -236,7 +289,7 @@ class RetentionStatsService
                 $retentionStatistic->setBrand($brand);
                 $retentionStatistic->setSubscriptionType($intervalName);
                 $retentionStatistic->setTotalUsersInPool($subscriptionsAtStart->count());
-                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased($upgradedOrChangedUsers->count());
+                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased($upgradedOrChangedUserIds->count());
                 $retentionStatistic->setTotalUsersWhoRenewed($totalWithPayments->count());
                 $retentionStatistic->setTotalUsersWhoCanceledOrExpired($totalUsersWhoFellOff->count());
 
