@@ -370,11 +370,15 @@ class PaymentService
         $stripeCustomer = $this->getStripeCustomer($purchaser, $gateway);
 
         // make the stripe card
-        $card = $this->stripePaymentGateway->createCustomerCard(
-            $gateway,
-            $stripeCustomer,
-            $stripeToken
-        );
+        if (empty($purchaser->getStripeCard())) {
+            $stripeCard = $this->stripePaymentGateway->createCustomerCard(
+                $gateway,
+                $stripeCustomer,
+                $stripeToken
+            );
+        } else {
+            $stripeCard = $purchaser->getStripeCard();
+        }
 
         $billingAddress = $this->setupBillingAddress($purchaser, $billingAddress);
 
@@ -382,7 +386,7 @@ class PaymentService
         $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
             $purchaser,
             $billingAddress,
-            $card,
+            $stripeCard,
             $stripeCustomer,
             $gateway,
             $currency,
