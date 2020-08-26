@@ -100,9 +100,7 @@ class AccountingService
         // fetch report summary totals, calculated at least partially in mysql
         $result = new AccountingProductTotals($smallDate, $bigDate);
 
-        // get all the payments during this period to process
-//        SELECT * FROM `ecommerce_payments` WHERE created_at BETWEEN '2020-05-01 08:00:00' AND '2020-06-01 08:00:00' AND gateway_name='drumeo' AND external_provider NOT IN ('apple', 'google') AND type='subscription_renewal' AND status='paid' AND external_id IS NOT NULL ORDER BY `ecommerce_payments`.`created_at` ASC
-
+        // get all the payments and refunds during this period to process
         $payments = $connection->table('ecommerce_payments')
             ->select(
                 [
@@ -322,7 +320,7 @@ class AccountingService
         // now lets group the data structure so we have 1 top level array element per payment and no duplicates
         $paymentsArrayGrouped = [];
 
-        foreach (array_merge($payments->toArray(), []) as $payment) {
+        foreach (array_merge($payments->toArray(), $refunds->toArray()) as $payment) {
             // if its a refund we should ignore the payment itself in the main calculations
             $payment->refund_id = $payment->refund_id ?? null;
 
@@ -429,12 +427,10 @@ class AccountingService
             }
         }
 
-//        var_dump($paymentsArrayGrouped);
-//        die();
-
         // for internal tracking and testing
         $totalPaidDatabase = 0;
         $totalRefundedDatabase = 0;
+        $paymentsGrandTotalPaidTracked = 0;
 
         foreach ($paymentsArrayGrouped as $paymentArrayGrouped) {
             if ($paymentArrayGrouped['refund_amount'] == 0) {
@@ -444,11 +440,12 @@ class AccountingService
             }
         }
 
-        $handledPaymentIds = [];
-        $handledRefundIds = [];
-
-        var_dump('Total payments to process: ' . $payments->pluck('payment_id')->unique()->count());
-        var_dump('Total refunds to process: ' . $refunds->pluck('payment_id')->unique()->count());
+        // testing code
+//        $handledPaymentIds = [];
+//        $handledRefundIds = [];
+//
+//        var_dump('Total payments to process: ' . $payments->pluck('payment_id')->unique()->count());
+//        var_dump('Total refunds to process: ' . $refunds->pluck('payment_id')->unique()->count());
 
         // the final data array we are after
         $productMapElementExample = [
@@ -474,8 +471,6 @@ class AccountingService
         // order item weight / total of all order item weights = order item weight ratio
         // refund amount / original payment amount = refund ratio
 
-        $tempPaymentSum = 0;
-
         foreach ($paymentsArrayGrouped as $paymentId => $paymentData) {
 
             // figure out if we should associate this payment with only the subscription (membership renewals)
@@ -487,8 +482,6 @@ class AccountingService
                     $paymentData['subscription']['subscription_type'] == Subscription::TYPE_PAYMENT_PLAN) ||
                 empty($paymentData['subscription']) || $paymentData['payment_type'] == Payment::TYPE_INITIAL_ORDER
             ) {
-                $tempPaymentSum += $paymentData['payment_total_paid'];
-                $handledPaymentIds[] = $paymentData['refund_id'] ?? $paymentData['payment_id'];
 
                 // use initial order linked to payment
                 if (!empty($paymentData['order']) && !empty($paymentData['order']['items'])) {
@@ -501,7 +494,8 @@ class AccountingService
 
                     $orderToUse = $paymentData['subscription']['order'];
                 } else {
-                    throw new Exception('Could not find order to use for payment ID: ' . $paymentData['payment_id']);
+                    // this means something is wrong with the data, we'll skip for now
+                    continue;
                 }
 
                 // calculate the paid ratio
@@ -552,16 +546,13 @@ class AccountingService
                         $orderItemWeightRatio = 1;
                     }
 
-                    if (empty($paymentOrderItem['order_item_product_id'])) {
-                        dd($paymentData);
-                    }
-
                     // create the first map array element for this product if its not already created
-                    if (empty($productsMap[$paymentOrderItem['order_item_product_id']])) {
-                        $productsMap[$paymentOrderItem['order_item_product_id']] = $productMapElementExample;
-                    }
+                    $productMap = $productsMap[$paymentOrderItem['order_item_product_id']] ?? $productMapElementExample;
 
-                    $productMap = &$productsMap[$paymentOrderItem['order_item_product_id']];
+                    if (empty($paymentOrderItem['order_item_product_id'])) {
+                        // this means there is something wrong with the data, skip for now
+                        continue 2;
+                    }
 
                     // set tax, shipping, and finance
                     $taxPaid = $orderToUse['order_taxes_due'] * $paidRatio * $orderItemCostRatio;
@@ -596,23 +587,6 @@ class AccountingService
 
                     $productMap['productPaid'] += $productPaid;
 
-//                    var_dump('order item ' . $paymentOrderItem['order_item_product_sku'] . ' $taxPaid: ' . $taxPaid);
-//                    var_dump(
-//                        'order item ' . $paymentOrderItem['order_item_product_sku'] . ' $financePaid: ' . $financePaid
-//                    );
-//                    var_dump(
-//                        'order item ' . $paymentOrderItem['order_item_product_sku'] . ' $shippingPaid: ' . $shippingPaid
-//                    );
-//                    var_dump(
-//                        'order item ' . $paymentOrderItem['order_item_product_sku'] . ' $productPaid: ' . $productPaid
-//                    );
-//                    var_dump(
-//                        'order item ' .
-//                        $paymentOrderItem['order_item_product_sku'] .
-//                        ' netPaid: ' .
-//                        ($productPaid + $taxPaid + $shippingPaid + $financePaid)
-//                    );
-
                     $productMap['grossPaid'] += $productPaid;
                     $productMap['netPaid'] +=
                         $productPaid + $taxPaid + $shippingPaid + $financePaid;
@@ -636,18 +610,29 @@ class AccountingService
                     if ($quantity < 0) {
                         $productMap['refundedQuantity'] += abs($quantity);
                     }
+
+                    if ($paymentData['refund_amount'] > 0) {
+                        $productMap['refunded'] += $paymentData['refund_amount'] * $orderItemCostRatio;
+                    }
+
+                    $productsMap[$paymentOrderItem['order_item_product_id']] = $productMap;
                 }
 
-                if ($paymentData['refund_amount'] == 0 && $paymentData['payment_total_paid'] != round($thisOrderNet, 2)) {
-                    var_dump('Could not fully process total payment for: ');
-                    var_dump('$paymentData[\'payment_total_paid\']=' . $paymentData['payment_total_paid']);
-                    var_dump('$thisOrderNet=' . $thisOrderNet);
-                    var_dump($paymentData);
+                // testing code
+//                if ($paymentData['refund_amount'] == 0 && $paymentData['payment_total_paid'] != round($thisOrderNet, 2)) {
+//                    var_dump('Could not fully process total order payment for: ');
+//                    var_dump('$paymentData[\'payment_total_paid\']=' . $paymentData['payment_total_paid']);
+//                    var_dump('$thisOrderNet=' . $thisOrderNet);
+//                    var_dump($paymentData);
+//                    var_dump($orderToUse['items']);
+//                }
+//
+//                $handledPaymentIds[] = $paymentData['refund_id'] ?? $paymentData['payment_id'];
+
+                if ($paymentData['refund_amount'] == 0) {
+                    $paymentsGrandTotalPaidTracked += $paymentData['payment_total_paid'];
                 }
 
-                var_dump($paymentData['payment_total_paid'] . ' - ' . round($thisOrderNet, 2));
-
-                // todo: verify all the values are correct?
                 continue;
             }
 
@@ -655,9 +640,6 @@ class AccountingService
             // renewal payment so use the subscription to associate
             if (!empty($paymentData['subscription']) &&
                 !empty($paymentData['subscription']['subscription_product_sku'])) {
-
-                $tempPaymentSum += $paymentData['payment_total_paid'];
-                $handledPaymentIds[] = $paymentData['refund_id'] ?? $paymentData['payment_id'];
 
                 // calculate refund ratio if applicable
                 if ($paymentData['payment_total_paid'] > 0 && $paymentData['refund_amount'] > 0) {
@@ -674,11 +656,7 @@ class AccountingService
                 // ---------------------------
                 // set the product map
                 // create the first map array element for this product if its not already created
-                if (empty($productsMap[$paymentData['subscription']['subscription_product_id']])) {
-                    $productsMap[$paymentData['subscription']['subscription_product_id']] = $productMapElementExample;
-                }
-
-                $productMap = &$productsMap[$paymentData['subscription']['subscription_product_id']];
+                $productMap = $productsMap[$paymentData['subscription']['subscription_product_id']] ?? $productMapElementExample;
 
                 // if its a refund we should subtract all the totals instead of adding
                 if (!empty($paymentData['refund_amount']) && $paymentData['refund_amount'] > 0) {
@@ -690,8 +668,14 @@ class AccountingService
                 $productMap['productPaid'] += $productPaid;
 
                 $productMap['grossPaid'] += $productPaid;
-                $productMap['netPaid'] +=
-                    $paymentData['payment_total_paid'];
+
+                if ($paymentData['refund_amount'] > 0) {
+                    $productMap['netPaid'] +=
+                        -$paymentData['refund_amount'];
+                } else {
+                    $productMap['netPaid'] +=
+                        $paymentData['payment_total_paid'];
+                }
 
                 // set product info and rest
                 $productMap['productSku'] = $paymentData['subscription']['subscription_product_sku'];
@@ -705,18 +689,31 @@ class AccountingService
                     $productMap['refundedQuantity'] += abs($quantity);
                 }
 
-                if ($paymentData['refund_amount'] == 0 && $paymentData['payment_total_paid'] != round($productPaid + $taxPaid, 2)) {
-                    var_dump('Could not fully process total payment for: ');
-                    var_dump('$paymentData[\'payment_total_paid\']=' . $paymentData['payment_total_paid']);
-                    var_dump('$thisOrderNet=' . ($productPaid + $taxPaid));
-                    var_dump($paymentData);
+                if ($paymentData['refund_amount'] > 0) {
+                    $productMap['refunded'] += $paymentData['refund_amount'];
+                }
+
+                $productsMap[$paymentData['subscription']['subscription_product_id']] = $productMap;
+
+                // testing code
+//                if ($paymentData['refund_amount'] == 0 && $paymentData['payment_total_paid'] != round($productPaid + $taxPaid, 2)) {
+//                    var_dump('Could not fully process total subscription payment for: ');
+//                    var_dump('$paymentData[\'payment_total_paid\']=' . $paymentData['payment_total_paid']);
+//                    var_dump('$thisOrderNet=' . ($productPaid + $taxPaid));
+//                    var_dump($paymentData);
+//                }
+//
+//                $handledPaymentIds[] = $paymentData['refund_id'] ?? $paymentData['payment_id'];
+
+                if ($paymentData['refund_amount'] == 0) {
+                    $paymentsGrandTotalPaidTracked += $paymentData['payment_total_paid'];
                 }
 
                 continue;
             }
 
-            var_dump('Cound not handle payment: ' . $paymentData['payment_id']);
-            var_dump($paymentData);
+//            var_dump('Cound not handle payment: ' . $paymentData['payment_id']);
+//            var_dump($paymentData);
         }
 
         $totalProduct = 0;
@@ -726,14 +723,111 @@ class AccountingService
             $totalNet += $productMap['netPaid'];
         }
 
-        var_dump('Total payments and refunds processed: ' . count($handledPaymentIds));
+//        var_dump('Total payments and refunds processed: ' . count($handledPaymentIds));
+//        var_dump('total paid in DB: ' . $totalPaidDatabase);
+//        var_dump('total refunded in DB: ' . $totalRefundedDatabase);
+//        var_dump('$totalNet: ' . $totalNet);
+//        var_dump('$paymentsGrandTotalPaidTracked: ' . $paymentsGrandTotalPaidTracked);
+//
+//        dd($productsMap);
 
-        var_dump('total paid in DB: ' . $totalPaidDatabase);
-        var_dump('total refunded in DB: ' . $totalRefundedDatabase);
-        var_dump('$tempPaymentSum: ' . $tempPaymentSum);
-        var_dump('$totalNet: ' . $totalNet);
+        foreach ($productsMap as $productId => $productData) {
 
-        dd($productsMap);
+            if (empty($productData['productName'])) {
+                continue;
+            }
+
+            $productStatistics = new AccountingProduct($productId);
+
+            $productStatistics->setName($productData['productName']);
+            $productStatistics->setSku($productData['productSku']);
+            $productStatistics->setTaxPaid(round($productData['taxPaid'], 2));
+            $productStatistics->setShippingPaid(round($productData['shippingPaid'], 2));
+            $productStatistics->setFinancePaid(round($productData['financePaid'], 2));
+            $productStatistics->setLessRefunded(round($productData['refunded'], 2));
+            $productStatistics->setTotalQuantity($productData['quantity']);
+            $productStatistics->setRefundedQuantity($productData['refundedQuantity']);
+            $productStatistics->setFreeQuantity($productData['freeQuantity']);
+            $productStatistics->setNetProduct(round($productData['productPaid'], 2));
+            $productStatistics->setNetPaid(round($productData['netPaid'], 2));
+
+            $result->addProductStatistics($productStatistics);
+        }
+
+        // accounting also needs rows with all 0's for products without data
+        $allProducts = $this->productRepository->all();
+
+        // if brand is passed in, only add products from that brand
+        foreach ($allProducts as $productIndex => $product) {
+            if (!empty($brand) && $product->getBrand() != $brand) {
+                continue;
+            }
+
+            if (empty($result->getAccountingProducts()[$product->getId()])) {
+                $productStatistics = new AccountingProduct($product->getId());
+
+                $productStatistics->setName($product->getName());
+                $productStatistics->setSku($product->getSku());
+                $productStatistics->setTaxPaid(0);
+                $productStatistics->setShippingPaid(0);
+                $productStatistics->setFinancePaid(0);
+                $productStatistics->setLessRefunded(0);
+                $productStatistics->setTotalQuantity(0);
+                $productStatistics->setRefundedQuantity(0);
+                $productStatistics->setFreeQuantity(0);
+                $productStatistics->setNetProduct(0);
+                $productStatistics->setNetPaid(0);
+
+                $result->addProductStatistics($productStatistics);
+            }
+        }
+
+        $result->orderAccountingProductsBySku();
+
+        // instead of using the database we'll just add up all the rows to calculate the totals
+        // tax
+        $result->setTaxPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setTaxPaid($result->getTaxPaid() + $accountingProduct->getTaxPaid());
+        }
+        $result->setTaxPaid(round($result->getTaxPaid(), 2));
+
+        // shipping
+        $result->setShippingPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setShippingPaid($result->getShippingPaid() + $accountingProduct->getShippingPaid());
+        }
+        $result->setShippingPaid(round($result->getShippingPaid(), 2));
+
+        // finance
+        $result->setFinancePaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setFinancePaid($result->getFinancePaid() + $accountingProduct->getFinancePaid());
+        }
+        $result->setShippingPaid(round($result->getShippingPaid(), 2));
+
+        // refunded
+        $result->setRefunded(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setRefunded($result->getRefunded() + $accountingProduct->getLessRefunded());
+        }
+        $result->setRefunded(round($result->getRefunded(), 2));
+
+        // gross product
+        $result->setNetProduct(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setNetProduct($result->getNetProduct() + $accountingProduct->getNetProduct());
+        }
+        $result->setNetProduct(round($result->getNetProduct(), 2));
+
+        // net paid
+        $result->setNetPaid(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setNetPaid($result->getNetPaid() + $accountingProduct->getNetPaid());
+        }
+        $result->setNetPaid(round($result->getNetPaid(), 2));
+
+        return $result;
     }
 
     /**
