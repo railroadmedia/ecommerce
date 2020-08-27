@@ -601,9 +601,12 @@ class AccountingService
                     $productMap['financePaid'] += $financePaid;
 
                     // quantity should never go negative for refunds since we track refunded quantity in another column
-                    $productMap['quantity'] += max($quantity, 0);
+                    // we only want to increase the quantity if its the inital payment and not a payment plan renewal
+                    if ($paymentData['payment_type'] == Payment::TYPE_INITIAL_ORDER) {
+                        $productMap['quantity'] += max($quantity, 0);
+                    }
 
-                    if ($productPaid == 0) {
+                    if ($productPaid == 0 && $paymentData['payment_type'] == Payment::TYPE_INITIAL_ORDER) {
                         $productMap['freeQuantity'] += max($quantity, 0);
                     }
 
