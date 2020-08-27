@@ -804,7 +804,7 @@ class AccountingService
         foreach ($result->getAccountingProducts() as $accountingProduct) {
             $result->setFinancePaid($result->getFinancePaid() + $accountingProduct->getFinancePaid());
         }
-        $result->setShippingPaid(round($result->getShippingPaid(), 2));
+        $result->setFinancePaid(round($result->getFinancePaid(), 2));
 
         // refunded
         $result->setRefunded(0);
