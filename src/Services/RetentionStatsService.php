@@ -509,9 +509,9 @@ class RetentionStatsService
                 $retentionStatistic->setBrand($brand);
                 $retentionStatistic->setSubscriptionType($intervalName);
                 $retentionStatistic->setTotalUsersInPool(0);
-                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased(0);
-                $retentionStatistic->setTotalUsersWhoRenewed(0);
-                $retentionStatistic->setTotalUsersWhoCanceledOrExpired(0);
+                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased($userIdsWhoUpgradedViaNewOrder->count());
+                $retentionStatistic->setTotalUsersWhoRenewed($allRetainedUserIds->count());
+                $retentionStatistic->setTotalUsersWhoCanceledOrExpired($allNotRetainedUserIds->count());
                 $retentionStatistic->setRetentionRate($retentionRate);
 
                 $retentionStatistic->setIntervalStartDateTime($smallDateTime->toDateTimeString());
