@@ -433,6 +433,7 @@ EOT;
     /**
      * Updates active/suspended/canceled state memberships - Total Users
      * table: ecommerce_membership_stats, columns: 'active_state', 'suspended_state', 'canceled_state'
+     * also adds 'new' for lifetimes
      */
     public function processUserMembership(Carbon $smallDate, Carbon $bigDate)
     {
@@ -454,9 +455,18 @@ EOT;
             ],
         ];
 
+        // we'll just use all the membership product skus since we check if the expiration date is null which
+        // means its lifetime
+        $lifetimeSkusGrouped = config('ecommerce.membership_product_skus') ?? [];
+        $lifetimeSkus = [];
+
+        foreach ($lifetimeSkusGrouped as $brand => $lifetimeSkusForBrand) {
+            $lifetimeSkus = array_merge($lifetimeSkus, $lifetimeSkusForBrand);
+        }
+
         $lifetimeProductIds = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_products')
-            ->whereIn('sku', self::LIFETIME_SKUS)
+            ->whereIn('sku', $lifetimeSkus)
             ->get()
             ->keyBy('id')
             ->toArray();
@@ -507,7 +517,7 @@ EOT;
 
                 $totalActiveForBrandFromPrimarySources = 0;
 
-                // lifetimes
+                // active lifetimes
                 $lifetimeUserIds =
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_user_products')
@@ -544,6 +554,46 @@ EOT;
                     ->update(
                         [
                             'active_state' => $lifetimeUserIds->count(),
+                        ]
+                    );
+
+                // new lifetimes
+                $newLifetimeUserIds =
+                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        ->table('ecommerce_user_products')
+                        ->join(
+                            'ecommerce_products',
+                            'ecommerce_products.id',
+                            '=',
+                            'ecommerce_user_products.product_id'
+                        )
+                        ->whereIn(
+                            'product_id',
+                            array_keys($lifetimeProductIds)
+                        )
+                        ->whereBetween(
+                            'ecommerce_user_products.created_at',
+                            [
+                                $dateIncrement->copy()->startOfDay(),
+                                $dateIncrementEndOfDay->toDateTimeString()
+                            ]
+                        )
+                        ->where('brand', $brand)
+                        ->whereNull('expiration_date')
+                        ->get([$this->databaseManager->raw('DISTINCT user_id')])
+                        ->pluck('user_id');
+
+                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    ->table('ecommerce_membership_stats')
+                    ->where(
+                        'stats_date',
+                        $dateIncrement->toDateString()
+                    )
+                    ->where('interval_type', 'lifetime')
+                    ->where('brand', $brand)
+                    ->update(
+                        [
+                            'new' => $newLifetimeUserIds->count(),
                         ]
                     );
 
