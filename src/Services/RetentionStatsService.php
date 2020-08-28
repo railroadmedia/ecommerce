@@ -7,13 +7,13 @@ use Exception;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\RetentionStats;
-use Railroad\Ecommerce\Entities\Structures\AverageMembershipEnd;
 use Railroad\Ecommerce\Entities\Structures\MembershipEndStats;
 use Railroad\Ecommerce\Entities\Structures\RetentionStatistic;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Repositories\RetentionStatsRepository;
-use Railroad\Ecommerce\Requests\AverageMembershipEndRequest;
 use Railroad\Ecommerce\Requests\RetentionStatsRequest;
 
 class RetentionStatsService
@@ -36,7 +36,6 @@ class RetentionStatsService
     public function __construct(
         RetentionStatsRepository $retentionStatsRepository,
         DatabaseManager $databaseManager
-
     )
     {
         $this->retentionStatsRepository = $retentionStatsRepository;
@@ -51,6 +50,17 @@ class RetentionStatsService
      */
     public function getStats(RetentionStatsRequest $request): array
     {
+        $debugMode = $request->has('debug');
+        $debugUserId = $request->get('debug_user_id', 0);
+
+        if ($debugMode) {
+            ini_set('xdebug.var_display_max_depth', '100');
+            ini_set('xdebug.var_display_max_children', '2560');
+            ini_set('xdebug.var_display_max_data', '10240');
+        }
+
+        $connection = $this->databaseManager->connection(config('ecommerce.database_connection_name'));
+
         $retentionStatistics = [];
 
         if (!empty($request->get('brand'))) {
@@ -87,7 +97,6 @@ class RetentionStatsService
             Carbon::parse($bigDate)
                 ->endOfDay();
 
-
         foreach ($brands as $brand) {
             $membershipProductSkus = config('ecommerce.membership_product_skus', [])[$brand] ?? [];
 
@@ -102,325 +111,235 @@ class RetentionStatsService
                     throw new Exception('Invalid interval.');
                 }
 
-//                // pull metrics
-//                $subscriptionsAtStart =
-//                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-//                        ->table('ecommerce_subscriptions')
-//                        ->select(
-//                            [
-//                                "ecommerce_subscriptions.*"
-//                            ]
-//                        )
-//                        ->whereIn(
-//                            'type',
-//                            [
-//                                Subscription::TYPE_SUBSCRIPTION,
-//                            ]
-//                        )
-//                        ->where('interval_type', $intervalType)
-//                        ->where('interval_count', $intervalCount)
-//                        ->where('brand', $brand)
-//                        ->where('start_date', '<', $smallDateTime->toDateTimeString())
-//                        ->where('paid_until', '>', $smallDateTime->toDateTimeString())
-//                        ->where(
-//                            function (Builder $builder) use ($smallDateTime) {
-//                                $builder
-//                                    ->where('canceled_on', '>', $smallDateTime->toDateTimeString())
-//                                    ->orWhereNull('canceled_on');
-//                            }
-//                        )
-//                        ->groupBy('ecommerce_subscriptions.user_id')
-//                        ->get();
-//
-//                // remove people who upgraded or got access via some other method
-//                $userIdsWhoRenewedOrSwitchedToLifetimeOrOther = [];
-//
-//                if (!empty($membershipProductSkus)) {
-//                    $rowsWhoRenewedOrSwitchedToLifetimeOrOther =
-//                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-//                            ->table('ecommerce_user_products')
-//                            ->join(
-//                                'ecommerce_products',
-//                                'ecommerce_products.id',
-//                                '=',
-//                                'ecommerce_user_products.product_id'
-//                            )
-//                            ->whereIn(
-//                                'ecommerce_user_products.user_id',
-//                                $subscriptionsAtStart->pluck('user_id')->toArray()
-//                            )
-//                            ->whereIn('sku', $membershipProductSkus)
-//                            ->where(
-//                                function (Builder $builder) use ($bigDateTime) {
-//                                    return $builder->whereNull('ecommerce_user_products.expiration_date')
-//                                        ->orWhere(
-//                                            'ecommerce_user_products.expiration_date',
-//                                            '>',
-//                                            $bigDateTime->toDateTimeString()
-//                                        );
-//                                }
-//                            )
-//                            ->whereNull('ecommerce_user_products.deleted_at')
-//                            ->where(
-//                                function (Builder $builder) use ($smallDateTime, $bigDateTime) {
-//                                    return $builder->whereBetween(
-//                                        'ecommerce_user_products.created_at',
-//                                        [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
-//                                    )
-//                                        ->orWhereBetween(
-//                                            'ecommerce_user_products.updated_at',
-//                                            [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
-//                                        );
-//                                }
-//                            )
-//                            ->get(['ecommerce_user_products.*', 'ecommerce_products.sku']);
-//
-//                    $userIdsWhoRenewedOrSwitchedToLifetimeOrOther =
-//                        $rowsWhoRenewedOrSwitchedToLifetimeOrOther->pluck('user_id');
-//                }
-//
-////                dd($rowsWhoSwitchedToLifetimeOrOther);
-////
-////                var_dump($upgradedOrChangedUserIds->diff($userIdsWhoSwitchedToLifetimeOrOther));
-////                $upgradedOrChangedUserIds = $upgradedOrChangedUserIds->merge($userIdsWhoSwitchedToLifetimeOrOther);
-////                var_dump($upgradedOrChangedUserIds->count());
-////                die();
-//
-//                $rowsUsersWhoFellOff = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-//                    ->table('ecommerce_subscriptions')
-//                    ->select(
-//                        [
-//                            "ecommerce_subscriptions.*"
-//                        ]
-//                    )
-//                    ->whereIn(
-//                        'type',
-//                        [
-//                            Subscription::TYPE_SUBSCRIPTION,
-//                        ]
-//                    )
-//                    ->whereIn('id', $subscriptionsAtStart->pluck('id')->toArray())
-//                    ->whereNotIn(
-//                        'user_id',
-//                        $userIdsWhoRenewedOrSwitchedToLifetimeOrOther->toArray()
-//                    )
-//                    ->where(
-//                        function (Builder $builder) use ($bigDateTime, $smallDateTime) {
-//                            $builder
-//                                ->where(
-//                                    function (Builder $builder) use ($bigDateTime, $smallDateTime) {
-//                                        $builder->whereBetween(
-//                                            'paid_until',
-//                                            [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
-//                                        )
-//                                            ->whereNull('canceled_on');
-//                                    }
-//                                )
-//                                ->orWhereBetween(
-//                                    'canceled_on',
-//                                    [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
-//                                );
-//                        }
-//                    )
-//                    ->groupBy('user_id')
-//                    ->get();
-//
-//                $rowsWithPayments = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-//                    ->table('ecommerce_subscriptions')
-//                    ->join(
-//                        'ecommerce_subscription_payments',
-//                        'ecommerce_subscription_payments.subscription_id',
-//                        '=',
-//                        'ecommerce_subscriptions.id'
-//                    )
-//                    ->join(
-//                        'ecommerce_payments',
-//                        'ecommerce_payments.id',
-//                        '=',
-//                        'ecommerce_subscription_payments.payment_id'
-//                    )
-//                    ->whereIn(
-//                        'ecommerce_subscriptions.id',
-//                        $subscriptionsAtStart->pluck('id')->toArray()
-//                    )
-//                    ->whereNotIn(
-//                        'ecommerce_subscriptions.user_id',
-//                        $rowsUsersWhoFellOff->pluck('user_id')->toArray()
-//                    )
-//                    ->where('total_paid', '>', 0)
-//
-//                    // adding days to the payment end date limit accounts for the support team doing payment recovery
-//                    // which they try for 30 days after a failed renewal
-//                    ->whereBetween(
-//                        'ecommerce_payments.created_at',
-//                        [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
-//                    )
-//                    ->groupBy('user_id')
-//                    ->get();
-//
-//                $totalRetained = $rowsWithPayments->pluck('user_id')
-//                    ->merge($userIdsWhoRenewedOrSwitchedToLifetimeOrOther)
-//                    ->unique()
-//                    ->count();
-//
-//                var_dump($rowsUsersWhoFellOff);
-//                dd($totalRetained);
+                $allFailedSubscriptionIds = collect();
 
-                // users who had a membership payment over
-                // users who should have had a membership payment
-                if ($intervalType == 'year') {
-                    $minusIntervalStartDate = $smallDateTime->copy()->subYears($intervalCount);
-                    $minusIntervalEndDate = $bigDateTime->copy()->subYears($intervalCount);
-                } elseif ($intervalType == 'month') {
-                    $minusIntervalStartDate = $smallDateTime->copy()->subMonths($intervalCount);
-                    $minusIntervalEndDate = $bigDateTime->copy()->subMonths($intervalCount);
-                } else {
-                    throw new Exception('Invalid interval.');
-                }
+                // get all users who had a failed payment on a membership subscription
+                // filter out ones that had a successful payment shortly after
+                // get all users who cancelled or expired but did not have a failed payment
+                // filter out users if they start another sub or upgraded in the same period
 
-                $usersWhoShouldHaveRenewed =
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                        ->table('ecommerce_subscriptions')
-                        ->join('ecommerce_products', 'ecommerce_products.id', '=', 'ecommerce_subscriptions.product_id')
-                        ->leftJoin(
-                            'ecommerce_subscription_payments',
-                            'ecommerce_subscription_payments.subscription_id',
-                            '=',
-                            'ecommerce_subscriptions.id'
-                        )
-                        ->leftJoin(
-                            'ecommerce_payments',
-                            'ecommerce_payments.id',
-                            '=',
-                            'ecommerce_subscription_payments.payment_id'
-                        )
-//                        ->where('user_id', 294894)
-                        ->where('interval_type', $intervalType)
-                        ->where('interval_count', $intervalCount)
-                        ->where('ecommerce_subscriptions.brand', $brand)
-                        ->whereIn('sku', $membershipProductSkus)
-                        ->where(
-                            function (Builder $builder) use ($minusIntervalEndDate, $minusIntervalStartDate) {
-                                $builder->whereBetween(
-                                    'ecommerce_subscriptions.created_at',
-                                    [
-                                        $minusIntervalStartDate->toDateTimeString(),
-                                        $minusIntervalEndDate->toDateTimeString()
-                                    ]
-                                )
-                                    ->orWhere(
-                                        function (Builder $builder) use (
-                                            $minusIntervalStartDate,
-                                            $minusIntervalEndDate
-                                        ) {
-                                            $builder->whereBetween(
-                                                'ecommerce_payments.created_at',
-                                                [
-                                                    $minusIntervalStartDate->toDateTimeString(),
-                                                    $minusIntervalEndDate->toDateTimeString()
-                                                ]
-                                            )
-                                                ->where('ecommerce_payments.total_paid', '>', 0)
-                                                ->where('ecommerce_payments.total_refunded', 0);
-                                        }
-                                    );
-
-                            }
-                        )
-                        ->get(['user_id'])
-                        ->pluck('user_id')
-                        ->unique();
-
-                // get users who cancelled or expired, they may have cancelled early
-                $usersWhoCancelled = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                    ->table('ecommerce_subscriptions')
-                    ->join(
-                        'ecommerce_products',
-                        'ecommerce_products.id',
-                        '=',
-                        'ecommerce_subscriptions.product_id'
-                    )
+                $failedPaymentRows = $connection->table('ecommerce_payments')
                     ->select(
                         [
-                            "ecommerce_subscriptions.*"
+                            'ecommerce_payments.*',
+                            'ecommerce_subscriptions.id as subscription_id',
+                            'ecommerce_subscriptions.user_id',
+                            'ecommerce_subscriptions.canceled_on'
                         ]
                     )
-                    ->where('interval_type', $intervalType)
-                    ->where('interval_count', $intervalCount)
+                    ->join(
+                        'ecommerce_subscription_payments',
+                        'ecommerce_subscription_payments.payment_id',
+                        '=',
+                        'ecommerce_payments.id'
+                    )
+                    ->join(
+                        'ecommerce_subscriptions',
+                        'ecommerce_subscriptions.id',
+                        '=',
+                        'ecommerce_subscription_payments.subscription_id'
+                    )
+                    ->whereBetween(
+                        'ecommerce_payments.created_at',
+                        [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
+                    )
+                    ->where('ecommerce_payments.total_paid', 0)
+                    ->where('ecommerce_payments.status', Payment::STATUS_FAILED)
+                    ->where('ecommerce_payments.gateway_name', $brand)
+                    ->where('ecommerce_payments.attempt_number', 0)
+                    ->where('ecommerce_subscriptions.type', Subscription::TYPE_SUBSCRIPTION)
                     ->where('ecommerce_subscriptions.brand', $brand)
-                    ->whereIn('sku', $membershipProductSkus)
-                    ->whereIn(
-                        'ecommerce_subscriptions.type',
-                        [
-                            Subscription::TYPE_SUBSCRIPTION,
-                        ]
-                    )
+                    ->where('ecommerce_subscriptions.interval_type', $intervalType)
+                    ->where('ecommerce_subscriptions.interval_count', $intervalCount)
+                    ->whereNotNull('ecommerce_subscriptions.product_id')
+                    ->get();
+
+                $allFailedSubscriptionIds =
+                    $allFailedSubscriptionIds->merge($failedPaymentRows->pluck('subscription_id'));
+
+                $failedPaymentUserIds = $failedPaymentRows->pluck('user_id');
+
+                $expiredOrCancelledSubscriptionRows = $connection->table('ecommerce_subscriptions')
+                    ->select(['ecommerce_subscriptions.*'])
+                    ->where('ecommerce_subscriptions.type', Subscription::TYPE_SUBSCRIPTION)
+                    ->where('ecommerce_subscriptions.brand', $brand)
+                    ->where('ecommerce_subscriptions.interval_type', $intervalType)
+                    ->where('ecommerce_subscriptions.interval_count', $intervalCount)
                     ->where(
                         function (Builder $builder) use ($bigDateTime, $smallDateTime) {
                             $builder
                                 ->where(
                                     function (Builder $builder) use ($bigDateTime, $smallDateTime) {
                                         $builder->whereBetween(
-                                            'paid_until',
+                                            'ecommerce_subscriptions.paid_until',
                                             [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
                                         )
                                             ->whereNull('canceled_on');
                                     }
                                 )
                                 ->orWhereBetween(
-                                    'canceled_on',
+                                    'ecommerce_subscriptions.canceled_on',
                                     [$smallDateTime->toDateTimeString(), $bigDateTime->toDateTimeString()]
                                 );
                         }
                     )
-                    ->get(['user_id'])
-                    ->pluck('user_id')
-                    ->unique();
+                    ->get();
 
-                dd($usersWhoCancelled);
+                $allFailedSubscriptionIds =
+                    $allFailedSubscriptionIds->merge($expiredOrCancelledSubscriptionRows->pluck('id'));
 
-                $usersWhoShouldHaveRenewed = $usersWhoShouldHaveRenewed->merge($usersWhoCancelled);
+                $expiredOrCancelledSubscriptionUserIds = $expiredOrCancelledSubscriptionRows->pluck('user_id');
 
-                $usersWhoDidRenew =
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
-                        ->table('ecommerce_subscriptions')
-                        ->join('ecommerce_products', 'ecommerce_products.id', '=', 'ecommerce_subscriptions.product_id')
-                        ->join(
-                            'ecommerce_subscription_payments',
-                            'ecommerce_subscription_payments.subscription_id',
-                            '=',
-                            'ecommerce_subscriptions.id'
-                        )
-                        ->join(
-                            'ecommerce_payments',
-                            'ecommerce_payments.id',
-                            '=',
-                            'ecommerce_subscription_payments.payment_id'
-                        )
-                        ->whereIn('user_id', $usersWhoShouldHaveRenewed->toArray())
-//                        ->whereIn('user_id', [302841])
-                        ->where('interval_type', $intervalType)
-                        ->where('interval_count', $intervalCount)
-                        ->where('ecommerce_subscriptions.brand', $brand)
-                        ->whereIn('sku', $membershipProductSkus)
-                        ->where(
-                            function (Builder $builder) use ($smallDateTime, $bigDateTime) {
-                                $builder->whereBetween(
-                                    'ecommerce_payments.created_at',
-                                    [
-                                        $smallDateTime->toDateTimeString(),
-                                        $bigDateTime->addDays(3)->toDateTimeString()
-                                    ]
-                                )
-                                    ->where('ecommerce_payments.total_paid', '>', 0)
-                                    ->where('ecommerce_payments.total_refunded', 0);
+                // We need an array of every user ID and the date which their membership failed
+                // (failed payment, cancelled, or expired) so we can check if they were retained after that date.
+                // Array format is: user_id => failure_carbon_datetime
+                $userFailureDates = [];
+
+                foreach ($failedPaymentRows as $failedPaymentRow) {
+
+                    if ($debugMode) {
+                        if ($failedPaymentRow->user_id == $debugUserId) {
+                            var_dump($failedPaymentRow);
+                        }
+                    }
+
+                    if (empty($userFailureDates[$failedPaymentRow->user_id]) ||
+                        Carbon::parse($failedPaymentRow->created_at) < $userFailureDates[$failedPaymentRow->user_id]) {
+                        $userFailureDates[$failedPaymentRow->user_id] = Carbon::parse($failedPaymentRow->created_at);
+                    }
+                }
+
+                foreach ($expiredOrCancelledSubscriptionRows as $expiredOrCancelledSubscriptionRow) {
+                    $dateToUse = null;
+
+                    if (!empty($expiredOrCancelledSubscriptionRow->canceled_on) &&
+                        Carbon::parse($expiredOrCancelledSubscriptionRow->canceled_on) <
+                        Carbon::parse($expiredOrCancelledSubscriptionRow->paid_until)) {
+                        $dateToUse = Carbon::parse($expiredOrCancelledSubscriptionRow->canceled_on);
+                    } else {
+                        $dateToUse = Carbon::parse($expiredOrCancelledSubscriptionRow->paid_until);
+                    }
+
+                    if (empty($userFailureDates[$expiredOrCancelledSubscriptionRow->user_id]) ||
+                        $dateToUse < $userFailureDates[$expiredOrCancelledSubscriptionRow->user_id]
+                    ) {
+                        $userFailureDates[$expiredOrCancelledSubscriptionRow->user_id] = $dateToUse;
+                    }
+
+                    if ($debugMode) {
+                        if ($expiredOrCancelledSubscriptionRow->user_id == $debugUserId) {
+                            var_dump($expiredOrCancelledSubscriptionRow);
+                            var_dump($dateToUse);
+                        }
+                    }
+                }
+
+                // We need to look at all the failed subscriptions and make sure that they don't have failed payments
+                // lead up to the cancel or expiry date. For example if they is a failed payment in Jan, then another
+                // in Feb (support is trying to re-bill them). Then support cancels the sub in March. We want this
+                // sub to affect the Jan retention number, not March. If we don't filter like this they will count
+                // for both months which is essentially duplicating their representation in the stats.
+                $allFailedSubscriptionIds = $allFailedSubscriptionIds->unique();
+
+                $allFailedSubscriptions = $connection->table('ecommerce_payments')
+                    ->select(
+                        [
+                            'ecommerce_payments.*',
+                            'ecommerce_subscriptions.id as subscription_id',
+                            'ecommerce_subscriptions.user_id',
+                            'ecommerce_subscriptions.paid_until',
+                            'ecommerce_subscriptions.canceled_on',
+                        ]
+                    )
+                    ->join(
+                        'ecommerce_subscription_payments',
+                        'ecommerce_subscription_payments.payment_id',
+                        '=',
+                        'ecommerce_payments.id'
+                    )
+                    ->join(
+                        'ecommerce_subscriptions',
+                        'ecommerce_subscriptions.id',
+                        '=',
+                        'ecommerce_subscription_payments.subscription_id'
+                    )
+                    ->whereIn('ecommerce_subscriptions.id', $allFailedSubscriptionIds)
+                    ->orderBy('ecommerce_payments.created_at', 'desc')
+                    ->get();
+
+                $allFailedSubscriptionsGrouped = $allFailedSubscriptions->groupBy('subscription_id');
+
+                foreach ($allFailedSubscriptions as $allFailedSubscriptionIndex => $allFailedSubscription) {
+
+                    $allThisSubsPayments =
+                        $allFailedSubscriptionsGrouped[$allFailedSubscription->subscription_id] ?? [];
+
+                    $dateToUse = null;
+
+                    if (!empty($allFailedSubscription->canceled_on) &&
+                        Carbon::parse($allFailedSubscription->canceled_on) <
+                        Carbon::parse($allFailedSubscription->paid_until)) {
+                        $dateToUse = Carbon::parse($allFailedSubscription->canceled_on);
+                    } else {
+                        $dateToUse = Carbon::parse($allFailedSubscription->paid_until);
+                    }
+
+                    if (empty($dateToUse)) {
+                        continue;
+                    }
+
+                    foreach ($allThisSubsPayments as $thisSubsPayment) {
+                        if (Carbon::parse($thisSubsPayment->created_at) <
+                            $dateToUse &&
+                            $thisSubsPayment->status == Payment::STATUS_FAILED &&
+                            Carbon::parse($thisSubsPayment->created_at) < $smallDateTime) {
+
+                            if ($debugMode) {
+//                                if ($failedPaymentRow->user_id == $debugUserId) {
+//                                    var_dump($thisSubsPayment);
+////                                    dd($failedPaymentRow);
+//                                }
                             }
-                        )
-                        ->get(['user_id'])
-                        ->pluck('user_id')
-                        ->unique();
 
-                $usersWhoRenewedOrSwitchedToLifetimeOrOther =
+                            unset($userFailureDates[$allFailedSubscription->user_id]);
+                            break;
+                        }
+
+                        if (Carbon::parse($thisSubsPayment->created_at) <
+                            Carbon::parse($dateToUse) &&
+                            $thisSubsPayment->status != Payment::STATUS_FAILED) {
+                            break;
+                        }
+                    }
+                }
+
+                // if the failure date is outside the bounds of the reporting timeframe they should also be removed
+                foreach ($userFailureDates as $userId => $userFailureDate) {
+                    if ($userFailureDate < $smallDateTime || $userFailureDate > $bigDateTime) {
+                        unset($userFailureDates[$userId]);
+                    }
+                }
+
+                // Now that we have a full list of anyone who may have not been retained, we'll filter out people
+                // who upgraded, or had their payment recovered shortly after it failed via the automated re-billing
+                // system. We will also remove people who purchased a new sub within 28 days or had any successful
+                // membership payment within the next 28 days (because of the retention teams efforts).
+                // Because of this we must limit admins from pulling data after 30 days before the current time.
+                // For example if its currently July 15th, we must only report up to June 15th, no later.
+
+                $userIdsPotentiallyNotRetained =
+                    $failedPaymentUserIds->merge($expiredOrCancelledSubscriptionUserIds)->unique()->sort();
+
+                // remove all user ids who do not have a failure date
+                foreach ($userIdsPotentiallyNotRetained as $userIdPotentiallyNotRetainedIndex =>
+                         $userIdPotentiallyNotRetained) {
+                    if (empty($userFailureDates[$userIdPotentiallyNotRetained])) {
+                        unset($userIdsPotentiallyNotRetained[$userIdPotentiallyNotRetainedIndex]);
+                    }
+                }
+
+                // Get all of these users who got lifetime access or other access anytime before the time period.
+                $rowsUsersWhoHadLifetimeBeforeHand =
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_user_products')
                         ->join(
@@ -429,57 +348,160 @@ class RetentionStatsService
                             '=',
                             'ecommerce_user_products.product_id'
                         )
-                        ->whereIn('user_id', $usersWhoShouldHaveRenewed->toArray())
-//                        ->whereIn('user_id', [302841])
+                        ->whereIn(
+                            'ecommerce_user_products.user_id',
+                            $userIdsPotentiallyNotRetained
+                        )
                         ->whereIn('sku', $membershipProductSkus)
                         ->where(
                             function (Builder $builder) use ($bigDateTime) {
-                                return $builder->whereNull(
-                                    'ecommerce_user_products.expiration_date'
-                                )
-                                    ->orWhere(
-                                        'ecommerce_user_products.expiration_date',
-                                        '>',
-                                        $bigDateTime->copy()->addDays(15)->toDateTimeString()
-                                    );
+                                return $builder->whereNull('ecommerce_user_products.expiration_date');
                             }
                         )
                         ->whereNull('ecommerce_user_products.deleted_at')
-                        ->where(
-                            function (Builder $builder) use ($smallDateTime, $bigDateTime) {
-                                return $builder->whereBetween(
-                                    'ecommerce_user_products.created_at',
-                                    [
-                                        $smallDateTime->toDateTimeString(),
-                                        $bigDateTime->toDateTimeString()
-                                    ]
-                                )
-                                    ->orWhereBetween(
-                                        'ecommerce_user_products.updated_at',
-                                        [
-                                            $smallDateTime->toDateTimeString(),
-                                            $bigDateTime->toDateTimeString()
-                                        ]
-                                    );
-                            }
-                        )
-                        ->get(['user_id'])
-                        ->pluck('user_id')
-                        ->unique();
+                        ->where('ecommerce_user_products.created_at', '<', $smallDateTime->toDateTimeString())
+                        ->get(['ecommerce_user_products.*', 'ecommerce_products.sku']);
 
-                $usersWhoShouldHaveRenewedCount = $usersWhoShouldHaveRenewed->count();
+                $userIdsWhoHadLifetimeBeforeHand = $rowsUsersWhoHadLifetimeBeforeHand->pluck('user_id')->unique();
 
-                $usersRetained = $usersWhoDidRenew
-                    ->merge($usersWhoRenewedOrSwitchedToLifetimeOrOther)
-                    ->unique();
+                // remove these lifetime owners from the list
+                $userIdsPotentiallyNotRetained = $userIdsPotentiallyNotRetained->diff($userIdsWhoHadLifetimeBeforeHand);
 
-                $usersRetainedCount = $usersRetained->count();
+                // find people who upgraded or re-ordered
+                $usersOrdersDuringPeriod = $connection->table('ecommerce_orders')
+                    ->select(
+                        [
+                            'ecommerce_orders.created_at as order_created_at',
+                            'ecommerce_orders.user_id as user_id',
+                            'ecommerce_order_items.*'
+                        ]
+                    )
+                    ->join('ecommerce_order_items', 'ecommerce_order_items.order_id', '=', 'ecommerce_orders.id')
+                    ->join('ecommerce_products', 'ecommerce_products.id', '=', 'ecommerce_order_items.product_id')
+                    ->join('ecommerce_order_payments', 'ecommerce_order_payments.order_id', '=', 'ecommerce_orders.id')
+                    ->join('ecommerce_payments', 'ecommerce_payments.id', '=', 'ecommerce_order_payments.payment_id')
+                    ->where('ecommerce_orders.brand', $brand)
+                    ->where(
+                        function (Builder $builder) {
+                            $builder->where('ecommerce_orders.total_paid', '=', DB::raw('ecommerce_orders.total_due'))
+                                ->orWhere('ecommerce_orders.total_paid', '>', 0);
+                        }
+                    )
+                    ->whereIn('ecommerce_orders.user_id', $userIdsPotentiallyNotRetained)
+                    ->whereIn('ecommerce_products.sku', $membershipProductSkus)
+                    ->where('ecommerce_payments.total_refunded', '<', DB::raw('ecommerce_payments.total_paid'))
+                    ->whereBetween(
+                        'ecommerce_orders.created_at',
+                        [$smallDateTime->toDateTimeString(), $bigDateTime->copy()->addDays(28)->toDateTimeString()]
+                    )
+                    ->get();
 
-                if ($usersWhoShouldHaveRenewedCount > 0) {
-                    $retentionRate = $usersRetainedCount / $usersWhoShouldHaveRenewedCount;
-                } else {
-                    $retentionRate = 1;
+                $userIdsWhoUpgradedViaNewOrder = collect();
+
+                foreach ($usersOrdersDuringPeriod->groupBy('user_id') as $userId => $orderItemDataRows) {
+
+                    if ($debugMode) {
+                        if ($userId == $debugUserId) {
+                            var_dump($userFailureDates[$userId]);
+                            var_dump($orderItemDataRows);
+                        }
+                    }
+
+                    foreach ($orderItemDataRows as $orderItemDataRow) {
+
+                        // we must add a minute because when a user does upgrades sometimes there is a few second
+                        // delay between when the DB rows are updated/created
+                        if (!empty($userFailureDates[$userId]) &&
+                            Carbon::parse($orderItemDataRow->order_created_at)->addMinute() >
+                            $userFailureDates[$userId]) {
+
+                            // they upgraded
+                            $userIdsWhoUpgradedViaNewOrder[] = $userId;
+                        }
+                    }
                 }
+
+//                dd($userIdsWhoUpgradedViaNewOrder);
+
+                // get all users who successfully renewed with a payment
+                $successfulPaymentRows = $connection->table('ecommerce_payments')
+                    ->select(['ecommerce_payments.*', 'ecommerce_subscriptions.user_id'])
+                    ->join(
+                        'ecommerce_subscription_payments',
+                        'ecommerce_subscription_payments.payment_id',
+                        '=',
+                        'ecommerce_payments.id'
+                    )
+                    ->join(
+                        'ecommerce_subscriptions',
+                        'ecommerce_subscriptions.id',
+                        '=',
+                        'ecommerce_subscription_payments.subscription_id'
+                    )
+                    ->whereBetween(
+                        'ecommerce_payments.created_at',
+                        [$smallDateTime->toDateTimeString(), $bigDateTime->copy()->addDays(28)->toDateTimeString()]
+                    )
+                    ->where('ecommerce_payments.total_refunded', 0)
+                    ->where('ecommerce_payments.total_paid', '>', 0)
+                    ->where('ecommerce_payments.status', Payment::STATUS_PAID)
+                    ->where('ecommerce_payments.type', '!=', Payment::TYPE_INITIAL_ORDER)
+                    ->where('ecommerce_payments.gateway_name', $brand)
+                    ->where('ecommerce_subscriptions.type', Subscription::TYPE_SUBSCRIPTION)
+                    ->where('ecommerce_subscriptions.brand', $brand)
+                    ->where('ecommerce_subscriptions.interval_type', $intervalType)
+                    ->where('ecommerce_subscriptions.interval_count', $intervalCount)
+                    ->where('ecommerce_subscriptions.created_at', '<', $smallDateTime->toDateTimeString())
+                    ->whereNotNull('ecommerce_subscriptions.product_id')
+                    ->get();
+
+                $userIdsWhoRenewed = collect();
+
+                foreach ($successfulPaymentRows->groupBy('user_id') as $userId => $successfulPaymentDataRows) {
+
+                    if ($debugMode) {
+                        if ($userId == $debugUserId) {
+                            var_dump($userFailureDates[$userId] ?? null);
+                            var_dump($successfulPaymentDataRows);
+                        }
+                    }
+
+                    foreach ($successfulPaymentDataRows as $successfulPaymentDataRow) {
+
+                        // we must add a minute buffer because upgrades can have the same or small difference in dates
+                        // due to order processing
+                        if (!empty($userFailureDates[$userId]) &&
+                            Carbon::parse($successfulPaymentDataRow->created_at)->addMinute(1) >
+                            $userFailureDates[$userId]) {
+
+                            // they upgraded
+                            $userIdsWhoRenewed[] = $userId;
+                        }
+
+                        if (empty($userFailureDates[$userId]) &&
+                            Carbon::parse($successfulPaymentDataRow->created_at) > $smallDateTime &&
+                            Carbon::parse($successfulPaymentDataRow->created_at) < $bigDateTime) {
+                            $userIdsWhoRenewed[] = $userId;
+                        }
+                    }
+                }
+
+                $userIdsWhoRenewed = $userIdsWhoRenewed->unique();
+
+                $allRetainedUserIds = $userIdsWhoUpgradedViaNewOrder->merge($userIdsWhoRenewed)->unique()->sort();
+                $allNotRetainedUserIds = $userIdsPotentiallyNotRetained->diff($allRetainedUserIds)->sort();
+
+                if ($debugMode) {
+                    var_dump(
+                        $allRetainedUserIds->count() /
+                        ($allRetainedUserIds->count() + $allNotRetainedUserIds->count())
+                    );
+                    var_dump($allRetainedUserIds);
+                    var_dump($allNotRetainedUserIds);
+                }
+
+                $retentionRate =
+                    $allRetainedUserIds->count() / ($allRetainedUserIds->count() + $allNotRetainedUserIds->count());
 
                 // create the statistic
                 $retentionStatistic = new RetentionStatistic();
@@ -487,105 +509,24 @@ class RetentionStatsService
                 $retentionStatistic->setBrand($brand);
                 $retentionStatistic->setSubscriptionType($intervalName);
                 $retentionStatistic->setTotalUsersInPool(0);
-                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased(0);
-                $retentionStatistic->setTotalUsersWhoRenewed(0);
-                $retentionStatistic->setTotalUsersWhoCanceledOrExpired(0);
+                $retentionStatistic->setTotalUsersWhoUpgradedOrRepurchased($userIdsWhoUpgradedViaNewOrder->count());
+                $retentionStatistic->setTotalUsersWhoRenewed($allRetainedUserIds->count());
+                $retentionStatistic->setTotalUsersWhoCanceledOrExpired($allNotRetainedUserIds->count());
                 $retentionStatistic->setRetentionRate($retentionRate);
 
                 $retentionStatistic->setIntervalStartDateTime($smallDateTime->toDateTimeString());
                 $retentionStatistic->setIntervalEndDateTime($bigDateTime->toDateTimeString());
 
-                // debugging/test code, do not remove
-//                var_dump($retentionStatistic);
+                if ($debugMode) {
+                    var_dump($retentionStatistic);
+                    die();
+                }
 
                 $retentionStatistics[] = $retentionStatistic;
             }
         }
 
         return $retentionStatistics;
-    }
-
-    /**
-     * @param AverageMembershipEndRequest $request
-     *
-     * @return array
-     */
-    public function getAverageMembershipEnd(AverageMembershipEndRequest $request): array
-    {
-        $smallDate = $request->has('small_date_time') ?
-            Carbon::parse($request->get('small_date_time'))
-                ->startOfDay() :
-            null;
-
-        $bigDate = $request->has('big_date_time') ?
-            Carbon::parse($request->get('big_date_time'))
-                ->endOfDay() :
-            null;
-
-        $intervalType = $request->get('interval_type');
-        $brand = $request->get('brand');
-
-        $result = [];
-
-        $intervalTypes = [
-            RetentionStats::TYPE_ONE_MONTH => [
-                'type' => config('ecommerce.interval_type_monthly'),
-                'count' => 1,
-            ],
-            RetentionStats::TYPE_SIX_MONTHS => [
-                'type' => config('ecommerce.interval_type_monthly'),
-                'count' => 6,
-            ],
-            RetentionStats::TYPE_ONE_YEAR => [
-                'type' => config('ecommerce.interval_type_yearly'),
-                'count' => 1,
-            ]
-        ];
-
-        foreach ($intervalTypes as $type => $typeDetails) {
-
-            if ($intervalType == null || $type == $intervalType) {
-
-                $rawStats = $this->retentionStatsRepository->getAverageMembershipEnd(
-                    $typeDetails['type'],
-                    $typeDetails['count'],
-                    $smallDate,
-                    $bigDate,
-                    $brand
-                );
-
-                $stats = [];
-
-                foreach ($rawStats as $rawStat) {
-                    $statBrand = $rawStat['brand'];
-                    if (!isset($stats[$statBrand])) {
-                        $stats[$statBrand] = [
-                            'weightedSum' => 0,
-                            'sum' => 0,
-                        ];
-                    }
-                    $stats[$statBrand]['weightedSum'] += $rawStat['totalCyclesPaid'] * $rawStat['count'];
-                    $stats[$statBrand]['sum'] += $rawStat['count'];
-                }
-
-                foreach ($stats as $statBrand => $brandStats) {
-
-                    $id = md5($statBrand . $type);
-
-                    $stat = new AverageMembershipEnd($id);
-
-                    $stat->setBrand($statBrand);
-                    $stat->setSubscriptionType($type);
-                    $stat->setAverageMembershipEnd(round($brandStats['weightedSum'] / $brandStats['sum'], 2));
-                    $stat->setIntervalStartDate($smallDate);
-                    $stat->setIntervalEndDate($bigDate);
-
-                    $result[] = $stat;
-                }
-            }
-        }
-
-        return $result;
     }
 
     /**
