@@ -455,18 +455,9 @@ EOT;
             ],
         ];
 
-        // we'll just use all the membership product skus since we check if the expiration date is null which
-        // means its lifetime
-        $lifetimeSkusGrouped = config('ecommerce.membership_product_skus') ?? [];
-        $lifetimeSkus = [];
-
-        foreach ($lifetimeSkusGrouped as $brand => $lifetimeSkusForBrand) {
-            $lifetimeSkus = array_merge($lifetimeSkus, $lifetimeSkusForBrand);
-        }
-
         $lifetimeProductIds = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_products')
-            ->whereIn('sku', $lifetimeSkus)
+            ->whereIn('sku', self::LIFETIME_SKUS)
             ->get()
             ->keyBy('id')
             ->toArray();
@@ -534,7 +525,7 @@ EOT;
                         ->where(
                             'ecommerce_user_products.created_at',
                             '<=',
-                            $bigDate->copy()->endOfDay()->toDateTimeString()
+                            $dateIncrementEndOfDay->toDateTimeString()
                         )
                         ->where('brand', $brand)
                         ->whereNull('expiration_date')

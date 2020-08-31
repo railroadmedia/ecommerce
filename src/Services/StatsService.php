@@ -39,7 +39,8 @@ class StatsService
         EcommerceEntityManager $entityManager,
         PaymentRepository $paymentRepository,
         RefundRepository $refundRepository
-    ) {
+    )
+    {
         $this->entityManager = $entityManager;
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
@@ -57,6 +58,9 @@ class StatsService
      */
     public function indexByRequest(Request $request): array
     {
+        /**
+         * @var $results DailyStatistic[]
+         */
         $results = [];
         $dateFormat = 'Y-m-d';
 
@@ -95,7 +99,10 @@ class StatsService
 
         $brand = $request->get('brand');
 
-        while($currentDay <= $bigDateTime) {
+        $grandTotalRevenueReportedPerProduct = 0;
+        $grandTotalRevenueReported = 0;
+
+        while ($currentDay <= $bigDateTime) {
 
             $add = false;
 
@@ -234,11 +241,31 @@ class StatsService
                 $results[$day] = $dailyStatistic;
             }
 
+            // since the order item final price is often inflated, we must adjust all numbers relative to the ratio
+            // between how mush is reported as paid vs how much was actually paid
+            foreach ($dailyStatistic->getProductStatistics() as $productStatistic) {
+                $grandTotalRevenueReportedPerProduct += $productStatistic->getTotalSales();
+                $grandTotalRevenueReportedPerProduct += $productStatistic->getTotalRenewalSales();
+            }
+
+            $grandTotalRevenueReported += $dailyStatistic->getTotalSales();
+
             $dailyOrdersProductsMap = null;
 
             $this->entityManager->clear();
 
             $currentDay->addDay();
+        }
+
+        if ($grandTotalRevenueReported > 0 && $grandTotalRevenueReportedPerProduct > 0) {
+            $paidRatio = $grandTotalRevenueReported / $grandTotalRevenueReportedPerProduct;
+
+            foreach ($results as $result) {
+                foreach ($result->getProductStatistics() as $productStatistic) {
+                    $productStatistic->setTotalSales($productStatistic->getTotalSales() * $paidRatio);
+                    $productStatistic->setTotalRenewalSales($productStatistic->getTotalRenewalSales() * $paidRatio);
+                }
+            }
         }
 
         return array_reverse(array_values($results));
