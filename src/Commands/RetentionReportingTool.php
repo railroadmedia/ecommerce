@@ -71,10 +71,13 @@ class RetentionReportingTool extends Command
                 'Date End' => 'Date End',
                 'Drumeo 1 Month Rate' => 'Drumeo 1 Month Rate',
                 'Drumeo 1 Year Rate' => 'Drumeo 1 Year Rate',
+                'Drumeo Total Expired/Cancelled' => 'Drumeo Total Expired/Cancelled',
                 'Pianote 1 Month Rate' => 'Pianote 1 Month Rate',
                 'Pianote 1 Year Rate' => 'Pianote 1 Year Rate',
+                'Pianote Total Expired/Cancelled' => 'Pianote Total Expired/Cancelled',
                 'Guitareo 1 Month Rate' => 'Guitareo 1 Month Rate',
                 'Guitareo 1 Year Rate' => 'Guitareo 1 Year Rate',
+                'Guitareo Total Expired/Cancelled' => 'Guitareo Total Expired/Cancelled',
             ]
         ];
 
@@ -120,6 +123,8 @@ class RetentionReportingTool extends Command
                 $thisRow[ucwords($stat->getBrand()) . ' ' . $prettyIntervalName . ' Rate'] =
                     round($stat->getRetentionRate() * 100);
 
+                $thisRow[ucwords($stat->getBrand()) . ' Total Expired/Cancelled'] =
+                    $stat->getTotalUsersWhoCanceledOrExpired();
             }
 
             $csvData[] = array_values($thisRow);

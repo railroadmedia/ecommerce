@@ -283,6 +283,7 @@ INNER JOIN (
             OR (interval_type = '%s' AND interval_count = 1))
         AND created_at >= '%s'
         AND created_at <= '%s'
+        AND paid_until >= '%s'
         AND product_id IS NOT NULL
     GROUP BY stats_date, stats_interval_type, brand
 ) n ON
@@ -303,6 +304,7 @@ EOT;
             config('ecommerce.interval_type_monthly'),
             config('ecommerce.interval_type_yearly'),
             $smallDate->copy()->startOfDay()->toDateTimeString(),
+            $bigDate->copy()->endOfDay()->toDateTimeString(),
             $bigDate->copy()->endOfDay()->toDateTimeString()
         );
 
@@ -314,7 +316,6 @@ EOT;
 
         $this->info(sprintf($format, $finish));
     }
-
 
     /**
      * Update expired membership - ecommerce_membership_stats.expired column
@@ -837,10 +838,10 @@ EOT;
 
                         $otherActiveStateCount -= $totalActiveForBrandFromPrimarySources;
 
-                        $otherNewCount =
+                        $otherNewRows =
                             $this->databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_user_products')
-                                ->select(['ecommerce_user_products.*'])
+                                ->select(['ecommerce_user_products.*', 'ecommerce_products.sku as sku', 'es.id as es_id'])
                                 ->join(
                                     'ecommerce_products',
                                     'ecommerce_products.id',
@@ -858,7 +859,7 @@ EOT;
                                             ) {
                                                 $builder->on('ecommerce_user_products.user_id', '=', 'es.user_id')
                                                     ->on(
-                                                        'es.created_at',
+                                                        'es.start_date',
                                                         '>',
                                                         $this->databaseManager->raw(
                                                             '"' .
@@ -867,7 +868,7 @@ EOT;
                                                         )
                                                     )
                                                     ->on(
-                                                        'es.created_at',
+                                                        'es.start_date',
                                                         '<',
                                                         $this->databaseManager->raw(
                                                             '"' .
@@ -884,7 +885,7 @@ EOT;
                                             ) {
                                                 $builder->on('ecommerce_user_products.user_id', '=', 'es.user_id')
                                                     ->on(
-                                                        'es.created_at',
+                                                        'es.start_date',
                                                         '<',
                                                         $this->databaseManager->raw(
                                                             '"' .
@@ -911,6 +912,10 @@ EOT;
                                     'sku',
                                     config('ecommerce.membership_product_skus')[$brand]
                                 )
+                                ->whereNotIn(
+                                    'sku',
+                                    self::LIFETIME_SKUS
+                                )
                                 ->whereBetween(
                                     'ecommerce_user_products.created_at',
                                     [
@@ -932,7 +937,7 @@ EOT;
                                 ->groupBy('user_id')
                                 ->get();
 
-                        $otherNewCount = $otherNewCount->count();
+                        $otherNewCount = $otherNewRows->count();
                     }
 
                     $this->databaseManager->connection(config('ecommerce.database_connection_name'))
