@@ -25,8 +25,7 @@ class UpdateStripeCustomerIdColumnUserStripeCustomerIdsTable extends Migration
      */
     public function down()
     {
-        Schema::table('ecommerce_user_stripe_customer_ids', function (Blueprint $table) {
-            $table->integer('stripe_customer_id')->change();
-        });
+        // https://github.com/doctrine/dbal/issues/3714 (note, is *Laravel* issue, not DBAL)
+        DB::statement("ALTER TABLE ecommerce_user_stripe_customer_ids CHANGE stripe_customer_id stripe_customer_id INT");
     }
 }
