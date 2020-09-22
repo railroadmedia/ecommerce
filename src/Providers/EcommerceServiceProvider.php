@@ -65,7 +65,7 @@ class EcommerceServiceProvider extends ServiceProvider
     {
         $this->listen = [
             GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
-            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
+//            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
             OrderEvent::class => [
                 OrderShippingFulfilmentListener::class,
                 OrderUserProductListener::class,

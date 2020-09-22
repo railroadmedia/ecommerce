@@ -966,6 +966,8 @@ EOT;
     {
         $start = microtime(true);
 
+        // todo: get new from DB rather than adding them up, because users can be new for multiple products
+
         $sql = <<<'EOT'
 UPDATE ecommerce_membership_stats ms
 INNER JOIN (

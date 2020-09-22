@@ -94,7 +94,8 @@ class SubscriptionRepository extends RepositoryBase
                 ->subHours($renewalAttemptHoursDiff);
         }
 
-        $qb->select(['s'])
+        $qb->select(['s', 'o'])
+            ->leftJoin('s.order', 'o')
             ->where(
                 $qb->expr()
                     ->eq('s.brand', ':brand')

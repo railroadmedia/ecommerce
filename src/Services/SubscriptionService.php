@@ -623,9 +623,6 @@ class SubscriptionService
             $subscription->setFailedPayment(null);
             $subscription->setUpdatedAt(Carbon::now());
 
-            event(new SubscriptionRenewed($subscription, $payment));
-            event(new SubscriptionUpdated($oldSubscription, $subscription));
-
             $paymentTaxes = new PaymentTaxes();
 
             $paymentTaxes->setPayment($payment);
@@ -650,6 +647,8 @@ class SubscriptionService
 
             $this->entityManager->flush();
 
+            event(new SubscriptionRenewed($subscription, $payment));
+            event(new SubscriptionUpdated($oldSubscription, $subscription));
             event(new SubscriptionEvent($subscription->getId(), 'renewed'));
 
         } else {
