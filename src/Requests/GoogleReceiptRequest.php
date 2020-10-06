@@ -31,7 +31,7 @@ class GoogleReceiptRequest extends FormRequest
     public function rules()
     {
         return [
-            'data.type' => 'in:appleReceipt',
+            'data.type' => 'in:googleReceipt',
             'data.attributes.package_name' => 'required',
             'data.attributes.product_id' => 'required',
             'data.attributes.purchase_token' => 'required|unique:' .
