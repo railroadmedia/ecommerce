@@ -720,7 +720,7 @@ class GooglePlayStoreService
                         $purchaseItem['purchase_token']
                     );
 
-                    if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis() > Carbon::now()->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1))) &&
+                    if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) > Carbon::now()->subDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)) &&
                         ($googleResponse->getAutoRenewing() == 1)) {
                         return self::SHOULD_LOGIN;
                     } else {
