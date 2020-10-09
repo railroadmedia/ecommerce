@@ -28,19 +28,26 @@ class AppleReceiptRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $rules = [
             'data.type' => 'in:appleReceipt',
             'data.attributes.receipt' => 'required|unique:' .
                 config('ecommerce.database_connection_name') .
                 '.ecommerce_apple_receipts,receipt',
-            'data.attributes.email' => 'required|max:255|unique:' .
-                config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
-                '.' .
-                config('ecommerce.database_info_for_unique_user_email_validation.table') .
-                ',' .
-                config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
-            'data.attributes.password' => 'required|max:255',
         ];
+
+        if (!auth()->user()) {
+            $rules += [
+                'data.attributes.email' => 'required|max:255|unique:' .
+                    config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
+                    '.' .
+                    config('ecommerce.database_info_for_unique_user_email_validation.table') .
+                    ',' .
+                    config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
+                'data.attributes.password' => 'required|max:255',
+            ];
+        }
+
+        return $rules;
     }
 
     /**
