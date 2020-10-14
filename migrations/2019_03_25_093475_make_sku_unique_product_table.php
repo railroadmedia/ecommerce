@@ -38,7 +38,7 @@ class MakeSkuUniqueProductTable extends Migration
                  * @var $table \Illuminate\Database\Schema\Blueprint
                  */
 
-                $table->dropUnique('sku');
+                $table->dropUnique(['sku']);
             }
         );
     }

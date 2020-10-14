@@ -25,8 +25,7 @@ class ChangeActionReasonToStringMembershipActionsTable extends Migration
      */
     public function down()
     {
-        Schema::table('ecommerce_membership_actions', function (Blueprint $table) {
-            $table->dateTime('action_reason')->nullable()->change();
-        });
+        // https://github.com/doctrine/dbal/issues/3714 (note, is *Laravel* issue, not DBAL)
+        DB::statement("ALTER TABLE ecommerce_membership_actions CHANGE action_reason action_reason DATETIME NULL");
     }
 }
