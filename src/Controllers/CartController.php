@@ -58,7 +58,8 @@ class CartController extends Controller
         $locked = (boolean)$request->get('locked', false);
 
         if ($locked == true) {
-            $this->cartService->getCart()->replaceItems([]);
+            // clear cart
+            $this->cartService->clearCart();
         }
 
         $addedProducts = [];

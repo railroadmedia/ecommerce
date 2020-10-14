@@ -104,8 +104,7 @@ class CartJsonController extends Controller
         $this->cartService->refreshCart();
 
         if ($request->get('locked', false) == true) {
-            $this->cartService->getCart()
-                ->replaceItems([]);
+            $this->cartService->clearCart();
         }
 
         foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
