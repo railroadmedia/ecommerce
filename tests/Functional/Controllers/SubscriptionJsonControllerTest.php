@@ -1683,6 +1683,174 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
     }
 
+    public function test_renew_payment_plan_credit_card()
+    {
+        $userEmail = $this->faker->email;
+        $userId = $this->createAndLogInNewUser($userEmail);
+
+        $productPrice = 197;
+        $totalPayments = 5;
+        $currentPayment = 5;
+        $pricePerPayment = round(($productPrice + 1 ) / $totalPayments, 2);
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $currency = 'USD';
+        $fakerCharge = new Charge();
+        $fakerCharge->id = $this->faker->word;
+        $fakerCharge->currency = $currency;
+        $fakerCharge->amount = $pricePerPayment;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+                'price' => $productPrice,
+            ]
+        );
+
+        $creditCard = $this->fakeCreditCard(
+            [
+                'payment_gateway_name' => 'drumeo',
+            ]
+        );
+
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'United States',
+                'region' => 'NY',
+            ]
+        );
+
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'billing_address_id' => $address['id'],
+                'currency' => $currency
+            ]
+        );
+
+
+        $expectedTaxRateProduct =
+            $this->taxService->getProductTaxRate(
+                new AddressStructure(strtolower($address['country']), strtolower($address['region']))
+            );
+
+        $expectedPaymentPlanTaxes = round($expectedTaxRateProduct * $pricePerPayment, 2);
+
+        $order = $this->fakeOrder();
+
+        $paymentPlan = $this->fakeSubscription(
+            [
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'product_id' => null,
+                'order_id' => $order['id'],
+                'payment_method_id' => $paymentMethod['id'],
+                'user_id' => $userId,
+                'paid_until' => Carbon::now()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'total_cycles_due' => 5,
+                'total_cycles_paid' => 4,
+                'total_price' => $pricePerPayment,
+                'tax' => $expectedPaymentPlanTaxes
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/subscription-renew/' . $paymentPlan['id']
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $paymentPlan['id'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addMonth(1)
+                    ->startOfDay()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payment_taxes',
+            [
+                'country' => $address['country'],
+                'region' => $address['region'],
+                'product_rate' => $expectedTaxRateProduct,
+                'shipping_rate' => 0,
+                'product_taxes_paid' => $expectedPaymentPlanTaxes,
+                'shipping_taxes_paid' => 0,
+            ]
+        );
+
+        // assert payment
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'id' => 1,
+                'total_due' => $pricePerPayment,
+                'total_paid' => $pricePerPayment,
+                'total_refunded' => 0,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => $fakerCharge->id,
+                'external_provider' => 'stripe',
+                'status' => Payment::STATUS_PAID,
+                'payment_method_id' => $paymentMethod['id'],
+                'currency' => $currency,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString()
+            ]
+        );
+
+        // assert payment is linked to order
+        $this->assertDatabaseHas(
+            'ecommerce_order_payments',
+            [
+                'order_id' => $order['id'],
+                'payment_id' => 1,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        // assert payment is linked to subscription
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => $paymentPlan['id'],
+                'payment_id' => 1,
+                'created_at' => Carbon::now()->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'railactionlog_actions_log',
+            [
+                'brand' => $paymentPlan['brand'],
+                'resource_name' => Subscription::class,
+                'resource_id' => $paymentPlan['id'],
+                'action_name' => Subscription::ACTION_RENEW,
+                'actor' => $userEmail,
+                'actor_id' => $userId,
+                'actor_role' => ActionLogService::ROLE_USER,
+            ]
+        );
+    }
+
     public function test_renew_subscription_credit_card()
     {
         Mail::fake();
