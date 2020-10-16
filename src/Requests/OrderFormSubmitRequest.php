@@ -158,7 +158,8 @@ class OrderFormSubmitRequest extends FormRequest
                     ',id',
                 'shipping_first_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
                 'shipping_last_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping_address_line_1' => 'string|required_without:shipping_address_id',
+                'shipping_address_line_1' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_\' ]+$/',
+                'shipping_address_line_2' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_\' ]+$/',
                 'shipping_city' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_ ]+$/',
                 'shipping_region' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
                 'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
@@ -206,6 +207,22 @@ class OrderFormSubmitRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages()
+    {
+        $msg = 'Only English alphabet characters are supported for the shipping address';
+
+        return [
+            'shipping_first_name.regex'         => $msg,
+            'shipping_last_name.regex'          => $msg,
+            'shipping_address_line_1.regex'     => $msg,
+            'shipping_address_line_2.regex'     => $msg,
+            'shipping_city.regex'               => $msg,
+            'shipping_region.regex'             => $msg,
+            'shipping_zip_or_postal_code.regex' => $msg,
+            'shipping_country.regex'            => $msg,
+        ];
     }
 
     /**
