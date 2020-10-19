@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 
 class SynchOrdersWithPaymentPlans extends Command
 {
@@ -30,15 +31,24 @@ class SynchOrdersWithPaymentPlans extends Command
     private $databaseManager;
 
     /**
+     * @var SubscriptionRepository
+     */
+    private $subscriptionRepository;
+
+    /**
      * AddPastMembershipStats constructor.
      *
      * @param DatabaseManager $databaseManager
+     * @param SubscriptionRepository $subscriptionRepository
      */
-    public function __construct(DatabaseManager $databaseManager)
-    {
+    public function __construct(
+        DatabaseManager $databaseManager,
+        SubscriptionRepository $subscriptionRepository
+    ) {
         parent::__construct();
 
         $this->databaseManager = $databaseManager;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
@@ -101,6 +111,40 @@ class SynchOrdersWithPaymentPlans extends Command
                         foreach ($subscriptionPayments as $subscriptionPayment) {
                             $paymentIds[$subscriptionPayment->payment_id] = true;
                             $paid += $subscriptionPayment->total_paid - ($subscriptionPayment->total_refunded ?: 0);
+                        }
+
+                        $paymentsCount = count($paymentIds);
+
+                        if ($paymentsCount > $subscription->total_cycles_due) {
+                            $subscriptionEntity = $this->subscriptionRepository->find($subscription->id);
+                            $user = $subscriptionEntity->getUser();
+
+                            if ($user) {
+                                $userEmail = $subscriptionEntity->getUser()->getEmail();
+
+                                $message = "User with email %s has %s payments for subscription with id %s and total cycles due %s";
+
+                                $this->info(
+                                    sprintf(
+                                        $message,
+                                        $userEmail,
+                                        $paymentsCount,
+                                        $subscription->id,
+                                        $subscription->total_cycles_due
+                                    )
+                                );
+                            } else {
+                                $message = "subscription with id %s and total cycles due %s and user is not valid";
+
+                                $this->info(
+                                    sprintf(
+                                        $message,
+                                        $paymentsCount,
+                                        $subscription->id,
+                                        $subscription->total_cycles_due
+                                    )
+                                );
+                            }
                         }
 
                         if ($paid != $subscription->total_paid) {
