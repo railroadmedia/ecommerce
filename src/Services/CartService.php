@@ -404,7 +404,7 @@ class CartService
 
         $totalTaxDue = $productTaxDue + $shippingTaxDue;
 
-        $financeDue = $this->getTotalFinanceCosts();
+        $financeDue = $this->getTotalFinanceCosts(); // todo - financeDue is not taxed here, differs from getDueForInitialPayment logic where financeDue is taxed, ask for details and update
 
         return max(0, round($totalItemCostDue + $shippingDue + $totalTaxDue + $financeDue, 2));
     }
@@ -506,6 +506,7 @@ class CartService
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
         if ($this->getDueForOrder() != $totalAfterPlanIsComplete) {
+            // todo - update getDueForOrder
             $initialPaymentAmount += $this->getDueForOrder() - $totalAfterPlanIsComplete;
         }
 
@@ -525,14 +526,24 @@ class CartService
     {
         $totalItemCostDue = $this->getTotalItemCosts();
 
-        $financeDue = $this->getTotalFinanceCosts();
+        if (!$numberOfPaymentsOverride) {
+            $numberOfPaymentsOverride = $this->cart->getPaymentPlanNumberOfPayments();
+        }
+
+        $financeDue = 0;
+
+        if ($numberOfPaymentsOverride > 1) {
+            // $this->getTotalFinanceCosts() is unusable here, because it returns a fixed finance, based on current cart number of payments set
+            // when getDueForPaymentPlanPayments method is called for payment plan options, we need finance for specified option, not for current cart number of payments
+            $financeDue = config('ecommerce.financing_cost_per_order', 1);
+        }
 
         $totalToFinance = $totalItemCostDue + $financeDue;
 
         return max(
             0,
             round(
-                $totalToFinance / ($numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments()),
+                $totalToFinance / ($numberOfPaymentsOverride),
                 2
             )
         );
@@ -648,7 +659,9 @@ class CartService
 
         $due = ($numberOfPayments > 1) ? $this->getDueForInitialPayment() : $orderDue;
 
-        $totalItemCostDue = $this->getTotalItemCosts();
+        $financeDue = $this->getTotalFinanceCosts();
+
+        $totalItemCostDue = $this->getTotalItemCosts() + $financeDue;
 
         $shippingDueBeforeOverride = $this->shippingService->getShippingDueForCart($this->cart, $totalItemCostDue);
 
@@ -679,7 +692,7 @@ class CartService
             'due' => $due,
             'product_taxes' => round($productTaxDue, 2),
             'shipping_taxes' => round($shippingTaxDue, 2),
-        ];
+        ]; // todo - update functional test
 
         $discounts =
             $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
@@ -750,7 +763,7 @@ class CartService
                     $orderDueForPlan = $orderDue - $financeCost;
                 }
                 if ($numberOfPayments == 1 && $paymentPlanOption > 1) {
-                    $orderDueForPlan = $orderDue + $financeCost;
+                    $orderDueForPlan = $orderDue; // todo - add functional test
                 }
 
                 if ($paymentPlanOption == 1) {
