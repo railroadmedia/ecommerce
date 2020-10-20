@@ -24,7 +24,6 @@ class CartControllerTest extends EcommerceTestCase
         $this->session = $this->app->make(Store::class);
     }
 
-    /*
     public function test_add_to_cart()
     {
         $this->session->flush();
@@ -113,11 +112,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $92.22 ($1.00 finance charge)",
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $36.89 ($1.00 finance charge)",
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -224,11 +223,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $92.22 ($1.00 finance charge)",
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $36.89 ($1.00 finance charge)",
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -425,11 +424,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $147.99 ($1.00 finance charge)",
+                        "label" => "2 payments of $148.49 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $59.2 ($1.00 finance charge)",
+                        "label" => "5 payments of $59.4 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -543,11 +542,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $92.22 ($1.00 finance charge)",
+                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $36.89 ($1.00 finance charge)",
+                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -691,11 +690,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $13.45 ($1.00 finance charge)",
+                        "label" => "2 payments of $13.95 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $5.38 ($1.00 finance charge)",
+                        "label" => "5 payments of $5.58 ($1.00 finance charge)",
                     ]
                 ],
             ]
@@ -722,7 +721,6 @@ class CartControllerTest extends EcommerceTestCase
 
         $this->assertEquals($productTwoQuantity, $cartItemTwo->getQuantity());
     }
-    */
 
     public function test_reset_number_of_payments_with_locked_cart()
     {
@@ -865,11 +863,11 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                     [
                         "value" => 2,
-                        "label" => "2 payments of $88.38 ($1.00 finance charge)",
+                        "label" => "2 payments of $88.88 ($1.00 finance charge)",
                     ],
                     [
                         "value" => 5,
-                        "label" => "5 payments of $35.35 ($1.00 finance charge)",
+                        "label" => "5 payments of $35.55 ($1.00 finance charge)",
                     ]
                 ],
             ]
