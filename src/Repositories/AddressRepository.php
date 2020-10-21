@@ -89,4 +89,43 @@ class AddressRepository extends RepositoryBase
 
         return new ResultsQueryBuilderComposite($results, $qb);
     }
+
+    /**
+     * @param $userId
+     * @param string $brand
+     *
+     * @return Address[]
+     */
+    public function getUserShippingAddresses($userId, $brand = null)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select('a')
+            ->from(Address::class, 'a')
+            ->where(
+                $qb->expr()
+                    ->eq('a.user', ':userId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('a.type', ':type')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('a.deletedAt')
+            )
+            ->setParameter('userId', $userId)
+            ->setParameter('type', Address::SHIPPING_ADDRESS_TYPE);
+
+        if ($brand) {
+            $qb->andWhere(
+                    $qb->expr()
+                        ->eq('a.brand', ':brand')
+                )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()
+                    ->getResult();
+    }
 }
