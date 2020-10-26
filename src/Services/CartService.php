@@ -491,15 +491,22 @@ class CartService
         $financeDue = $this->getTotalFinanceCosts();
         $financeDuePerPayment = $financeDue / $numberOfPayments;
 
-        $costPerPaymentBeforeTaxes = $totalItemCostDue / $numberOfPayments;
-        $costPerPaymentAfterTaxes = $costPerPaymentBeforeTaxes * ($productTaxRate + 1);
+        $costPerPaymentBeforeTaxes = round($totalItemCostDue / $numberOfPayments, 2);
+        $costPerPaymentAfterTaxes = round($costPerPaymentBeforeTaxes * ($productTaxRate + 1), 2);
 
         // Customers can only finance the order item price, product taxes, and finance.
         // All shipping costs and shipping taxes must be paid on the first payment.
-        $initialPaymentAmount = $costPerPaymentAfterTaxes + $financeDuePerPayment + $shippingDue + $shippingTaxDue;
+        $initialPaymentAmount = round($costPerPaymentAfterTaxes + $financeDuePerPayment +
+            $shippingDue +
+            $shippingTaxDue,
+            2
+        );
 
-        $totalAfterPlanIsComplete = $initialPaymentAmount + (($costPerPaymentAfterTaxes + $financeDuePerPayment) *
-                ($numberOfPayments - 1));
+        $totalAfterPlanIsComplete = round(
+            $initialPaymentAmount + (($this->getDueForPaymentPlanPayments($productTaxRate, $numberOfPayments)) *
+                ($numberOfPayments - 1)),
+            2
+        );
 
         $dueForOrder = $this->getDueForOrder();
 
@@ -529,8 +536,8 @@ class CartService
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $totalItemCostPerPayment = $totalItemCostDue / $numberOfPayments;
-        $taxPerPayment = $totalItemCostPerPayment * $taxRate;
+        $totalItemCostPerPayment = round($totalItemCostDue / $numberOfPayments, 2);
+        $taxPerPayment = round($totalItemCostPerPayment * $taxRate, 2);
         $financePerPayment = ($numberOfPayments > 1) ?
                                 config('ecommerce.financing_cost_per_order', 1) /  $numberOfPayments : 0;
 
