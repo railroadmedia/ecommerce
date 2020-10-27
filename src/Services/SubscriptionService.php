@@ -388,12 +388,20 @@ class SubscriptionService
         $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);
 
         // if its a payment plan, remove the finance charge per payment so it doesn't get taxed
-        $taxes = $this->taxService->getTaxesDueTotal(
-            $subscriptionPricePerPayment -
-            round(($subscription->getOrder()->getFinanceDue() / $subscription->getTotalCyclesDue()), 2),
-            0,
-            $address
-        );
+        if (!empty($subscription->getOrder()) && $subscription->getType() == Subscription::TYPE_PAYMENT_PLAN) {
+            $taxes = $this->taxService->getTaxesDueTotal(
+                $subscriptionPricePerPayment -
+                round(($subscription->getOrder()->getFinanceDue() / $subscription->getTotalCyclesDue()), 2),
+                0,
+                $address
+            );
+        } else {
+            $taxes = $this->taxService->getTaxesDueTotal(
+                $subscriptionPricePerPayment,
+                0,
+                $address
+            );
+        }
 
         $chargePrice = $this->currencyService->convertFromBase(
             round($subscriptionPricePerPayment + $taxes, 2),

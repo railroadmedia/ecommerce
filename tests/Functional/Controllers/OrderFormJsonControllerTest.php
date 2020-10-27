@@ -8185,9 +8185,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             2
         );
 
-        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $financeChargePerPayment = round($financeCharge / $paymentPlanOption, 2);
+
+        $paymentPlanCostPerPayment = round($expectedTotalFromItems / $paymentPlanOption, 2); // 20.2
         $paymentPlanCostPerPaymentAfterTax =
             round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+
+        $paymentPlanCostPerPayment += $financeChargePerPayment;
+        $paymentPlanCostPerPaymentAfterTax += $financeChargePerPayment;
+
         $initialPaymentAmount =
             round(
                 $paymentPlanCostPerPaymentAfterTax +
@@ -8204,7 +8210,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $difference =
             round(
                 $grandTotalDue -
-                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                ($initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)),
                 2
             ); // 116.5 - 116.54 = -0.04
 
@@ -8227,7 +8233,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $grandTotalDue,
-            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+            $initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)
         );
 
         $expectedPaymentTotalDue = $currencyService->convertFromBase($expectedOrderTotalDue, $currency);
@@ -8521,9 +8527,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         // 106 / 5 = 21.2
-        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $financeChargePerPayment = round($financeCharge / $paymentPlanOption, 2);
+
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems) / $paymentPlanOption, 2); // 20.2
         $paymentPlanCostPerPaymentAfterTax =
             round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+
+        $paymentPlanCostPerPayment += $financeChargePerPayment;
+        $paymentPlanCostPerPaymentAfterTax += $financeChargePerPayment;
+
         $initialPaymentAmount =
             round(
                 $paymentPlanCostPerPaymentAfterTax +
@@ -8533,7 +8545,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $difference =
             round(
                 $grandTotalDue -
-                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                ($initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)),
                 2
             ); // 116.5 - 116.54 = -0.04
 
@@ -8549,7 +8561,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $grandTotalDue,
-            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+            $initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)
         );
 
         $requestData = [
@@ -8882,9 +8894,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         // 106 / 5 = 21.2
-        $paymentPlanCostPerPayment = round(($expectedTotalFromItems + $financeCharge) / $paymentPlanOption, 2); // 20.2
+        $financeChargePerPayment = round($financeCharge / $paymentPlanOption, 2);
+
+        $paymentPlanCostPerPayment = round(($expectedTotalFromItems) / $paymentPlanOption, 2); // 20.2
         $paymentPlanCostPerPaymentAfterTax =
             round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct), 2); // 20.2
+
+        $paymentPlanCostPerPayment += $financeChargePerPayment;
+        $paymentPlanCostPerPaymentAfterTax += $financeChargePerPayment;
+
         $initialPaymentAmount =
             round(
                 $paymentPlanCostPerPaymentAfterTax + $shippingCostAmount + $expectedShippingTaxes,
@@ -8894,7 +8912,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $difference =
             round(
                 $grandTotalDue -
-                ($initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)),
+                ($initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)),
                 2
             ); // 116.5 - 116.54 = -0.04
 
@@ -8912,7 +8930,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $grandTotalDue,
-            $initialPaymentAmount + round($paymentPlanCostPerPayment * (1 + $expectedTaxRateProduct) * 4, 2)
+            $initialPaymentAmount + round($paymentPlanCostPerPaymentAfterTax * 4, 2)
         );
 
         $requestData = [

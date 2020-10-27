@@ -603,13 +603,13 @@ class CartServiceTest extends EcommerceTestCase
 
     public function test_get_due_for_initial_payment_bc()
     {
-        $productWeight = $this->faker->randomFloat(2, 5, 10);
+        $productWeight = 8;
 
         $product = $this->fakeProduct(
             [
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(20, 100),
-                'price' => $this->faker->randomFloat(2, 15, 20),
+                'price' => 15.31,
                 'weight' => $productWeight,
                 'is_physical' => true,
             ]
@@ -630,11 +630,11 @@ class CartServiceTest extends EcommerceTestCase
                 'shipping_option_id' => $shippingOption['id'],
                 'min' => 5,
                 'max' => 50,
-                'price' => $this->faker->randomFloat(2, 3, 5),
+                'price' => 7,
             ]
         );
 
-        $quantity = $this->faker->numberBetween(3, 5);
+        $quantity = 3;
 
         $shippingRegion = 'british columbia';
 
@@ -668,14 +668,14 @@ class CartServiceTest extends EcommerceTestCase
 
         $numberOfPayments = 2;
 
-        $taxablePerPayment = $expectedItemsCost / $numberOfPayments;
-        $taxPerPayment = $taxablePerPayment * $expectedTaxRateProduct;
-        $financePerPayment = config('ecommerce.financing_cost_per_order') / $numberOfPayments;
+        $taxablePerPayment = round($expectedItemsCost / $numberOfPayments, 2);
+        $taxPerPayment = round($taxablePerPayment * $expectedTaxRateProduct, 2);
+        $financePerPayment = round(config('ecommerce.financing_cost_per_order') / $numberOfPayments, 2);
 
         $expectedInitialPayment =
             round($taxablePerPayment + $taxPerPayment + $financePerPayment + $expectedShippingCost + $expectedShippingTaxes, 2);
 
-        $totalAfterPlanIsComplete = $expectedInitialPayment + ($taxablePerPayment + $taxPerPayment + $financePerPayment);
+        $totalAfterPlanIsComplete = round($expectedInitialPayment + ($taxablePerPayment + $taxPerPayment + $financePerPayment), 2);
 
         if ($grandTotalDue != $totalAfterPlanIsComplete) {
             $expectedInitialPayment += $grandTotalDue - $totalAfterPlanIsComplete;
@@ -700,6 +700,7 @@ class CartServiceTest extends EcommerceTestCase
         $cartService->refreshCart();
 
         $dueForInitialPayment = $cartService->getDueForInitialPayment();
+        $duePerPayment = $cartService->getDueForPaymentPlanPayments($expectedTaxRateProduct, $numberOfPayments);
 
         $this->assertEquals($grandTotalDue, $cartService->getDueForOrder());
         $this->assertEquals($expectedInitialPayment, $dueForInitialPayment);
