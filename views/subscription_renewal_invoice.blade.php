@@ -337,9 +337,9 @@
                                                     {{ $payment->getCreatedAt()->format('F j, Y') }}<br><br>
                                                     {{ config('ecommerce.company_name_on_invoice') }}
 
-                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$order->getBrand()]))
+                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$subscription->getBrand()]))
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.canada_gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                        {{ config('ecommerce.canada_gst_hst_number')[$subscription->getBrand()] ?? '' }}
                                                     @endif
                                                     <br><br>
                                                 </td>

@@ -54,7 +54,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'gateway' => config('ecommerce.brand'),
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
-            'shipping_address_line_1' => $this->faker->address,
+            'shipping_address_line_1' => $this->faker->words(3, true),
             'shipping_city' => $this->faker->city,
             'shipping_region' => $region,
             'shipping_zip_or_postal_code' => $this->faker->postcode,

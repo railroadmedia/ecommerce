@@ -487,26 +487,32 @@ class CartService
             $taxableAddress
         );
 
+        $numberOfPayments = $this->cart->getPaymentPlanNumberOfPayments();
         $financeDue = $this->getTotalFinanceCosts();
+        $financeDuePerPayment = $financeDue / $numberOfPayments;
 
-        $costPerPaymentBeforeTaxes =
-            round(($totalItemCostDue + $financeDue) / $this->cart->getPaymentPlanNumberOfPayments(), 2);
-        $costPerPaymentAfterTaxes =
-            round(
-                $costPerPaymentBeforeTaxes * ($productTaxRate + 1),
-                2
-            );
+        $costPerPaymentBeforeTaxes = round($totalItemCostDue / $numberOfPayments, 2);
+        $costPerPaymentAfterTaxes = round($costPerPaymentBeforeTaxes * ($productTaxRate + 1), 2);
 
         // Customers can only finance the order item price, product taxes, and finance.
         // All shipping costs and shipping taxes must be paid on the first payment.
-        $initialPaymentAmount = $costPerPaymentAfterTaxes + $shippingDue + $shippingTaxDue;
+        $initialPaymentAmount = round($costPerPaymentAfterTaxes + $financeDuePerPayment +
+            $shippingDue +
+            $shippingTaxDue,
+            2
+        );
 
-        $totalAfterPlanIsComplete = $initialPaymentAmount + ($costPerPaymentAfterTaxes *
-                ($this->cart->getPaymentPlanNumberOfPayments() - 1));
+        $totalAfterPlanIsComplete = round(
+            $initialPaymentAmount + (($this->getDueForPaymentPlanPayments($productTaxRate, $numberOfPayments)) *
+                ($numberOfPayments - 1)),
+            2
+        );
+
+        $dueForOrder = $this->getDueForOrder();
 
         // account for any rounded off cents by adding the difference after all payments to the first payment
-        if ($this->getDueForOrder() != $totalAfterPlanIsComplete) {
-            $initialPaymentAmount += $this->getDueForOrder() - $totalAfterPlanIsComplete;
+        if ($dueForOrder != $totalAfterPlanIsComplete) {
+            $initialPaymentAmount += $dueForOrder - $totalAfterPlanIsComplete;
         }
 
         return max(0, round($initialPaymentAmount, 2));
@@ -516,23 +522,29 @@ class CartService
      * Returns the price of the payment plan subscription that will be billed each month for the duration
      * of the payment plan.
      *
-     * @param null $numberOfPaymentsOverride
+     * @param float $taxRate
+     * @param integer|null $numberOfPaymentsOverride
+     *
      * @return float
      *
      * @throws Throwable
      */
-    public function getDueForPaymentPlanPayments($numberOfPaymentsOverride = null)
-    {
+    public function getDueForPaymentPlanPayments(
+        $taxRate,
+        $numberOfPaymentsOverride = null
+    ) {
         $totalItemCostDue = $this->getTotalItemCosts();
+        $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
-        $financeDue = $this->getTotalFinanceCosts();
-
-        $totalToFinance = $totalItemCostDue + $financeDue;
+        $totalItemCostPerPayment = round($totalItemCostDue / $numberOfPayments, 2);
+        $taxPerPayment = round($totalItemCostPerPayment * $taxRate, 2);
+        $financePerPayment = ($numberOfPayments > 1) ?
+                                config('ecommerce.financing_cost_per_order', 1) /  $numberOfPayments : 0;
 
         return max(
             0,
             round(
-                $totalToFinance / ($numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments()),
+                $totalItemCostPerPayment + $taxPerPayment + $financePerPayment,
                 2
             )
         );
@@ -658,8 +670,10 @@ class CartService
 
         $taxableAddress = $this->taxService->getAddressForTaxation($this->getCart());
 
+        $currentPaymentTotalItemCostDue = $totalItemCostDue / $numberOfPayments;
+
         $productTaxDue = $this->taxService->getTaxesDueForProductCost(
-            $totalItemCostDue,
+            $currentPaymentTotalItemCostDue,
             $taxableAddress
         );
 
@@ -750,7 +764,7 @@ class CartService
                     $orderDueForPlan = $orderDue - $financeCost;
                 }
                 if ($numberOfPayments == 1 && $paymentPlanOption > 1) {
-                    $orderDueForPlan = $orderDue + $financeCost;
+                    $orderDueForPlan = $orderDue;
                 }
 
                 if ($paymentPlanOption == 1) {
@@ -760,7 +774,7 @@ class CartService
                     $label = sprintf(
                         $format,
                         $paymentPlanOption,
-                        round($this->getDueForPaymentPlanPayments($paymentPlanOption) * (1 + $productTaxRate), 2),
+                        $this->getDueForPaymentPlanPayments($productTaxRate, $paymentPlanOption),
                         number_format($financeCost, 2)
                     );
                 }
