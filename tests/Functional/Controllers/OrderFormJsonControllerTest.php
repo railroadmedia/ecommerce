@@ -511,6 +511,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The card token field is required when payment method type is credit_card.',
                     'title' => 'Validation failed.'
                 ],
+                [
+                    'source' => 'account_creation_password',
+                    'detail' => 'The account creation password must be at least 8 characters.',
+                    'title' => 'Validation failed.'
+                ],
             ],
             $results->decodeResponseJson('errors')
         );
