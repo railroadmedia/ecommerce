@@ -85,7 +85,9 @@ class SubscriptionTransformer extends TransformerAbstract
         $subscriptionPricePerPayment = round($subscription->getTotalPrice(), 2);
 
         // if its a payment plan, remove the finance charge per payment so it doesn't get taxed
-        if (!empty($subscription->getOrder()) && $subscription->getType() == Subscription::TYPE_PAYMENT_PLAN) {
+        if (!empty($subscription->getOrder()) &&
+            $subscription->getType() == Subscription::TYPE_PAYMENT_PLAN &&
+            $subscription->getTotalCyclesDue() >= 1) {
             $taxes = $this->taxService->getTaxesDueTotal(
                 $subscriptionPricePerPayment -
                 round(($subscription->getOrder()->getFinanceDue() / $subscription->getTotalCyclesDue()), 2),
