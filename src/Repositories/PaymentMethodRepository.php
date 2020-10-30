@@ -147,6 +147,7 @@ class PaymentMethodRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('upm.user', ':user')
             )
+            ->orderBy('pm.createdAt', 'desc')
             ->setParameter('user', $userId);
 
         if ($brand) {
@@ -199,6 +200,7 @@ class PaymentMethodRepository extends RepositoryBase
                 $qb->expr()
                     ->eq('cpm.customer', ':customer')
             )
+            ->orderBy('pm.createdAt', 'desc')
             ->setParameter('customer', $customer);
 
         if ($brand) {
