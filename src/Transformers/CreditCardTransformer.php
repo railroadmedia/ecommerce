@@ -19,7 +19,7 @@ class CreditCardTransformer extends TransformerAbstract
         return [
             'id' => $creditCard->getId(),
             'fingerprint' => $creditCard->getFingerprint(),
-            'last_four_digits' => $creditCard->getLastFourDigits(),
+            'last_four_digits' => sprintf('%04d', $creditCard->getLastFourDigits()),
             'cardholder_name' => $creditCard->getCardholderName(),
             'company_name' => $creditCard->getCompanyName(),
             'expiration_date' => $creditCard->getExpirationDate() ?
