@@ -102,7 +102,9 @@ class AccessCodeService
         /** @var $subscription Subscription */
         foreach ($subscriptions as $subscription) {
 
-            if($subscription->getType() === 'payment plan') continue;
+            if($subscription->getType() === 'payment plan'){
+                continue;
+            }
 
             /** @var $paidUntil Datetime */
             $paidUntil = $subscription->getPaidUntil();
