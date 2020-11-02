@@ -173,7 +173,7 @@ class OrderFormService
                             $request->get('gateway', config('ecommerce.default_gateway')),
                             $cart->getCurrency(),
                             $request->get('card_token'),
-                            $request->get('set_as_default', true)
+                            $request->get('set_as_default', false)
                         );
                     } elseif (!empty($request->get('token'))) {
                         $paymentMethod = $this->paymentService->createPayPalPaymentMethod(
@@ -182,7 +182,7 @@ class OrderFormService
                             $request->get('gateway', config('ecommerce.default_gateway')),
                             $cart->getCurrency(),
                             $request->get('token'),
-                            $request->get('set_as_default', true)
+                            $request->get('set_as_default', false)
                         );
                     }
                 } else {
@@ -214,7 +214,7 @@ class OrderFormService
                         $paymentAmountInBaseCurrency,
                         $request->get('card_token'),
                         Payment::TYPE_INITIAL_ORDER,
-                        $request->get('set_as_default', true)
+                        $request->get('set_as_default', false)
                     );
 
                 } // paypal
@@ -228,7 +228,7 @@ class OrderFormService
                         $paymentAmountInBaseCurrency,
                         $request->get('token'),
                         Payment::TYPE_INITIAL_ORDER,
-                        $request->get('set_as_default', true)
+                        $request->get('set_as_default', false)
                     );
 
                 }
