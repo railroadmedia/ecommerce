@@ -271,7 +271,7 @@ class OrderClaimingService
 
     /**
      * @param Purchaser $purchaser
-     * @param PaymentMethod $paymentMethod
+     * @param PaymentMethod|null $paymentMethod
      * @param Payment $payment
      * @param Order $order
      * @param OrderItem|null $orderItem
@@ -286,7 +286,7 @@ class OrderClaimingService
      */
     public function createSubscription(
         Purchaser $purchaser,
-        PaymentMethod $paymentMethod,
+        ?PaymentMethod $paymentMethod,
         ?Payment $payment,
         Order $order,
         ?OrderItem $orderItem,
@@ -408,7 +408,9 @@ class OrderClaimingService
 
         // tax are now all handled on the fly
         $subscription->setTax(0);
-        $subscription->setCurrency($paymentMethod->getCurrency());
+        $subscription->setCurrency(
+            !is_null($paymentMethod) ? $paymentMethod->getCurrency() : config('ecommerce.default_currency')
+        );
         $subscription->setIntervalType($intervalType);
         $subscription->setIntervalCount($intervalCount);
         $subscription->setTotalCyclesPaid($totalCyclesPaid);

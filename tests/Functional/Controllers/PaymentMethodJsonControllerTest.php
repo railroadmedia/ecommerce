@@ -1391,6 +1391,10 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_set_default_update_subscription()
     {
+        // todo: fix
+        // we no longer automatically set all subs to their new default, this gets handled on the implementation side
+        $this->markTestSkipped('Functionality removed.');
+
         $userId = $this->createAndLogInNewUser();
 
         $this->permissionServiceMock->method('canOrThrow')->willReturn(true);
@@ -1452,7 +1456,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $payload = [
-            'id' => $paymentMethodTwo['id']
+            'id' => $paymentMethodTwo['id'],
+            'update_ac'
         ];
 
         $response = $this->call(
