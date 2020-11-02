@@ -99,19 +99,15 @@ class AccessCodeService
         $processedProductsIds = [];
 
         // extend subscriptions
+        /** @var $subscription Subscription */
         foreach ($subscriptions as $subscription) {
-            /**
-             * @var $subscription Subscription
-             */
 
-            /**
-             * @var $paidUntil Datetime
-             */
+            if($subscription->getType() === 'payment plan') continue;
+
+            /** @var $paidUntil Datetime */
             $paidUntil = $subscription->getPaidUntil();
 
-            /**
-             * @var $subscriptionEndDate Carbon
-             */
+            /** @var $subscriptionEndDate Carbon */
             $subscriptionEndDate = Carbon::instance($paidUntil);
 
             // if subscription is expired, the access code will create a UserProduct
@@ -119,16 +115,13 @@ class AccessCodeService
                 continue;
             }
 
+            /** @var $product Product */
             foreach ($accessCodeProducts as $product) {
 
                 if ($product->getType() != Product::TYPE_DIGITAL_SUBSCRIPTION) {
                     // for subscription extending, only subscription products are processed in this block
                     continue;
                 }
-
-                /**
-                 * @var $product Product
-                 */
 
                 $intervalCount = $product->getSubscriptionIntervalCount();
 
