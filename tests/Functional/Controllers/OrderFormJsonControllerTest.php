@@ -8497,7 +8497,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $shippingCostAmount = 5.50;
+        $shippingCostAmount = 0;
 
         $shippingCost = $this->fakeShippingCost(
             [
@@ -8511,11 +8511,11 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct(
             [
                 'price' => round($this->paymentPlanMinimumPrice * 2, 2),
-                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'type' => Product::TYPE_DIGITAL_ONE_TIME,
                 'active' => 1,
                 'description' => $this->faker->word,
-                'is_physical' => 1,
-                'weight' => 2.20,
+                'is_physical' => 0,
+                'weight' => 0,
                 'subscription_interval_type' => '',
                 'subscription_interval_count' => 0,
             ]
@@ -9135,6 +9135,8 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_payment_plan_taxes_and_shipping_totals()
     {
+        $this->markTestSkipped('We no longer support payment plans for physical items.');
+
         $userId = $this->createAndLogInNewUser();
         $currency = 'USD';
 

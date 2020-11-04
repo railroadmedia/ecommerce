@@ -417,6 +417,7 @@ class CartControllerTest extends EcommerceTestCase
                     'product_taxes' => 0,
                     'shipping_taxes' => 0,
                 ],
+                'payment_plan_options' => [],
             ]
         );
 
@@ -669,6 +670,7 @@ class CartControllerTest extends EcommerceTestCase
                     'No product with SKU ' . $randomSku1 . ' was found.',
                     'No product with SKU ' . $randomSku2 .  ' was found.',
                 ],
+                'payment_plan_options' => [],
             ]
         );
 
@@ -828,6 +830,7 @@ class CartControllerTest extends EcommerceTestCase
                     'product_taxes' => 0.0,
                     'shipping_taxes' => 0.0,
                 ],
+                'payment_plan_options' => [],
             ]
         );
     }
