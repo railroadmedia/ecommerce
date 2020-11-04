@@ -496,7 +496,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
                 'account_creation_password' => $password,
-                'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
                 'brand' => 'drumeo',
             ]
@@ -556,7 +555,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
                 'account_creation_password' => $password,
-                'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
                 'brand' => 'drumeo',
             ]
@@ -663,7 +661,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'account_creation_email' => $email,
             'account_creation_password' => $accountCreationPassword,
-            'account_creation_password_confirmation' => $accountCreationPassword,
         ];
 
         $response = $this->call(
@@ -8142,7 +8139,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'account_creation_email' => $accountCreationMail,
             'account_creation_password' => $accountCreationPassword,
-            'account_creation_password_confirmation' => $accountCreationPassword,
         ];
 
         $this->expectsEvents(

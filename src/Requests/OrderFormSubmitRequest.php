@@ -192,7 +192,7 @@ class OrderFormSubmitRequest extends FormRequest
                         config('ecommerce.database_info_for_unique_user_email_validation.table') .
                         ',' .
                         config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
-                    'account_creation_password' => 'required_with:account_creation_email|confirmed|min:8|max:128',
+                    'account_creation_password' => 'required_with:account_creation_email|min:8|max:128',
                 ];
             }
         }

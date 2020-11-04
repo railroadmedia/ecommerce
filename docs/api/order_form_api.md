@@ -124,7 +124,6 @@ Submit the order with whatever is currently in the cart.
 |body|billing_email|yes if 'account_creation_email' not set|||**can only use this for non-digital items**|
 |body|account_creation_email|yes if the order has digital items or 'billing_email' is not set||||
 |body|account_creation_password|yes if the order has digital items or 'billing_email' is not set||||
-|body|account_creation_password_confirmation|yes if the order has digital items or 'billing_email' is not set||||
 |body|user_id|||you must pass this in all cases if you want to place orders for another user|'place-orders-for-other-users' permission is required to place orders for other users|
 |body|product_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
 |body|shipping_taxes_due_override| | | |'place-orders-for-other-users' permission is required to override amounts|
@@ -153,8 +152,7 @@ $.ajax({
         shipping_country: "Canada",
         currency: "CAD",
         account_creation_email: "reilly.fahey@emard.com",
-        account_creation_password: "`riMe8x37Q{L",
-        account_creation_password_confirmation: "`riMe8x37Q{L"
+        account_creation_password: "`riMe8x37Q{L"
     },
     success: function(response) {},
     error: function(response) {}
@@ -183,7 +181,6 @@ $.ajax({
         currency: "CAD",
         account_creation_email: "reilly.fahey@emard.com",
         account_creation_password: "`riMe8x37Q{L",
-        account_creation_password_confirmation: "`riMe8x37Q{L",
         product_taxes_due_override: 130,
         shipping_taxes_due_override: 15,
         shipping_due_override: 31,
@@ -351,7 +348,6 @@ $.ajax({
         currency: "CAD",
         account_creation_email: "reilly.fahey@emard.com",
         account_creation_password: "`riMe8x37Q{L",
-        account_creation_password_confirmation: "`riMe8x37Q{L",
         product_taxes_due_override: 0,
         shipping_taxes_due_override: 0,
         shipping_due_override: 0,
