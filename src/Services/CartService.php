@@ -266,6 +266,24 @@ class CartService
     }
 
     /**
+     * @return bool
+     *
+     * @throws ORMException
+     */
+    public function hasAnyPhysicalProducts()
+    {
+        $products = $this->productRepository->byCart($this->getCart());
+
+        foreach ($products as $product) {
+            if (in_array($product->getType(), [Product::TYPE_PHYSICAL_ONE_TIME])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Returns the total cart items cost with discounts applied
      *
      * @return float
@@ -754,7 +772,9 @@ class CartService
         $paymentPlanOptions = [];
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
-        if ($orderDue > config('ecommerce.payment_plan_minimum_price')) {
+        if ($orderDue > config('ecommerce.payment_plan_minimum_price') &&
+            !$this->hasAnyRecurringSubscriptionProducts() &&
+            !$this->hasAnyPhysicalProducts()) {
 
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
                 $orderDueForPlan = $orderDue;

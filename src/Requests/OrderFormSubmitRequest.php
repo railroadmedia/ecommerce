@@ -125,7 +125,10 @@ class OrderFormSubmitRequest extends FormRequest
             'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
         ];
 
-        if (!$this->cartService->hasAnyRecurringSubscriptionProducts()) {
+        if (!$this->cartService->hasAnyRecurringSubscriptionProducts() &&
+            !$this->cartService->hasAnyPhysicalProducts() &&
+            $this->cartService->getDueForOrder() > config('ecommerce.payment_plan_minimum_price')) {
+
             $rules['payment_plan_number_of_payments'] =
                 'integer|in:' . implode(',', config('ecommerce.payment_plan_options'));
         }

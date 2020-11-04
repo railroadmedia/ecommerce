@@ -417,20 +417,6 @@ class CartControllerTest extends EcommerceTestCase
                     'product_taxes' => 0,
                     'shipping_taxes' => 0,
                 ],
-                'payment_plan_options' => [
-                    [
-                        "value" => 1,
-                        "label" => "1 payment of $295.98",
-                    ],
-                    [
-                        "value" => 2,
-                        "label" => "2 payments of $148.49 ($1.00 finance charge)",
-                    ],
-                    [
-                        "value" => 5,
-                        "label" => "5 payments of $59.4 ($1.00 finance charge)",
-                    ]
-                ],
             ]
         );
 
@@ -683,20 +669,6 @@ class CartControllerTest extends EcommerceTestCase
                     'No product with SKU ' . $randomSku1 . ' was found.',
                     'No product with SKU ' . $randomSku2 .  ' was found.',
                 ],
-                'payment_plan_options' => [
-                    [
-                        "value" => 1,
-                        "label" => "1 payment of $26.9",
-                    ],
-                    [
-                        "value" => 2,
-                        "label" => "2 payments of $13.95 ($1.00 finance charge)",
-                    ],
-                    [
-                        "value" => 5,
-                        "label" => "5 payments of $5.58 ($1.00 finance charge)",
-                    ]
-                ],
             ]
         );
 
@@ -855,20 +827,6 @@ class CartControllerTest extends EcommerceTestCase
                     'shipping_before_override' => 0.0,
                     'product_taxes' => 0.0,
                     'shipping_taxes' => 0.0,
-                ],
-                'payment_plan_options' => [
-                    [
-                        "value" => 1,
-                        "label" => "1 payment of $176.75",
-                    ],
-                    [
-                        "value" => 2,
-                        "label" => "2 payments of $88.88 ($1.00 finance charge)",
-                    ],
-                    [
-                        "value" => 5,
-                        "label" => "5 payments of $35.55 ($1.00 finance charge)",
-                    ]
                 ],
             ]
         );
