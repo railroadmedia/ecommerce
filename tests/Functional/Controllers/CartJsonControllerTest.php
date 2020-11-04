@@ -26,6 +26,8 @@ class CartJsonControllerTest extends EcommerceTestCase
         parent::setUp();
 
         $this->session = $this->app->make(Store::class);
+
+        $this->addRecommendedProducts();
     }
 
     public function test_index()

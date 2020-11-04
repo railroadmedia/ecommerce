@@ -376,6 +376,9 @@ class EcommerceTestCase extends BaseTestCase
             ]
         ]);
 
+        $app['config']->set('ecommerce.recommended_products_count', $defaultConfig['recommended_products_count']);
+        $app['config']->set('ecommerce.recommended_products_skus', $defaultConfig['recommended_products_skus']);
+
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth
@@ -1148,5 +1151,22 @@ class EcommerceTestCase extends BaseTestCase
                 print_r($actualIncludes, true)
             );
         }
+    }
+
+    protected function addRecommendedProducts()
+    {
+        $brand = config('ecommerce.brand');
+        $skus = config('ecommerce.recommended_products_skus')[$brand];
+
+        $products = [];
+
+        foreach ($skus as $sku) {
+            $products[] = $this->fakeProduct([
+                'sku' => $sku,
+                'active' => 1,
+            ]);
+        }
+
+        return $products;
     }
 }

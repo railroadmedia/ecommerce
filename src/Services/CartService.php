@@ -57,6 +57,8 @@ class CartService
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
 
+    const DEFAULT_RECOMMENDED_PRODUCTS_COUNT = 3;
+
     /**
      * CartService constructor.
      *
@@ -709,47 +711,24 @@ class CartService
                 continue;
             }
 
-            $items[] = [
-                'sku' => $product->getSku(),
-                'name' => $product->getName(),
-                'quantity' => $cartItem->getQuantity(),
-                'thumbnail_url' => $product->getThumbnailUrl(),
-                'description' => $product->getDescription(),
-                'stock' => $product->getStock(),
-                'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    $product->getSubscriptionIntervalType() : null,
-                'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    $product->getSubscriptionIntervalCount() : null,
-                'subscription_renewal_price' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    round(
-                        ($product->getPrice() * $cartItem->getQuantity()) -
-                        $this->discountService->getSubscriptionItemDiscountedRenewalAmount(
-                            $this->cart,
-                            $product,
-                            $totalItemCostDue,
-                            $shippingDue
-                        ),
-                        2
-                    ) : null,
-                'price_before_discounts' => round($product->getPrice() * $cartItem->getQuantity(), 2),
-                'price_after_discounts' => max(
-                    round(
-                        ($product->getPrice() * $cartItem->getQuantity()) -
-                        $this->discountService->getItemDiscountedAmount(
-                            $this->cart,
-                            $product,
-                            $totalItemCostDue,
-                            $shippingDue
-                        ),
-                        2
-                    ),
-                    0
-                ),
-                'requires_shipping' => $product->getIsPhysical(),
-                'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                    $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
-            ];
+            $items[] = $this->getCartItemData($product, $cartItem->getQuantity(), $totalItemCostDue, $shippingDue);
         }
+
+        $recommendedProductsSkus = $this->getRecommendedProductsSkus();
+        $recommendedProductsBySku = $this->productRepository->bySkus($recommendedProductsSkus);
+        $recommendedProductsBySku = key_array_of_entities_by($recommendedProductsBySku, 'getSku');
+        $recommendedProducts = [];
+
+        foreach ($recommendedProductsSkus as $sku) {
+            $product = $recommendedProductsBySku[$sku];
+
+            if (empty($product)) {
+                continue;
+            }
+
+            $recommendedProducts[] = $this->getCartItemData($product, 1, $totalItemCostDue, $shippingDue);
+        }
+        
 
         $paymentPlanOptions = [];
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
@@ -788,6 +767,7 @@ class CartService
 
         return [
             'items' => $items,
+            'recommendedProducts' => $recommendedProducts,
             'discounts' => $discounts,
             'shipping_address' => $shippingAddress,
             'billing_address' => $billingAddress,
@@ -795,6 +775,81 @@ class CartService
             'payment_plan_options' => $paymentPlanOptions,
             'locked' => $this->cart->getLocked(),
             'totals' => $totals,
+        ];
+    }
+
+    public function getRecommendedProductsSkus()
+    {
+        $cartSkusMap = [];
+
+        foreach ($this->cart->getItems() as $cartItem) {
+            $cartSkusMap[$cartItem->getSku()] = true;
+        }
+
+        $count = config('ecommerce.recommended_products_count') ?? self::DEFAULT_RECOMMENDED_PRODUCTS_COUNT;
+        $brand = config('ecommerce.brand');
+        $configSkus = config('ecommerce.recommended_products_skus');
+
+        $result = [];
+
+        foreach ($configSkus[$brand] as $sku) {
+
+            if (!$count) {
+                break;
+            }
+
+            if (isset($cartSkusMap[$sku])) {
+                continue;
+            }
+
+            $result[] = $sku;
+            $count--;
+        }
+
+        return $result;
+    }
+
+    public function getCartItemData(Product $product, $quantity, $totalItemCostDue, $shippingDue)
+    {
+        return [
+            'sku' => $product->getSku(),
+            'name' => $product->getName(),
+            'quantity' => $quantity,
+            'thumbnail_url' => $product->getThumbnailUrl(),
+            'description' => $product->getDescription(),
+            'stock' => $product->getStock(),
+            'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                $product->getSubscriptionIntervalType() : null,
+            'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                $product->getSubscriptionIntervalCount() : null,
+            'subscription_renewal_price' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                round(
+                    ($product->getPrice() * $quantity) -
+                    $this->discountService->getSubscriptionItemDiscountedRenewalAmount(
+                        $this->cart,
+                        $product,
+                        $totalItemCostDue,
+                        $shippingDue
+                    ),
+                    2
+                ) : null,
+            'price_before_discounts' => round($product->getPrice() * $quantity, 2),
+            'price_after_discounts' => max(
+                round(
+                    ($product->getPrice() * $quantity) -
+                    $this->discountService->getItemDiscountedAmount(
+                        $this->cart,
+                        $product,
+                        $totalItemCostDue,
+                        $shippingDue
+                    ),
+                    2
+                ),
+                0
+            ),
+            'requires_shipping' => $product->getIsPhysical(),
+            'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
         ];
     }
 }

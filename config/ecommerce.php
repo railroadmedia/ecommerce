@@ -208,6 +208,19 @@ return [
             ],
         ],
     ],
+
+    'recommended_products_count' => 3,
+
+    'recommended_products_skus' => [
+        'drumeo' => [
+            '2017-Black-Hoodie-L',
+            '3001C-crew-minimalist-shirt-grey-L',
+            'Drumeo-VaterSticks',
+            'stick-bag',
+            'quietpad'
+        ],
+    ],
+
 //
 //    //the countries and the region names should be lowercase
 //    'product_tax_rate' => [

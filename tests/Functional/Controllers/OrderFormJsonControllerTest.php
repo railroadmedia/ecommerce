@@ -9817,6 +9817,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_prepare_order_form()
     {
+        $this->addRecommendedProducts();
         $userId = $this->createAndLogInNewUser();
 
         $currency = $this->getCurrency();
