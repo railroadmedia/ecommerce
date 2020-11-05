@@ -525,5 +525,7 @@ return [
     'subscription_renewal_date' => 90, // todo - to be removed
     'failed_payments_before_de_activation' => 1,
 
-    'trial_days_number' => 7
+    'trial_days_number' => 7,
+
+    'password_creation_rules' => 'confirmed|min:8|max:128', // also defined in usora
 ];

@@ -181,13 +181,6 @@ class OrderFormSubmitRequest extends FormRequest
                 ];
             }
             else {
-                /*
-                 * password validation rules exist in four locations:
-                 * 1. account creation, by user: \Railroad\Ecommerce\Requests\OrderFormSubmitRequest::rules
-                 * 2. password change, by user: \Railroad\Usora\Controllers\PasswordController::update
-                 * 3. reset forgotten password, by user: \Railroad\Usora\Controllers\ResetPasswordController::reset
-                 * 4. reset user's password, by staff: \Railroad\Usora\Requests\UserJsonUpdateRequest::rules
-                 */
                 $rules += [
                     'account_creation_email' => 'required_without:billing_email|email|unique:' .
                         config('ecommerce.database_info_for_unique_user_email_validation.database_connection_name') .
@@ -195,7 +188,8 @@ class OrderFormSubmitRequest extends FormRequest
                         config('ecommerce.database_info_for_unique_user_email_validation.table') .
                         ',' .
                         config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
-                    'account_creation_password' => 'required_with:account_creation_email|confirmed|min:8|max:128',
+                    'account_creation_password' => 'required_with:account_creation_email|' .
+                        config('ecommerce.password_creation_rules', 'confirmed|min:8|max:128'),
                 ];
             }
         }
