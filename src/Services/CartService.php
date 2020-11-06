@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -51,6 +52,16 @@ class CartService
      */
     private $locationService;
 
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -67,13 +78,17 @@ class CartService
      * @param TaxService $taxService
      * @param ShippingService $shippingService
      * @param LocationService $locationService
+     * @param UserProductService $userProductService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         DiscountService $discountService,
         ProductRepository $productRepository,
         TaxService $taxService,
         ShippingService $shippingService,
-        LocationService $locationService
+        LocationService $locationService,
+        UserProductService $userProductService,
+        UserProviderInterface $userProvider
     )
     {
         $this->discountService = $discountService;
@@ -81,6 +96,8 @@ class CartService
         $this->taxService = $taxService;
         $this->shippingService = $shippingService;
         $this->locationService = $locationService;
+        $this->userProductService = $userProductService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -790,6 +807,19 @@ class CartService
         $brand = config('ecommerce.brand');
         $configSkus = config('ecommerce.recommended_products_skus');
 
+        $userProductsSkusMap = [];
+
+        $currentUserId = $this->userProvider->getCurrentUserId();
+
+        if ($currentUserId) {
+            $userProducts = $this->userProductService->getAllUsersProducts($currentUserId);
+
+            foreach ($userProducts as $userProduct) {
+                $product = $userProduct->getProduct();
+                $userProductsSkusMap[$product->getSku()] = true;
+            }
+        }
+
         $result = [];
 
         foreach ($configSkus[$brand] as $sku) {
@@ -798,7 +828,7 @@ class CartService
                 break;
             }
 
-            if (isset($cartSkusMap[$sku])) {
+            if (isset($cartSkusMap[$sku]) || isset($userProductsSkusMap[$sku])) {
                 continue;
             }
 
