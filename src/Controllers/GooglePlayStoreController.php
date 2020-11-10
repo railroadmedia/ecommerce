@@ -80,7 +80,7 @@ class GooglePlayStoreController extends Controller
 
         $this->jsonApiHydrator->hydrate($receipt, $request->onlyAllowed());
 
-        $receipt->setPassword($request->input('data.attributes.password'));
+        $receipt->setPassword($request->input('data.attributes.password',''));
         $receipt->setPurchaseType($request->input('data.attributes.purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE));
 
         $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
