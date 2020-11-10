@@ -34,9 +34,7 @@ class GoogleReceiptRequest extends FormRequest
             'data.type' => 'in:googleReceipt',
             'data.attributes.package_name' => 'required',
             'data.attributes.product_id' => 'required',
-            'data.attributes.purchase_token' => 'required|unique:' .
-                config('ecommerce.database_connection_name') .
-                '.ecommerce_google_receipts,purchase_token',
+            'data.attributes.purchase_token' => 'required'
         ];
 
         if (!auth()->user()) {
