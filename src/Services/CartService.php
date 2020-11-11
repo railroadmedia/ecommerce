@@ -731,21 +731,31 @@ class CartService
             $items[] = $this->getCartItemData($product, $cartItem->getQuantity(), $totalItemCostDue, $shippingDue);
         }
 
-        $recommendedProductsSkus = $this->getRecommendedProductsSkus();
-        $recommendedProductsBySku = $this->productRepository->bySkus($recommendedProductsSkus);
-        $recommendedProductsBySku = key_array_of_entities_by($recommendedProductsBySku, 'getSku');
+        $recommendedProductsData = $this->getRecommendedProductsData();
         $recommendedProducts = [];
 
-        foreach ($recommendedProductsSkus as $sku) {
-            $product = $recommendedProductsBySku[$sku];
+        if (!empty($recommendedProductsData)) {
+            $recommendedProductsBySku = $this->productRepository->bySkus(array_keys($recommendedProductsData));
+            $recommendedProductsBySku = key_array_of_entities_by($recommendedProductsBySku, 'getSku');
 
-            if (empty($product)) {
-                continue;
+            foreach ($recommendedProductsData as $sku => $recommendedProductData) {
+                $product = $recommendedProductsBySku[$sku];
+
+                if (empty($product)) {
+                    continue;
+                }
+
+                $recommendedProducts[] = $this->getCartItemData(
+                    $product,
+                    1,
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $recommendedProductData['name_override'],
+                    $recommendedProductData['product_page_url'],
+                    $recommendedProductData['add_directly_to_cart'],
+                );
             }
-
-            $recommendedProducts[] = $this->getCartItemData($product, 1, $totalItemCostDue, $shippingDue);
         }
-        
 
         $paymentPlanOptions = [];
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
@@ -795,8 +805,25 @@ class CartService
         ];
     }
 
-    public function getRecommendedProductsSkus()
+    /**
+     * Returns recommended products data for current cart
+     *
+     * @return array
+     */
+    public function getRecommendedProductsData()
     {
+        /*
+        // return format
+        [
+            'sku_string' => [
+                'name_override' => string|null
+                'product_page_url' => string,
+                'add_directly_to_cart' => bool,
+            ],
+            ...
+        ]
+        */
+
         $cartSkusMap = [];
 
         foreach ($this->cart->getItems() as $cartItem) {
@@ -805,7 +832,7 @@ class CartService
 
         $count = config('ecommerce.recommended_products_count') ?? self::DEFAULT_RECOMMENDED_PRODUCTS_COUNT;
         $brand = config('ecommerce.brand');
-        $configSkus = config('ecommerce.recommended_products_skus');
+        $configSkus = config('ecommerce.recommended_products');
 
         $userProductsSkusMap = [];
 
@@ -822,7 +849,9 @@ class CartService
 
         $result = [];
 
-        foreach ($configSkus[$brand] as $sku) {
+        foreach ($configSkus[$brand] as $recommendedProductData) {
+
+            $sku = $recommendedProductData['sku'];
 
             if (!$count) {
                 break;
@@ -832,16 +861,62 @@ class CartService
                 continue;
             }
 
-            $result[] = $sku;
+            if (
+                isset($recommendedProductData['excluded_skus'])
+                && is_array($recommendedProductData['excluded_skus'])
+                && !empty($recommendedProductData['excluded_skus'])
+            ) {
+                $isExcluded = false;
+
+                foreach ($recommendedProductData['excluded_skus'] as $excludedSku) {
+                    if (isset($cartSkusMap[$excludedSku]) || isset($userProductsSkusMap[$excludedSku])) {
+                        $isExcluded = true;
+                        break;
+                    }
+                }
+
+                if ($isExcluded) {
+                    continue;
+                }
+            }
+
+            $result[$sku] = [
+                'name_override' => isset($recommendedProductData['name_override']) ?
+                                    $recommendedProductData['name_override'] : null,
+                'product_page_url' => $recommendedProductData['product_page_url'],
+                'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
+                                    $recommendedProductData['add_directly_to_cart'] : true,
+            ];
+
             $count--;
         }
 
         return $result;
     }
 
-    public function getCartItemData(Product $product, $quantity, $totalItemCostDue, $shippingDue)
-    {
-        return [
+    /**
+     * Returns cart item array serialization
+     *
+     * @param Product $product
+     * @param int $quantity
+     * @param float $totalItemCostDue
+     * @param float $shippingDue
+     * @param string|null $nameOverride
+     * @param string|null $productPageUrl
+     * @param bool|null $addDirectlyToCart
+     *
+     * @return array
+     */
+    public function getCartItemData(
+        Product $product,
+        $quantity,
+        $totalItemCostDue,
+        $shippingDue,
+        $nameOverride = null,
+        $productPageUrl = null,
+        $addDirectlyToCart = null
+    ) {
+        $serialization = [
             'sku' => $product->getSku(),
             'name' => $product->getName(),
             'quantity' => $quantity,
@@ -881,5 +956,19 @@ class CartService
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
                 $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
         ];
+
+        if ($nameOverride !== null) {
+            $serialization['name'] = $nameOverride;
+        }
+
+        if ($productPageUrl !== null) {
+            $serialization['product_page_url'] = $productPageUrl;
+        }
+
+        if ($addDirectlyToCart !== null) {
+            $serialization['add_directly_to_cart'] = $addDirectlyToCart;
+        }
+
+        return $serialization;
     }
 }

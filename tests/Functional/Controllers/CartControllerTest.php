@@ -64,6 +64,94 @@ class CartControllerTest extends EcommerceTestCase
 
         $totalDue = $product['price'] * $initialQuantity;
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         $expected = [
             'items' => [
                 [
@@ -83,63 +171,9 @@ class CartControllerTest extends EcommerceTestCase
                 ]
             ],
             'recommendedProducts' => [
-                [
-                    'sku' => $recommendedProducts[0]['sku'],
-                    'name' => $recommendedProducts[0]['name'],
-                    'quantity' => 1,
-                    'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                    'description' => $recommendedProducts[0]['description'],
-                    'stock' => $recommendedProducts[0]['stock'],
-                    'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[0]['subscription_interval_type'] : null,
-                    'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[0]['subscription_interval_count'] : null,
-                    'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[0]['price'] : null,
-                    'price_before_discounts' => $recommendedProducts[0]['price'],
-                    'price_after_discounts' => $recommendedProducts[0]['price'],
-                    'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                    'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                        $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                ],
-                [
-                    'sku' => $recommendedProducts[1]['sku'],
-                    'name' => $recommendedProducts[1]['name'],
-                    'quantity' => 1,
-                    'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                    'description' => $recommendedProducts[1]['description'],
-                    'stock' => $recommendedProducts[1]['stock'],
-                    'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[1]['subscription_interval_type'] : null,
-                    'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[1]['subscription_interval_count'] : null,
-                    'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[1]['price'] : null,
-                    'price_before_discounts' => $recommendedProducts[1]['price'],
-                    'price_after_discounts' => $recommendedProducts[1]['price'],
-                    'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                    'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                        $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                ],
-                [
-                    'sku' => $recommendedProducts[2]['sku'],
-                    'name' => $recommendedProducts[2]['name'],
-                    'quantity' => 1,
-                    'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                    'description' => $recommendedProducts[2]['description'],
-                    'stock' => $recommendedProducts[2]['stock'],
-                    'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[2]['subscription_interval_type'] : null,
-                    'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[2]['subscription_interval_count'] : null,
-                    'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                        $recommendedProducts[2]['price'] : null,
-                    'price_before_discounts' => $recommendedProducts[2]['price'],
-                    'price_after_discounts' => $recommendedProducts[2]['price'],
-                    'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                    'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                        $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                ]
+                $recommendedProductOne,
+                $recommendedProductTwo,
+                $recommendedProductThree,
             ],
             'discounts' => [],
             'shipping_address' => null,
@@ -238,6 +272,94 @@ class CartControllerTest extends EcommerceTestCase
             'products' => [$product['sku'] => $quantity],
         ]);
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the empty cart structure & error message
         $response->assertSessionHas(
             'cart',
@@ -260,63 +382,9 @@ class CartControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
@@ -391,69 +459,103 @@ class CartControllerTest extends EcommerceTestCase
             'products' => [$randomSku => 10],
         ]);
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the empty cart structure & error message
         $response->assertSessionHas(
             'cart',
             [
                 'items' => [],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
@@ -546,6 +648,94 @@ class CartControllerTest extends EcommerceTestCase
 
         $totalDue = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the cart structure
         $response->assertSessionHas(
             'cart',
@@ -583,63 +773,9 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                 ],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
@@ -740,6 +876,94 @@ class CartControllerTest extends EcommerceTestCase
             'products' => [$product['sku'] => $quantity],
         ]);
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the empty cart structure & error message
         $response->assertSessionHas(
             'cart',
@@ -762,63 +986,9 @@ class CartControllerTest extends EcommerceTestCase
                     ]
                 ],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
@@ -930,6 +1100,94 @@ class CartControllerTest extends EcommerceTestCase
 
         $totalDue = $productOne['price'] * $productOneQuantity + $productTwo['price'] * $productTwoQuantity;
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the cart structure
         $response->assertSessionHas(
             'cart',
@@ -967,63 +1225,9 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                 ],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,
@@ -1177,6 +1381,94 @@ class CartControllerTest extends EcommerceTestCase
 
         $totalDue = $productTwo['price'] * $productTwoQuantity + $productThree['price'] * $productThreeQuantity;
 
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
         // assert the session has the expected cart structure with number of payments = 1 and expected totalDue
         $response->assertSessionHas(
             'cart',
@@ -1214,63 +1506,9 @@ class CartControllerTest extends EcommerceTestCase
                     ],
                 ],
                 'recommendedProducts' => [
-                    [
-                        'sku' => $recommendedProducts[0]['sku'],
-                        'name' => $recommendedProducts[0]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
-                        'description' => $recommendedProducts[0]['description'],
-                        'stock' => $recommendedProducts[0]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[0]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[0]['price'],
-                        'price_after_discounts' => $recommendedProducts[0]['price'],
-                        'requires_shipping' => $recommendedProducts[0]['is_physical'],
-                        'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[1]['sku'],
-                        'name' => $recommendedProducts[1]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
-                        'description' => $recommendedProducts[1]['description'],
-                        'stock' => $recommendedProducts[1]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[1]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[1]['price'],
-                        'price_after_discounts' => $recommendedProducts[1]['price'],
-                        'requires_shipping' => $recommendedProducts[1]['is_physical'],
-                        'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ],
-                    [
-                        'sku' => $recommendedProducts[2]['sku'],
-                        'name' => $recommendedProducts[2]['name'],
-                        'quantity' => 1,
-                        'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
-                        'description' => $recommendedProducts[2]['description'],
-                        'stock' => $recommendedProducts[2]['stock'],
-                        'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_type'] : null,
-                        'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['subscription_interval_count'] : null,
-                        'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                            $recommendedProducts[2]['price'] : null,
-                        'price_before_discounts' => $recommendedProducts[2]['price'],
-                        'price_after_discounts' => $recommendedProducts[2]['price'],
-                        'requires_shipping' => $recommendedProducts[2]['is_physical'],
-                        'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                            $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
-                    ]
+                    $recommendedProductOne,
+                    $recommendedProductTwo,
+                    $recommendedProductThree,
                 ],
                 'discounts' => [],
                 'shipping_address' => null,

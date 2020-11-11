@@ -211,13 +211,111 @@ return [
 
     'recommended_products_count' => 3,
 
-    'recommended_products_skus' => [
+    'recommended_products' => [
         'drumeo' => [
-            '2017-Black-Hoodie-L',
-            '3001C-crew-minimalist-shirt-grey-L',
-            'Drumeo-VaterSticks',
-            'stick-bag',
-            'quietpad'
+            [
+                'sku' => 'DLM-Trial-1-month',
+                'product_page_url' => 'https://www.drumeo.com/trial/',
+                'name_override' => 'Drumeo Edge 7-Day Trial',
+                'excluded_skus' => [
+                    'DLM-1-month',
+                    'DLM-1-year',
+                    'DLM-Trial-1-month',
+                    'DLM-6-month',
+                    'DLM-teachers-1-year',
+                    'DLM-teachers-upgrade-1-month',
+                    'DLM-teachers-upgrade-1-year',
+                    'DLM-3-month',
+                    'DLM-UPSELL-2-month',
+                    'DLM-Trial-Best-Book-1-month',
+                    'edge-membership-6-months',
+                    'DLM-Trial-Drummers-Toolbox-1-month',
+                    'DLM-Lifetime',
+                    'drumeo_edge_30_days_access',
+                    'DLM-Trial-30-Day',
+                ],
+            ],
+            [
+                'sku' => 'quietpad',
+                'product_page_url' => 'https://www.drumeo.com/drumshop/quietpad/',
+            ],
+            [
+                'sku' => 'Drumeo-VaterSticks',
+                'product_page_url' => 'https://www.drumeo.com/drumshop/drumsticks/',
+            ],
+            [
+                'sku' => 'the-drummers-toolbox-book',
+                'product_page_url' => 'https://www.drumeo.com/drumshop/the-drummers-toolbox/',
+            ],
+            [
+                'sku' => 'BeginnerBook',
+                'product_page_url' => 'https://www.drumeo.com/drumshop/beginner-book/',
+            ],
+            [
+                'sku' => 'tone-control-kit',
+                'product_page_url' => 'https://www.drumeo.com/drumshop/tone-control-kit/',
+            ],
+        ],
+        'pianote' => [
+            [
+                'sku' => 'PIANOTE-MEMBERSHIP-TRIAL',
+                'product_page_url' => 'https://www.pianote.com/trial/',
+                'name_override' => 'Pianote 7-Day Trial',
+                'excluded_skus' => [
+                    'PIANOTE-MEMBERSHIP-1-MONTH',
+                    'PIANOTE-MEMBERSHIP-1-YEAR',
+                    'PIANOTE-MEMBERSHIP-LIFETIME',
+                    'PIANOTE-MEMBERSHIP-LIFETIME-EXISTING-MEMBERS',
+                    '1-DOLLAR',
+                    'PIANOTE-MEMBERSHIP-6-MONTH',
+                    'PIANOTE-MEMBERSHIP-TRIAL',
+                    'PIANOTE-MEMBERSHIP-TRIAL-30-DAY',
+                ],
+            ],
+            [
+                'sku' => 'pianote-foundation',
+                'product_page_url' => 'https://www.pianote.com/foundations',
+            ],
+            [
+                'sku' => 'Sweatshirt-Hooded-Black-S',
+                'product_page_url' => 'https://www.pianote.com/shop/hoodie-iconic',
+                'name_override' => 'Iconic Pianote Hoodie',
+                'excluded_skus' => [
+                    'Sweatshirt-Hooded-Black-S',
+                    'Sweatshirt-Hooded-Black-M',
+                    'Sweatshirt-Hooded-Black-L',
+                    'Sweatshirt-Hooded-Black-XL',
+                    'Sweatshirt-Hooded-Black-XXL',
+                    'Sweatshirt-Hooded-Black-XXXL',
+                ],
+                'add_directly_to_cart' => false,
+            ],
+            [
+                'sku' => '2019-TSHIRT-S',
+                'product_page_url' => 'https://www.pianote.com/shop/shirt-iconic',
+                'name_override' => 'Iconic Pianote T-Shirt',
+                'excluded_skus' => [
+                    '2019-TSHIRT-S',
+                    '2019-TSHIRT-M',
+                    '2019-TSHIRT-L',
+                    '2019-TSHIRT-XL',
+                    '2019-TSHIRT-XXL',
+                ],
+                'add_directly_to_cart' => false,
+            ],
+            [
+                'sku' => 'Tshirt-Floral-Black-XS',
+                'product_page_url' => 'https://www.pianote.com/shop/shirt-floral',
+                'name_override' => "Women's Floral Shirt",
+                'excluded_skus' => [
+                    'Tshirt-Floral-Black-XS',
+                    'Tshirt-Floral-Black-S',
+                    'Tshirt-Floral-Black-L',
+                    'Tshirt-Floral-Black-M',
+                    'Tshirt-Floral-Black-XL',
+                ],
+                'add_directly_to_cart' => false,
+            ],
         ],
     ],
 
