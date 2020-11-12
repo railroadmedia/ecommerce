@@ -62,6 +62,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -91,6 +95,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -118,6 +126,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         $this->session->flush();
@@ -287,6 +299,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         // second recommented product is 3rd from the list
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[2]['sku'],
@@ -317,6 +333,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[2]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[2]['cta'];
+        }
+
         // third recommented product is 4th from the list
         $recommendedProductThree = [
             'sku' => $recommendedProducts[3]['sku'],
@@ -345,6 +365,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[3]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
         }
 
         $cartService = $this->app->make(CartService::class);
@@ -618,6 +642,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -645,6 +673,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[1]['product_page_url'])) {
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
         }
 
         // third recommented product is 4th from the list, because 3rd was added in cart
@@ -675,6 +707,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[3]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
         }
 
         // response asserts
@@ -821,6 +857,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         // second recommented product is 3rd from the list, because 1st was excluded
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[2]['sku'],
@@ -851,6 +891,10 @@ class CartJsonControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[2]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[2]['cta'];
+        }
+
         // third recommented product is 4th from the list, because 1st was excluded
         $recommendedProductThree = [
             'sku' => $recommendedProducts[3]['sku'],
@@ -879,6 +923,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[3]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
         }
 
         // response asserts

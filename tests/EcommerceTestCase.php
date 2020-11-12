@@ -1219,6 +1219,10 @@ class EcommerceTestCase extends BaseTestCase
                 $product['product_page_url'] = $recommendedProductData['product_page_url'];
             }
 
+            if (isset($recommendedProductData['cta'])) {
+                $product['cta'] = $recommendedProductData['cta'];
+            }
+
             if (isset($recommendedProductData['add_directly_to_cart'])) {
                 $product['add_directly_to_cart'] = $recommendedProductData['add_directly_to_cart'];
             }

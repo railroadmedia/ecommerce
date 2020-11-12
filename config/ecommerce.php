@@ -215,7 +215,7 @@ return [
         'drumeo' => [
             [
                 'sku' => 'DLM-Trial-1-month',
-                'product_page_url' => 'https://www.drumeo.com/trial/',
+                'product_page_url' => '/trial/',
                 'name_override' => 'Drumeo Edge 7-Day Trial',
                 'excluded_skus' => [
                     'DLM-1-month',
@@ -234,32 +234,33 @@ return [
                     'drumeo_edge_30_days_access',
                     'DLM-Trial-30-Day',
                 ],
+                'cta' => '7 Days Free, Then $29/mo',
             ],
             [
                 'sku' => 'quietpad',
-                'product_page_url' => 'https://www.drumeo.com/drumshop/quietpad/',
+                'product_page_url' => '/drumshop/quietpad/',
             ],
             [
                 'sku' => 'Drumeo-VaterSticks',
-                'product_page_url' => 'https://www.drumeo.com/drumshop/drumsticks/',
+                'product_page_url' => '/drumshop/drumsticks/',
             ],
             [
                 'sku' => 'the-drummers-toolbox-book',
-                'product_page_url' => 'https://www.drumeo.com/drumshop/the-drummers-toolbox/',
+                'product_page_url' => '/drumshop/the-drummers-toolbox/',
             ],
             [
                 'sku' => 'BeginnerBook',
-                'product_page_url' => 'https://www.drumeo.com/drumshop/beginner-book/',
+                'product_page_url' => '/drumshop/beginner-book/',
             ],
             [
                 'sku' => 'tone-control-kit',
-                'product_page_url' => 'https://www.drumeo.com/drumshop/tone-control-kit/',
+                'product_page_url' => '/drumshop/tone-control-kit/',
             ],
         ],
         'pianote' => [
             [
                 'sku' => 'PIANOTE-MEMBERSHIP-TRIAL',
-                'product_page_url' => 'https://www.pianote.com/trial/',
+                'product_page_url' => '/trial/',
                 'name_override' => 'Pianote 7-Day Trial',
                 'excluded_skus' => [
                     'PIANOTE-MEMBERSHIP-1-MONTH',
@@ -271,14 +272,15 @@ return [
                     'PIANOTE-MEMBERSHIP-TRIAL',
                     'PIANOTE-MEMBERSHIP-TRIAL-30-DAY',
                 ],
+                'cta' => '7 Days Free, Then $29/mo',
             ],
             [
                 'sku' => 'pianote-foundation',
-                'product_page_url' => 'https://www.pianote.com/foundations',
+                'product_page_url' => '/foundations',
             ],
             [
                 'sku' => 'Sweatshirt-Hooded-Black-S',
-                'product_page_url' => 'https://www.pianote.com/shop/hoodie-iconic',
+                'product_page_url' => '/shop/hoodie-iconic',
                 'name_override' => 'Iconic Pianote Hoodie',
                 'excluded_skus' => [
                     'Sweatshirt-Hooded-Black-S',
@@ -288,11 +290,12 @@ return [
                     'Sweatshirt-Hooded-Black-XXL',
                     'Sweatshirt-Hooded-Black-XXXL',
                 ],
+                'cta' => 'See Details',
                 'add_directly_to_cart' => false,
             ],
             [
                 'sku' => '2019-TSHIRT-S',
-                'product_page_url' => 'https://www.pianote.com/shop/shirt-iconic',
+                'product_page_url' => '/shop/shirt-iconic',
                 'name_override' => 'Iconic Pianote T-Shirt',
                 'excluded_skus' => [
                     '2019-TSHIRT-S',
@@ -301,11 +304,12 @@ return [
                     '2019-TSHIRT-XL',
                     '2019-TSHIRT-XXL',
                 ],
+                'cta' => 'See Details',
                 'add_directly_to_cart' => false,
             ],
             [
                 'sku' => 'Tshirt-Floral-Black-XS',
-                'product_page_url' => 'https://www.pianote.com/shop/shirt-floral',
+                'product_page_url' => '/shop/shirt-floral',
                 'name_override' => "Women's Floral Shirt",
                 'excluded_skus' => [
                     'Tshirt-Floral-Black-XS',
@@ -314,6 +318,7 @@ return [
                     'Tshirt-Floral-Black-M',
                     'Tshirt-Floral-Black-XL',
                 ],
+                'cta' => 'See Details',
                 'add_directly_to_cart' => false,
             ],
         ],

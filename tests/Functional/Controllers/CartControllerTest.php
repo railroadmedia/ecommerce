@@ -94,6 +94,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -123,6 +127,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -150,6 +158,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         $expected = [
@@ -302,6 +314,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -331,6 +347,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -358,6 +378,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the empty cart structure & error message
@@ -489,6 +513,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -518,6 +546,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -545,6 +577,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the empty cart structure & error message
@@ -678,6 +714,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -707,6 +747,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -734,6 +778,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the cart structure
@@ -906,6 +954,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -935,6 +987,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -962,6 +1018,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the empty cart structure & error message
@@ -1130,6 +1190,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -1159,6 +1223,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -1186,6 +1254,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the cart structure
@@ -1411,6 +1483,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
         $recommendedProductTwo = [
             'sku' => $recommendedProducts[1]['sku'],
             'name' => $recommendedProducts[1]['name'],
@@ -1440,6 +1516,10 @@ class CartControllerTest extends EcommerceTestCase
             $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
         }
 
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
         $recommendedProductThree = [
             'sku' => $recommendedProducts[2]['sku'],
             'name' => $recommendedProducts[2]['name'],
@@ -1467,6 +1547,10 @@ class CartControllerTest extends EcommerceTestCase
 
         if (isset($recommendedProducts[2]['product_page_url'])) {
             $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
         }
 
         // assert the session has the expected cart structure with number of payments = 1 and expected totalDue
