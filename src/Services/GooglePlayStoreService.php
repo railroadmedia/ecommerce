@@ -630,9 +630,9 @@ class GooglePlayStoreService
                 ->andWhere('gr.email is not null')
                 ->setParameter('token', $purchase['purchase_token'])
                 ->orderBy('gr.id', 'desc')
-                ->getQuery()->getFirstResult();
+                ->getQuery()->getResult();
 
-            if (!$googleReceipt) {
+            if (!($googleReceipt)) {
                 //check if purchases product is membership
                 if (array_key_exists(
                     $purchase['product_id'],
@@ -668,19 +668,18 @@ class GooglePlayStoreService
 
                     $receiptUser = $this->processReceipt($receipt);
                 }
-
-                continue;
-            }
-
-            $receiptUser = $this->userProvider->getUserByEmail($googleReceipt->getEmail());
-
-            if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
-
-                $shouldLogin = true;
-
             } else {
-                //sync
-                $this->processReceipt($googleReceipt);
+
+                $receiptUser = $this->userProvider->getUserByEmail($googleReceipt[0]->getEmail());
+
+                if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+
+                    $shouldLogin = true;
+
+                } else {
+                    //sync
+                    $this->processReceipt($googleReceipt[0]);
+                }
             }
         }
 
