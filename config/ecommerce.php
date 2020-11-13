@@ -307,7 +307,8 @@ return [
     // payment plans
     'financing_cost_per_order' => 1,
     'payment_plan_options' => [1, 2, 5],
-    'payment_plan_minimum_price' => 20,
+    'payment_plan_minimum_price_with_physical_items' => 250,
+    'payment_plan_minimum_price_without_physical_items' => 1,
 
     // gateways
     'default_gateway' => 'drumeo',

@@ -514,7 +514,8 @@ class CartService
 
         // Customers can only finance the order item price, product taxes, and finance.
         // All shipping costs and shipping taxes must be paid on the first payment.
-        $initialPaymentAmount = round($costPerPaymentAfterTaxes + $financeDuePerPayment +
+        $initialPaymentAmount = round(
+            $costPerPaymentAfterTaxes + $financeDuePerPayment +
             $shippingDue +
             $shippingTaxDue,
             2
@@ -550,14 +551,15 @@ class CartService
     public function getDueForPaymentPlanPayments(
         $taxRate,
         $numberOfPaymentsOverride = null
-    ) {
+    )
+    {
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
         $totalItemCostPerPayment = round($totalItemCostDue / $numberOfPayments, 2);
         $taxPerPayment = round($totalItemCostPerPayment * $taxRate, 2);
         $financePerPayment = ($numberOfPayments > 1) ?
-                                config('ecommerce.financing_cost_per_order', 1) /  $numberOfPayments : 0;
+            config('ecommerce.financing_cost_per_order', 1) / $numberOfPayments : 0;
 
         return max(
             0,
@@ -635,6 +637,28 @@ class CartService
     public function refreshCart()
     {
         $this->cart = Cart::fromSession();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentPlanEligible()
+    {
+        $orderDue = $this->getDueForOrder();
+
+        if (!$this->hasAnyRecurringSubscriptionProducts() &&
+            $this->hasAnyPhysicalProducts() &&
+            $orderDue > config('ecommerce.payment_plan_minimum_price_with_physical_items', 100)) {
+            return true;
+        }
+
+        if (!$this->hasAnyRecurringSubscriptionProducts() &&
+            !$this->hasAnyPhysicalProducts() &&
+            $orderDue > config('ecommerce.payment_plan_minimum_price_without_physical_items', 100)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -772,9 +796,7 @@ class CartService
         $paymentPlanOptions = [];
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
-        if ($orderDue > config('ecommerce.payment_plan_minimum_price') &&
-            !$this->hasAnyRecurringSubscriptionProducts() &&
-            !$this->hasAnyPhysicalProducts()) {
+        if ($this->isPaymentPlanEligible()) {
 
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
                 $orderDueForPlan = $orderDue;
