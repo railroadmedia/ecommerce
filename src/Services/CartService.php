@@ -236,7 +236,7 @@ class CartService
 
         $due = $this->getDueForOrder();
 
-        if ($due < config('ecommerce.payment_plan_minimum_price') ||
+        if (!$this->isPaymentPlanEligible() ||
             !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
 
             throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
