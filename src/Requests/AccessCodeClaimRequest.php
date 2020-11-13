@@ -68,7 +68,7 @@ class AccessCodeClaimRequest extends FormRequest
                 config('ecommerce.database_info_for_unique_user_email_validation.table') .
                 ',' .
                 config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
-            'password' => 'required_if:credentials_type,new|confirmed',
+            'password' => 'required_if:credentials_type,new|' . config('ecommerce.password_creation_rules', 'confirmed|min:8|max:128'),
             'context' => 'string|nullable',
         ];
     }

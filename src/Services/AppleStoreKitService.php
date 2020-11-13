@@ -454,7 +454,10 @@ class AppleStoreKitService
 
         if ($syncAll) {
             foreach ($allPurchasedItems as $item) {
-                if ($item->getExpiresDate() > Carbon::now() || is_null($item->getExpiresDate())) {
+                if ($item->getExpiresDate() >  Carbon::now()
+                        ->subDays(
+                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                        ) || is_null($item->getExpiresDate())) {
                     $allActivePurchasedItems[] = $item;
                 }
             }

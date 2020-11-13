@@ -423,7 +423,8 @@ return [
     // payment plans
     'financing_cost_per_order' => 1,
     'payment_plan_options' => [1, 2, 5],
-    'payment_plan_minimum_price' => 20,
+    'payment_plan_minimum_price_with_physical_items' => 250,
+    'payment_plan_minimum_price_without_physical_items' => 1,
 
     // gateways
     'default_gateway' => 'drumeo',
@@ -641,5 +642,7 @@ return [
     'subscription_renewal_date' => 90, // todo - to be removed
     'failed_payments_before_de_activation' => 1,
 
-    'trial_days_number' => 7
+    'trial_days_number' => 7,
+
+    'password_creation_rules' => 'confirmed|min:8|max:128', // also defined in usora
 ];
