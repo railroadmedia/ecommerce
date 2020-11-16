@@ -191,13 +191,23 @@ class OrderFormService
             } // use their existing payment method if they chose one
             elseif (!empty($cart->getPaymentMethodId())) {
 
-                $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
-                    $cart->getPaymentMethodId(),
-                    $cart->getCurrency(),
-                    $paymentAmountInBaseCurrency,
-                    $purchaser->getId(),
-                    Payment::TYPE_INITIAL_ORDER
-                );
+                if ($purchaser->getType() == Purchaser::USER_TYPE) {
+                    $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
+                        $cart->getPaymentMethodId(),
+                        $cart->getCurrency(),
+                        $paymentAmountInBaseCurrency,
+                        $purchaser->getId(),
+                        Payment::TYPE_INITIAL_ORDER
+                    );
+                } elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
+                    $payment = $this->paymentService->chargeCustomersExistingPaymentMethod(
+                        $cart->getPaymentMethodId(),
+                        $cart->getCurrency(),
+                        $paymentAmountInBaseCurrency,
+                        $purchaser->getId(),
+                        Payment::TYPE_INITIAL_ORDER
+                    );
+                }
 
                 $paymentMethod = $payment->getPaymentMethod();
             } // otherwise make a new payment method

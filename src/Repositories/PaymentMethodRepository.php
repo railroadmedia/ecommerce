@@ -6,6 +6,7 @@ use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Customer;
+use Railroad\Ecommerce\Entities\CustomerPaymentMethods;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\UserPaymentMethods;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -82,6 +83,41 @@ class PaymentMethodRepository extends RepositoryBase
             ->andWhere('pmj.id = pm.id')
             ->andWhere('pm.id = :paymentMethodId')
             ->setParameter('userId', $userId)
+            ->setParameter('paymentMethodId', $paymentMethodId);
+
+        return $qb->getQuery()
+            ->useResultCache($this->arrayCache)
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @param $customerId
+     * @param $paymentMethodId
+     *
+     * @return PaymentMethod|null
+     *
+     * @throws ORMException
+     */
+    public function getCustomersPaymentMethodById($customerId, $paymentMethodId)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select(['pm', 'cc', 'ppba'])
+            ->from(PaymentMethod::class, 'pm')
+            ->join(
+                CustomerPaymentMethods::class,
+                'cpm',
+                Join::WITH,
+                $qb->expr()
+                    ->eq(1, 1)
+            )
+            ->join('cpm.paymentMethod', 'pmj')
+            ->leftJoin('pm.creditCard', 'cc')
+            ->leftJoin('pm.paypalBillingAgreement', 'ppba')
+            ->where('cpm.customer = :customerId')
+            ->andWhere('pmj.id = pm.id')
+            ->andWhere('pm.id = :paymentMethodId')
+            ->setParameter('customerId', $customerId)
             ->setParameter('paymentMethodId', $paymentMethodId);
 
         return $qb->getQuery()

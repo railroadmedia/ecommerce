@@ -13,6 +13,7 @@ use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Repositories\AddressRepository;
+use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ShippingService;
 use Railroad\Permissions\Services\PermissionService;
@@ -48,6 +49,10 @@ class OrderFormSubmitRequest extends FormRequest
      * @var AddressRepository
      */
     private $addressRepository;
+    /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
 
     /**
      * OrderFormSubmitRequest constructor.
@@ -56,13 +61,15 @@ class OrderFormSubmitRequest extends FormRequest
      * @param PermissionService $permissionService
      * @param UserProviderInterface $userProvider
      * @param AddressRepository $addressRepository
+     * @param CustomerRepository $customerRepository
      */
     public function __construct(
         CartService $cartService,
         ShippingService $shippingService,
         PermissionService $permissionService,
         UserProviderInterface $userProvider,
-        AddressRepository $addressRepository
+        AddressRepository $addressRepository,
+        CustomerRepository $customerRepository
     )
     {
         parent::__construct();
@@ -74,6 +81,7 @@ class OrderFormSubmitRequest extends FormRequest
         $this->cartService->refreshCart();
         $this->userProvider = $userProvider;
         $this->addressRepository = $addressRepository;
+        $this->customerRepository = $customerRepository;
     }
 
     /**
@@ -175,6 +183,14 @@ class OrderFormSubmitRequest extends FormRequest
                 !empty($this->get('billing_email'))) {
                 $rules += [
                     'billing_email' => 'required_without:account_creation_email|email',
+                ];
+            }
+            elseif (!$this->shippingService->doesCartHaveAnyDigitalItems($this->cartService->getCart()) &&
+                $this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+                empty($this->get('account_creation_email')) &&
+                !empty($this->get('customer_id'))) {
+                $rules += [
+                    'customer_id' => 'required_without:billing_email|integer',
                 ];
             }
             else {
@@ -377,7 +393,7 @@ class OrderFormSubmitRequest extends FormRequest
         }
 
         // an existing user
-        if (auth()->check()) {
+        if (auth()->check() && empty($this->get('customer_id'))) {
             $user = $this->userProvider->getCurrentUser();
 
             $purchaser->setId($user->getId());
@@ -396,8 +412,21 @@ class OrderFormSubmitRequest extends FormRequest
             return $purchaser;
         }
 
+        // existing customer (requires permissions)
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+            !empty($this->get('customer_id')) &&
+            !empty($existingCustomer = $this->customerRepository->find($this->get('customer_id')))) {
+
+            $purchaser->setCustomerEntity($existingCustomer);
+            $purchaser->setEmail($existingCustomer->getEmail());
+            $purchaser->setId($existingCustomer->getId());
+            $purchaser->setType(Purchaser::CUSTOMER_TYPE);
+
+            return $purchaser;
+        }
+
         // guest customer
-        if (!empty($this->get('billing_email'))) {
+        elseif (!empty($this->get('billing_email'))) {
             $purchaser->setEmail($this->get('billing_email'));
             $purchaser->setType(Purchaser::CUSTOMER_TYPE);
 

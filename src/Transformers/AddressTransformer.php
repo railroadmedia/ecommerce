@@ -7,6 +7,7 @@ use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Order;
 
 class AddressTransformer extends TransformerAbstract
 {
@@ -73,11 +74,15 @@ class AddressTransformer extends TransformerAbstract
     /**
      * @param Address $address
      *
-     * @return Item
+     * @return Item|null
      */
     public function includeCustomer(Address $address)
     {
-        if ($address->getCustomer() instanceof Proxy) {
+        if (empty($address->getCustomer())) {
+            return null;
+        }
+
+        if ($address->getCustomer() instanceof Proxy && !$address->getCustomer()->__isInitialized()) {
             return $this->item(
                 $address->getCustomer(),
                 new EntityReferenceTransformer(),
