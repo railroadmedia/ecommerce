@@ -238,6 +238,20 @@ class Faker extends Generator
         );
     }
 
+    public function customerPaymentMethod(array $override = [])
+    {
+        return array_merge(
+            [
+                'customer_id' => $this->randomNumber(),
+                'payment_method_id' => $this->randomNumber(),
+                'is_primary' => $this->boolean,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
     public function paypalBillingAgreement(array $override = [])
     {
         return array_merge(
