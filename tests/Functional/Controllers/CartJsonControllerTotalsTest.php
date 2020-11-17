@@ -156,6 +156,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'name' => $product['name'],
                 'quantity' => $initialQuantity,
                 'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
                 'description' => $product['description'],
                 'stock' => $product['stock'],
                 'subscription_interval_type' => $product['subscription_interval_type'],

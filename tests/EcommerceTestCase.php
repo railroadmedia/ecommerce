@@ -1216,8 +1216,8 @@ class EcommerceTestCase extends BaseTestCase
                 $product['name_override'] = $recommendedProductData['name_override'];
             }
 
-            if (isset($recommendedProductData['product_page_url'])) {
-                $product['product_page_url'] = $recommendedProductData['product_page_url'];
+            if (isset($recommendedProductData['sales_page_url_override'])) {
+                $product['sales_page_url'] = $recommendedProductData['sales_page_url_override'];
             }
 
             if (isset($recommendedProductData['cta'])) {

@@ -793,7 +793,7 @@ class CartService
                     $totalItemCostDue,
                     $shippingDue,
                     $recommendedProductData['name_override'],
-                    $recommendedProductData['product_page_url'],
+                    $recommendedProductData['sales_page_url_override'],
                     $recommendedProductData['add_directly_to_cart'],
                     $recommendedProductData['cta']
                 );
@@ -860,7 +860,7 @@ class CartService
         [
             'sku_string' => [
                 'name_override' => string|null
-                'product_page_url' => string,
+                'sales_page_url_override' => string,
                 'add_directly_to_cart' => bool,
                 'cta' => string|null
             ],
@@ -940,7 +940,8 @@ class CartService
             $result[$sku] = [
                 'name_override' => isset($recommendedProductData['name_override']) ?
                                     $recommendedProductData['name_override'] : null,
-                'product_page_url' => $recommendedProductData['product_page_url'],
+                'sales_page_url_override' => isset($recommendedProductData['sales_page_url_override']) ?
+                                    $recommendedProductData['sales_page_url_override'] : null,
                 'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
                                     $recommendedProductData['add_directly_to_cart'] : true,
                 'cta' => isset($recommendedProductData['cta']) ?
@@ -961,7 +962,7 @@ class CartService
      * @param float $totalItemCostDue
      * @param float $shippingDue
      * @param string|null $nameOverride
-     * @param string|null $productPageUrl
+     * @param string|null $salePageUrlOverride
      * @param bool|null $addDirectlyToCart
      *
      * @return array
@@ -972,7 +973,7 @@ class CartService
         $totalItemCostDue,
         $shippingDue,
         $nameOverride = null,
-        $productPageUrl = null,
+        $salePageUrlOverride = null,
         $addDirectlyToCart = null,
         $callToActionLabel = null
     ) {
@@ -981,6 +982,7 @@ class CartService
             'name' => $product->getName(),
             'quantity' => $quantity,
             'thumbnail_url' => $product->getThumbnailUrl(),
+            'sales_page_url' => $product->getSalesPageUrl(),
             'description' => $product->getDescription(),
             'stock' => $product->getStock(),
             'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1021,8 +1023,8 @@ class CartService
             $serialization['name'] = $nameOverride;
         }
 
-        if ($productPageUrl !== null) {
-            $serialization['product_page_url'] = $productPageUrl;
+        if ($salePageUrlOverride !== null) {
+            $serialization['sales_page_url'] = $salePageUrlOverride;
         }
 
         if ($addDirectlyToCart !== null) {

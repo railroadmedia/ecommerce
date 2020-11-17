@@ -215,7 +215,6 @@ return [
         'drumeo' => [
             [
                 'sku' => 'DLM-Trial-1-month',
-                'product_page_url' => '/trial/',
                 'name_override' => 'Drumeo Edge 7-Day Trial',
                 'excluded_skus' => [
                     'DLM-1-month',
@@ -238,29 +237,23 @@ return [
             ],
             [
                 'sku' => 'quietpad',
-                'product_page_url' => '/drumshop/quietpad/',
             ],
             [
                 'sku' => 'Drumeo-VaterSticks',
-                'product_page_url' => '/drumshop/drumsticks/',
             ],
             [
                 'sku' => 'the-drummers-toolbox-book',
-                'product_page_url' => '/drumshop/the-drummers-toolbox/',
             ],
             [
                 'sku' => 'BeginnerBook',
-                'product_page_url' => '/drumshop/beginner-book/',
             ],
             [
                 'sku' => 'tone-control-kit',
-                'product_page_url' => '/drumshop/tone-control-kit/',
             ],
         ],
         'pianote' => [
             [
                 'sku' => 'PIANOTE-MEMBERSHIP-TRIAL',
-                'product_page_url' => '/trial/',
                 'name_override' => 'Pianote 7-Day Trial',
                 'excluded_skus' => [
                     'PIANOTE-MEMBERSHIP-1-MONTH',
@@ -276,11 +269,9 @@ return [
             ],
             [
                 'sku' => 'pianote-foundation',
-                'product_page_url' => '/foundations',
             ],
             [
                 'sku' => 'Sweatshirt-Hooded-Black-S',
-                'product_page_url' => '/shop/hoodie-iconic',
                 'name_override' => 'Iconic Pianote Hoodie',
                 'excluded_skus' => [
                     'Sweatshirt-Hooded-Black-S',
@@ -295,7 +286,6 @@ return [
             ],
             [
                 'sku' => '2019-TSHIRT-S',
-                'product_page_url' => '/shop/shirt-iconic',
                 'name_override' => 'Iconic Pianote T-Shirt',
                 'excluded_skus' => [
                     '2019-TSHIRT-S',
@@ -309,7 +299,6 @@ return [
             ],
             [
                 'sku' => 'Tshirt-Floral-Black-XS',
-                'product_page_url' => '/shop/shirt-floral',
                 'name_override' => "Women's Floral Shirt",
                 'excluded_skus' => [
                     'Tshirt-Floral-Black-XS',

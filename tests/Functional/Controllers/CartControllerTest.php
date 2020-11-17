@@ -69,6 +69,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -103,6 +104,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -136,6 +138,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -171,6 +174,7 @@ class CartControllerTest extends EcommerceTestCase
                     'name' => $product['name'],
                     'quantity' => $initialQuantity,
                     'thumbnail_url' => $product['thumbnail_url'],
+                    'sales_page_url' => $product['sales_page_url'],
                     'description' => $product['description'],
                     'stock' => $product['stock'],
                     'subscription_interval_type' => $product['subscription_interval_type'],
@@ -289,6 +293,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -323,6 +328,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -356,6 +362,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -394,6 +401,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $product['name'],
                         'quantity' => $quantity,
                         'thumbnail_url' => $product['thumbnail_url'],
+                        'sales_page_url' => $product['sales_page_url'],
                         'description' => $product['description'],
                         'stock' => $product['stock'],
                         'subscription_interval_type' => $product['subscription_interval_type'],
@@ -488,6 +496,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -522,6 +531,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -555,6 +565,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -689,6 +700,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -723,6 +735,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -756,6 +769,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -794,6 +808,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productOne['name'],
                         'quantity' => $productOneQuantity,
                         'thumbnail_url' => $productOne['thumbnail_url'],
+                        'sales_page_url' => $productOne['sales_page_url'],
                         'description' => $productOne['description'],
                         'stock' => $productOne['stock'],
                         'subscription_interval_type' => $productOne['subscription_interval_type'],
@@ -809,6 +824,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productTwo['name'],
                         'quantity' => $productTwoQuantity,
                         'thumbnail_url' => $productTwo['thumbnail_url'],
+                        'sales_page_url' => $productTwo['sales_page_url'],
                         'description' => $productTwo['description'],
                         'stock' => $productTwo['stock'],
                         'subscription_interval_type' => $productTwo['subscription_interval_type'],
@@ -916,6 +932,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -950,6 +967,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -983,6 +1001,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1021,6 +1040,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $product['name'],
                         'quantity' => $quantity,
                         'thumbnail_url' => $product['thumbnail_url'],
+                        'sales_page_url' => $product['sales_page_url'],
                         'description' => $product['description'],
                         'stock' => $product['stock'],
                         'subscription_interval_type' => $product['subscription_interval_type'],
@@ -1152,6 +1172,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1186,6 +1207,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1219,6 +1241,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1257,6 +1280,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productOne['name'],
                         'quantity' => $productOneQuantity,
                         'thumbnail_url' => $productOne['thumbnail_url'],
+                        'sales_page_url' => $productOne['sales_page_url'],
                         'description' => $productOne['description'],
                         'stock' => $productOne['stock'],
                         'subscription_interval_type' => $productOne['subscription_interval_type'],
@@ -1272,6 +1296,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productTwo['name'],
                         'quantity' => $productTwoQuantity,
                         'thumbnail_url' => $productTwo['thumbnail_url'],
+                        'sales_page_url' => $productTwo['sales_page_url'],
                         'description' => $productTwo['description'],
                         'stock' => $productTwo['stock'],
                         'subscription_interval_type' => $productTwo['subscription_interval_type'],
@@ -1432,6 +1457,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[0]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1466,6 +1492,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[1]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1499,6 +1526,7 @@ class CartControllerTest extends EcommerceTestCase
             'name' => $recommendedProducts[2]['name'],
             'quantity' => 1,
             'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
@@ -1537,6 +1565,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productTwo['name'],
                         'quantity' => $productTwoQuantity,
                         'thumbnail_url' => $productTwo['thumbnail_url'],
+                        'sales_page_url' => $productTwo['sales_page_url'],
                         'description' => $productTwo['description'],
                         'stock' => $productTwo['stock'],
                         'subscription_interval_type' => $productTwo['subscription_interval_type'],
@@ -1552,6 +1581,7 @@ class CartControllerTest extends EcommerceTestCase
                         'name' => $productThree['name'],
                         'quantity' => $productThreeQuantity,
                         'thumbnail_url' => $productThree['thumbnail_url'],
+                        'sales_page_url' => $productThree['sales_page_url'],
                         'description' => $productThree['description'],
                         'stock' => $productThree['stock'],
                         'subscription_interval_type' => $productThree['subscription_interval_type'],
