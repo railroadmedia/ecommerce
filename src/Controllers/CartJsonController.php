@@ -82,6 +82,8 @@ class CartJsonController extends Controller
 
         $cartArray = $this->cartService->toArray();
 
+        session()->put('bonuses', []);
+
         return ResponseService::cart($cartArray)
             ->respond(200);
     }
@@ -151,6 +153,8 @@ class CartJsonController extends Controller
     public function removeCartItem(string $productSku)
     {
         $errors = [];
+
+        session()->put('bonuses', []);
 
         try {
             $this->cartService->removeFromCart($productSku);

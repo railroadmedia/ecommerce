@@ -133,6 +133,8 @@ class CartService
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
             $this->cart->toSession();
+
+            session()->put('bonuses', []);
         }
 
         // promo code
@@ -835,9 +837,12 @@ class CartService
             }
         }
 
+        $bonuses = session()->get('bonuses', []);
+
         return [
             'items' => $items,
             'recommendedProducts' => $recommendedProducts,
+            'bonuses' => $bonuses,
             'discounts' => $discounts,
             'shipping_address' => $shippingAddress,
             'billing_address' => $billingAddress,
