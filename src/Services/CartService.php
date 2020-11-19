@@ -881,7 +881,7 @@ class CartService
 
         $count = config('ecommerce.recommended_products_count') ?? self::DEFAULT_RECOMMENDED_PRODUCTS_COUNT;
         $brand = config('ecommerce.brand');
-        $configProductsData = config('ecommerce.recommended_products');
+        $configProductsData = config('ecommerce.recommended_products', []);
 
         $userProductsSkusMap = [];
 
@@ -898,7 +898,7 @@ class CartService
 
         $configProductsSkus = [];
 
-        foreach ($configProductsData[$brand] as $recommendedProductData) {
+        foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
             $configProductsSkus[] = $recommendedProductData['sku'];
         }
 
@@ -907,7 +907,7 @@ class CartService
 
         $result = [];
 
-        foreach ($configProductsData[$brand] as $recommendedProductData) {
+        foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
 
             $sku = $recommendedProductData['sku'];
 
