@@ -51,6 +51,7 @@ class Faker extends Generator
                 'category' => $this->word,
                 'description' => $this->text,
                 'thumbnail_url' => $this->imageUrl(),
+                'sales_page_url' => $this->url,
                 'is_physical' => $this->randomElement([0, 1]),
                 'weight' => $this->numberBetween(0, 100),
                 'subscription_interval_type' => $this->randomElement(

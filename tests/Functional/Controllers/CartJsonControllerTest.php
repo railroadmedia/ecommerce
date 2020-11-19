@@ -30,6 +30,111 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_index()
     {
+        $recommendedProducts = $this->addRecommendedProducts();
+
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[2]['cta'];
+        }
+
         $this->session->flush();
 
         $cartService = $this->app->make(CartService::class);
@@ -66,6 +171,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -95,6 +201,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $initialQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -108,6 +215,264 @@ class CartJsonControllerTest extends EcommerceTestCase
             $decodedResponse['meta']['cart']['items'][0]
         );
 
+        // assert recommended products collection type
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection count
+        $this->assertEquals(3, count($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection data
+        $this->assertEquals(
+            [
+                $recommendedProductOne,
+                $recommendedProductTwo,
+                $recommendedProductThree,
+            ],
+            $decodedResponse['meta']['cart']['recommendedProducts']
+        );
+
+        // assert total due
+        $totalDue = $product['price'] * $initialQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(1, count($cart->getItems()));
+
+        // assert cart item
+        $cartItemOne = $cart->getItemBySku($product['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($initialQuantity, $cartItemOne->getQuantity());
+    }
+
+    public function test_index_user_owns_recommended_product()
+    {
+        $recommendedProducts = $this->addRecommendedProducts();
+
+        $this->session->flush();
+
+        $this->permissionServiceMock->method('can')->willReturn(true);
+
+        $userId = $this->createAndLogInNewUser();
+
+        $userProductOne = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $recommendedProducts[1]['id'], // user already purchased 2nd product from the list
+            ]
+        );
+
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
+        // second recommented product is 3rd from the list
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[2]['cta'];
+        }
+
+        // third recommented product is 4th from the list
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[3]['sku'],
+            'name' => $recommendedProducts[3]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[3]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[3]['sales_page_url'],
+            'description' => $recommendedProducts[3]['description'],
+            'stock' => $recommendedProducts[3]['stock'],
+            'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[3]['price'],
+            'price_after_discounts' => $recommendedProducts[3]['price'],
+            'requires_shipping' => $recommendedProducts[3]['is_physical'],
+            'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[3]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[3]['name_override'];
+        }
+
+        if (isset($recommendedProducts[3]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
+        }
+
+        $cartService = $this->app->make(CartService::class);
+
+        $product = $this->fakeProduct([
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+            'weight' => 1,
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(15, 100),
+        ]);
+
+        $initialQuantity = 2;
+
+        $cartService->addToCart(
+            $product['sku'],
+            $initialQuantity,
+            false,
+            ''
+        );
+
+        $response = $this->call('GET', '/json/cart');
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'recommendedProducts',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $product['sku'],
+                'name'                        => $product['name'],
+                'quantity'                    => $initialQuantity,
+                'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
+                'description'                 => $product['description'],
+                'stock'                       => $product['stock'],
+                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'subscription_renewal_price' => null,
+                'price_before_discounts'      => $product['price'] * $initialQuantity,
+                'price_after_discounts'       => $product['price'] * $initialQuantity,
+                'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        // assert recommended products collection type
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection count
+        $this->assertEquals(3, count($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection data
+        $this->assertEquals(
+            [
+                $recommendedProductOne,
+                $recommendedProductTwo,
+                $recommendedProductThree,
+            ],
+            $decodedResponse['meta']['cart']['recommendedProducts']
+        );
+
+        // assert total due
         $totalDue = $product['price'] * $initialQuantity;
 
         // assert total due
@@ -134,6 +499,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -162,6 +529,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -191,6 +559,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $initialQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -228,8 +597,403 @@ class CartJsonControllerTest extends EcommerceTestCase
         $this->assertEquals($initialQuantity, $cartItemOne->getQuantity());
     }
 
+    public function test_add_recommended_product_to_cart()
+    {
+        $this->session->flush();
+
+        $recommendedProductIndex = 2; // 3rd product from the recommended list
+        $recommendedProducts = $this->addRecommendedProducts([
+            $recommendedProductIndex => [
+                'active' => 1,
+                'stock' => $this->faker->numberBetween(15, 100),
+                'is_physical' => true,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        ]);
+
+        $product = $recommendedProducts[$recommendedProductIndex];
+
+        $initialQuantity = 2;
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
+            'products' => [$product['sku'] => $initialQuantity],
+        ]);
+
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[0]['sku'],
+            'name' => $recommendedProducts[0]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[0]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[0]['sales_page_url'],
+            'description' => $recommendedProducts[0]['description'],
+            'stock' => $recommendedProducts[0]['stock'],
+            'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[0]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[0]['price'],
+            'price_after_discounts' => $recommendedProducts[0]['price'],
+            'requires_shipping' => $recommendedProducts[0]['is_physical'],
+            'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+
+        ];
+
+        if (isset($recommendedProducts[0]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[0]['name_override'];
+        }
+
+        if (isset($recommendedProducts[0]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[0]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[0]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[0]['cta'];
+        }
+
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[1]['cta'];
+        }
+
+        // third recommented product is 4th from the list, because 3rd was added in cart
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[3]['sku'],
+            'name' => $recommendedProducts[3]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[3]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[3]['sales_page_url'],
+            'description' => $recommendedProducts[3]['description'],
+            'stock' => $recommendedProducts[3]['stock'],
+            'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[3]['price'],
+            'price_after_discounts' => $recommendedProducts[3]['price'],
+            'requires_shipping' => $recommendedProducts[3]['is_physical'],
+            'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[3]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[3]['name_override'];
+        }
+
+        if (isset($recommendedProducts[3]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
+        }
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(201, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'recommendedProducts',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku'                         => $product['sku'],
+                'name'                        => $product['name'],
+                'quantity'                    => $initialQuantity,
+                'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
+                'description'                 => $product['description'],
+                'stock'                       => $product['stock'],
+                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'subscription_renewal_price' => null,
+                'price_before_discounts'      => $product['price'] * $initialQuantity,
+                'price_after_discounts'       => $product['price'] * $initialQuantity,
+                'requires_shipping'           => true,
+                'is_digital'                  => !$product['is_physical'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        // assert recommended products collection type
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection count
+        $this->assertEquals(3, count($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection data
+        $this->assertEquals(
+            [
+                $recommendedProductOne,
+                $recommendedProductTwo,
+                $recommendedProductThree,
+            ],
+            $decodedResponse['meta']['cart']['recommendedProducts']
+        );
+
+        $totalDue = $product['price'] * $initialQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(1, count($cart->getItems()));
+
+        // assert cart item
+        $cartItemOne = $cart->getItemBySku($product['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($initialQuantity, $cartItemOne->getQuantity());
+    }
+
+    public function test_add_to_cart_exclude_recommended_product()
+    {
+        /*
+            this test asserts that adding a product in cart that is configured in recommended products excluded_skus list, the respective recommended product will no be displayed
+            examples:
+            - if cart recommended products displays a product with variants, such as clothing, if adding any product variant to cart, it will not be displayed in cart recommended products
+            - if cart displays a membership promo, if adding any membership to cart, it will not be displayed in cart recommended products
+        */
+
+        $recommendedProducts = $this->addRecommendedProducts();
+
+        // this test assumes 1st configured recommended product has excluded list, if config is updated, this test should also be updated
+        $this->assertTrue(is_array($recommendedProducts[0]['excluded_skus']));
+
+        $excludeProductSkuAddedToCart = $this->faker->randomElement($recommendedProducts[0]['excluded_skus']);
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
+            'products' => [$excludeProductSkuAddedToCart => 1],
+        ]);
+
+        // first recommented product is 2nd from the list, because 1st was excluded
+        $recommendedProductOne = [
+            'sku' => $recommendedProducts[1]['sku'],
+            'name' => $recommendedProducts[1]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[1]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[1]['sales_page_url'],
+            'description' => $recommendedProducts[1]['description'],
+            'stock' => $recommendedProducts[1]['stock'],
+            'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[1]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[1]['price'],
+            'price_after_discounts' => $recommendedProducts[1]['price'],
+            'requires_shipping' => $recommendedProducts[1]['is_physical'],
+            'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[1]['name_override'])) {
+            $recommendedProductOne['name'] = $recommendedProducts[1]['name_override'];
+        }
+
+        if (isset($recommendedProducts[1]['product_page_url'])) {
+            $recommendedProductOne['product_page_url'] = $recommendedProducts[1]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[1]['cta'])) {
+            $recommendedProductOne['cta'] = $recommendedProducts[1]['cta'];
+        }
+
+        // second recommented product is 3rd from the list, because 1st was excluded
+        $recommendedProductTwo = [
+            'sku' => $recommendedProducts[2]['sku'],
+            'name' => $recommendedProducts[2]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[2]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[2]['sales_page_url'],
+            'description' => $recommendedProducts[2]['description'],
+            'stock' => $recommendedProducts[2]['stock'],
+            'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[2]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[2]['price'],
+            'price_after_discounts' => $recommendedProducts[2]['price'],
+            'requires_shipping' => $recommendedProducts[2]['is_physical'],
+            'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[2]['name_override'])) {
+            $recommendedProductTwo['name'] = $recommendedProducts[2]['name_override'];
+        }
+
+        if (isset($recommendedProducts[2]['product_page_url'])) {
+            $recommendedProductTwo['product_page_url'] = $recommendedProducts[2]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[2]['cta'])) {
+            $recommendedProductTwo['cta'] = $recommendedProducts[2]['cta'];
+        }
+
+        // third recommented product is 4th from the list, because 1st was excluded
+        $recommendedProductThree = [
+            'sku' => $recommendedProducts[3]['sku'],
+            'name' => $recommendedProducts[3]['name'],
+            'quantity' => 1,
+            'thumbnail_url' => $recommendedProducts[3]['thumbnail_url'],
+            'sales_page_url' => $recommendedProducts[3]['sales_page_url'],
+            'description' => $recommendedProducts[3]['description'],
+            'stock' => $recommendedProducts[3]['stock'],
+            'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+            'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+            'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                                                $recommendedProducts[3]['price'] : null,
+            'price_before_discounts' => $recommendedProducts[3]['price'],
+            'price_after_discounts' => $recommendedProducts[3]['price'],
+            'requires_shipping' => $recommendedProducts[3]['is_physical'],
+            'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+            'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+        ];
+
+        if (isset($recommendedProducts[3]['name_override'])) {
+            $recommendedProductThree['name'] = $recommendedProducts[3]['name_override'];
+        }
+
+        if (isset($recommendedProducts[3]['product_page_url'])) {
+            $recommendedProductThree['product_page_url'] = $recommendedProducts[3]['product_page_url'];
+        }
+
+        if (isset($recommendedProducts[3]['cta'])) {
+            $recommendedProductThree['cta'] = $recommendedProducts[3]['cta'];
+        }
+
+        // response asserts
+
+        // assert response status code
+        $this->assertEquals(201, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'recommendedProducts',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ]
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert recommended products collection type
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection count
+        $this->assertEquals(3, count($decodedResponse['meta']['cart']['recommendedProducts']));
+
+        // assert recommended products collection data
+        $this->assertEquals(
+            [
+                $recommendedProductOne,
+                $recommendedProductTwo,
+                $recommendedProductThree,
+            ],
+            $decodedResponse['meta']['cart']['recommendedProducts']
+        );
+    }
+
     public function test_add_product_with_stock_empty_to_cart()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -256,6 +1020,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -293,6 +1058,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_inexistent_product_to_cart()
     {
+        $this->addRecommendedProducts();
+
         $randomSku = $this->faker->word;
 
         $response = $this->call('PUT', '/json/add-to-cart/', [
@@ -308,6 +1075,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -352,6 +1120,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_many_products_to_cart()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $productOne = $this->fakeProduct([
@@ -390,6 +1160,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -419,6 +1190,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productOne['name'],
                 'quantity'                    => $productOneQuantity,
                 'thumbnail_url'               => $productOne['thumbnail_url'],
+                'sales_page_url'              => $productOne['sales_page_url'],
                 'description'                 => $productOne['description'],
                 'stock'                       => $productOne['stock'],
                 'subscription_interval_type'  => $productOne['subscription_interval_type'],
@@ -439,6 +1211,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productTwo['name'],
                 'quantity'                    => $productTwoQuantity,
                 'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'sales_page_url'              => $productTwo['sales_page_url'],
                 'description'                 => $productTwo['description'],
                 'stock'                       => $productTwo['stock'],
                 'subscription_interval_type'  => $productTwo['subscription_interval_type'],
@@ -478,6 +1251,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart_higher_amount_than_product_stock()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -504,6 +1279,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -541,6 +1317,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_products_available_and_not_available_to_cart()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $productOne = $this->fakeProduct([
@@ -585,6 +1363,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -615,6 +1394,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productOne['name'],
                 'quantity'                    => $productOneQuantity,
                 'thumbnail_url'               => $productOne['thumbnail_url'],
+                'sales_page_url'              => $productOne['sales_page_url'],
                 'description'                 => $productOne['description'],
                 'stock'                       => $productOne['stock'],
                 'subscription_interval_type'  => $productOne['subscription_interval_type'],
@@ -635,6 +1415,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productTwo['name'],
                 'quantity'                    => $productTwoQuantity,
                 'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'sales_page_url'              => $productTwo['sales_page_url'],
                 'description'                 => $productTwo['description'],
                 'stock'                       => $productTwo['stock'],
                 'subscription_interval_type'  => $productTwo['subscription_interval_type'],
@@ -689,6 +1470,10 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_remove_cart_item()
     {
+        $this->addRecommendedProducts();
+
+        // todo - make product removed from cart a top recommended product, add asserts for recommended products & product removed is included in the list
+
         $this->session->flush();
 
         $productOne = $this->fakeProduct([
@@ -742,6 +1527,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -771,6 +1557,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productTwo['name'],
                 'quantity'                    => $productTwoQuantity,
                 'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'sales_page_url'              => $productTwo['sales_page_url'],
                 'description'                 => $productTwo['description'],
                 'stock'                       => $productTwo['stock'],
                 'subscription_interval_type'  => $productTwo['subscription_interval_type'],
@@ -810,6 +1597,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_remove_unexiting_cart_item()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -848,6 +1637,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -886,6 +1676,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $productQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -925,6 +1716,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_remove_sole_cart_item()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -961,6 +1754,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1006,6 +1800,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_update_cart_item_quantity()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -1044,6 +1840,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1073,6 +1870,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $newProductQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -1112,6 +1910,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_update_cart_item_quantity_higher_amount_than_product_stock()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -1150,6 +1950,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1188,6 +1989,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $initialProductQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -1227,6 +2029,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_update_cart_item_quantity_inexistent_product()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -1267,6 +2071,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1305,6 +2110,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => $productQuantity,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -1344,6 +2150,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_update_number_of_payments()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -1382,6 +2190,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1423,6 +2232,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_store_address_new()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct(
@@ -1478,6 +2289,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_store_address_existing_id()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct(
@@ -1532,6 +2345,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_store_address_supplement()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct(
@@ -1593,6 +2408,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_store_address_update()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $product = $this->fakeProduct(
@@ -1656,6 +2473,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_update_cart_total_overrides()
     {
+        $this->addRecommendedProducts();
+
         $adminUser = $this->createAndLogInNewUser();
 
         $this->permissionServiceMock->method('can')
@@ -1714,6 +2533,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1755,6 +2575,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_index_subscription_free_trial_days_zero_due_today_order_total()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $cartService = $this->app->make(CartService::class);
@@ -1815,6 +2637,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1844,6 +2667,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $product['name'],
                 'quantity'                    => 1,
                 'thumbnail_url'               => $product['thumbnail_url'],
+                'sales_page_url'              => $product['sales_page_url'],
                 'description'                 => $product['description'],
                 'stock'                       => $product['stock'],
                 'subscription_interval_type'  => $product['subscription_interval_type'],
@@ -1881,6 +2705,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_index_subscription_free_trial_days_and_physical()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $cartService = $this->app->make(CartService::class);
@@ -1963,6 +2789,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -1992,6 +2819,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productOne['name'],
                 'quantity'                    => 1,
                 'thumbnail_url'               => $productOne['thumbnail_url'],
+                'sales_page_url'              => $productOne['sales_page_url'],
                 'description'                 => $productOne['description'],
                 'stock'                       => $productOne['stock'],
                 'subscription_interval_type'  => $productOne['subscription_interval_type'],
@@ -2011,6 +2839,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productTwo['name'],
                 'quantity'                    => $productTwoQuantity,
                 'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'sales_page_url'              => $productTwo['sales_page_url'],
                 'description'                 => $productTwo['description'],
                 'stock'                       => $productTwo['stock'],
                 'subscription_interval_type'  => $productTwo['subscription_interval_type'],
@@ -2057,6 +2886,8 @@ class CartJsonControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart_negative_product_price()
     {
+        $this->addRecommendedProducts();
+
         $this->session->flush();
 
         $productOne = $this->fakeProduct([
@@ -2118,6 +2949,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'meta' => [
                     'cart' => [
                         'items',
+                        'recommendedProducts',
                         'discounts',
                         'shipping_address',
                         'billing_address',
@@ -2147,6 +2979,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productOne['name'],
                 'quantity'                    => $productOneQuantity,
                 'thumbnail_url'               => $productOne['thumbnail_url'],
+                'sales_page_url'              => $productOne['sales_page_url'],
                 'description'                 => $productOne['description'],
                 'stock'                       => $productOne['stock'],
                 'subscription_interval_type'  => $productOne['subscription_interval_type'],
@@ -2166,6 +2999,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'name'                        => $productTwo['name'],
                 'quantity'                    => $productTwoQuantity,
                 'thumbnail_url'               => $productTwo['thumbnail_url'],
+                'sales_page_url'              => $productTwo['sales_page_url'],
                 'description'                 => $productTwo['description'],
                 'stock'                       => $productTwo['stock'],
                 'subscription_interval_type'  => $productTwo['subscription_interval_type'],

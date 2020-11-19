@@ -391,7 +391,7 @@ class DiscountService
 
         $discountedAmount = 0;
 
-        if (!empty($product) && $product->getActive()) {
+        if (!empty($product) && $product->getActive() && !empty($productCartItem)) {
 
             foreach ($activeDiscounts as $discount) {
 

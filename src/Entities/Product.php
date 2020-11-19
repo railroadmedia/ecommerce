@@ -109,6 +109,13 @@ class Product
     protected $thumbnailUrl;
 
     /**
+     * @ORM\Column(type="text", name="sales_page_url", nullable=true)
+     *
+     * @var string
+     */
+    protected $salesPageUrl;
+
+    /**
      * @ORM\Column(type="boolean", name="is_physical")
      *
      * @var bool
@@ -300,6 +307,22 @@ class Product
     public function setThumbnailUrl(?string $thumbnailUrl)
     {
         $this->thumbnailUrl = $thumbnailUrl;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSalesPageUrl(): ?string
+    {
+        return $this->salesPageUrl;
+    }
+
+    /**
+     * @param string $salesPageUrl
+     */
+    public function setSalesPageUrl(?string $salesPageUrl)
+    {
+        $this->salesPageUrl = $salesPageUrl;
     }
 
     /**
