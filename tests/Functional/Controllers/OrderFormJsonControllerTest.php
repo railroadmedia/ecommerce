@@ -484,7 +484,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ''
         );
 
-        $password = $this->faker->word;
+        $password = $this->faker->word . '1251252';
 
         $results = $this->call(
             'PUT',

@@ -227,6 +227,7 @@ class CartControllerTest extends EcommerceTestCase
                     "label" => "5 payments of $37.09 ($1.00 finance charge)",
                 ]
             ],
+            'bonuses' => [],
         ];
 
         // assert the session has the cart structure
@@ -454,6 +455,7 @@ class CartControllerTest extends EcommerceTestCase
                         "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
+                'bonuses' => [],
             ]
         );
 
@@ -629,6 +631,7 @@ class CartControllerTest extends EcommerceTestCase
                 'errors' => [
                     'No product with SKU ' . $randomSku . ' was found.',],
                 'payment_plan_options' => [],
+                'bonuses' => [],
             ]
         );
 
@@ -864,6 +867,7 @@ class CartControllerTest extends EcommerceTestCase
                     'shipping_taxes' => 0,
                 ],
                 'payment_plan_options' => [],
+                'bonuses' => [],
             ]
         );
 
@@ -1093,6 +1097,7 @@ class CartControllerTest extends EcommerceTestCase
                         "label" => "5 payments of $37.09 ($1.00 finance charge)",
                     ]
                 ],
+                'bonuses' => [],
             ]
         );
 
@@ -1340,6 +1345,7 @@ class CartControllerTest extends EcommerceTestCase
                     'No product with SKU ' . $randomSku2 .  ' was found.',
                 ],
                 'payment_plan_options' => [],
+                'bonuses' => [],
             ]
         );
 
@@ -1612,6 +1618,7 @@ class CartControllerTest extends EcommerceTestCase
                     'shipping_taxes' => 0.0,
                 ],
                 'payment_plan_options' => [],
+                'bonuses' => [],
             ]
         );
     }
