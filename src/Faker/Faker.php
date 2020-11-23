@@ -51,6 +51,7 @@ class Faker extends Generator
                 'category' => $this->word,
                 'description' => $this->text,
                 'thumbnail_url' => $this->imageUrl(),
+                'sales_page_url' => $this->url,
                 'is_physical' => $this->randomElement([0, 1]),
                 'weight' => $this->numberBetween(0, 100),
                 'subscription_interval_type' => $this->randomElement(
@@ -229,6 +230,20 @@ class Faker extends Generator
         return array_merge(
             [
                 'user_id' => $this->randomNumber(),
+                'payment_method_id' => $this->randomNumber(),
+                'is_primary' => $this->boolean,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
+    public function customerPaymentMethod(array $override = [])
+    {
+        return array_merge(
+            [
+                'customer_id' => $this->randomNumber(),
                 'payment_method_id' => $this->randomNumber(),
                 'is_primary' => $this->boolean,
                 'created_at' => Carbon::now()

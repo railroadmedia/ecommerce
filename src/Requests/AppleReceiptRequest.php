@@ -30,9 +30,7 @@ class AppleReceiptRequest extends FormRequest
     {
         $rules = [
             'data.type' => 'in:appleReceipt',
-            'data.attributes.receipt' => 'required|unique:' .
-                config('ecommerce.database_connection_name') .
-                '.ecommerce_apple_receipts,receipt',
+            'data.attributes.receipt' => 'required'
         ];
 
         if (!auth()->user()) {

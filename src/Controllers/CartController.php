@@ -108,6 +108,7 @@ class CartController extends Controller
                     'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
                         $product->getSubscriptionIntervalCount() : null,
                     'thumbnail_url' => $product->getThumbnailUrl(),
+                    'sales_page_url' => $product->getSalesPageUrl(),
                 ];
             }
         }

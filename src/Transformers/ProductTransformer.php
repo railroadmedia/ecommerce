@@ -25,6 +25,7 @@ class ProductTransformer extends TransformerAbstract
             'category' => $product->getCategory(),
             'description' => $product->getDescription(),
             'thumbnail_url' => $product->getThumbnailUrl(),
+            'sales_page_url' => $product->getSalesPageUrl(),
             'is_physical' => $product->getIsPhysical(),
             'weight' => $product->getWeight(),
             'subscription_interval_type' => $product->getSubscriptionIntervalType(),

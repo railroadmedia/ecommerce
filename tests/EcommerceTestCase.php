@@ -53,6 +53,7 @@ class EcommerceTestCase extends BaseTestCase
         'userProducts' => 'ecommerce_user_products',
         'paypalBillingAgreements' => 'ecommerce_paypal_billing_agreements',
         'userPaymentMethod' => 'ecommerce_user_payment_methods',
+        'customerPaymentMethod' => 'ecommerce_customer_payment_methods',
         'payments' => 'ecommerce_payments',
         'orderPayments' => 'ecommerce_order_payments',
         'subscriptionPayments' => 'ecommerce_subscription_payments',
@@ -264,8 +265,9 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only',
             $defaultConfig['days_before_access_revoked_after_expiry_in_app_purchases_only']);
         $app['config']->set('ecommerce.days_before_access_revoked_after_expiry', $defaultConfig['days_before_access_revoked_after_expiry']);
-        
-        $app['config']->set('ecommerce.payment_plan_minimum_price', $defaultConfig['payment_plan_minimum_price']);
+
+        $app['config']->set('ecommerce.payment_plan_minimum_price_with_physical_items', $defaultConfig['payment_plan_minimum_price_with_physical_items']);
+        $app['config']->set('ecommerce.payment_plan_minimum_price_without_physical_items', $defaultConfig['payment_plan_minimum_price_without_physical_items']);
         $app['config']->set('ecommerce.payment_plan_options', $defaultConfig['payment_plan_options']);
         $app['config']->set('ecommerce.financing_cost_per_order', $defaultConfig['financing_cost_per_order']);
         $app['config']->set('ecommerce.type_product', $defaultConfig['type_product']);
@@ -376,6 +378,9 @@ class EcommerceTestCase extends BaseTestCase
             ]
         ]);
 
+        $app['config']->set('ecommerce.recommended_products_count', $defaultConfig['recommended_products_count']);
+        $app['config']->set('ecommerce.recommended_products', $defaultConfig['recommended_products']);
+
         $app->register(DoctrineServiceProvider::class);
 
         // allows access to built in user auth
@@ -403,7 +408,7 @@ class EcommerceTestCase extends BaseTestCase
             )
         );
 
-        $this->paymentPlanMinimumPrice = $defaultConfig['payment_plan_minimum_price'];
+        $this->paymentPlanMinimumPrice = $defaultConfig['payment_plan_minimum_price_with_physical_items'];
     }
 
     protected function createUsersTable()
@@ -814,6 +819,24 @@ class EcommerceTestCase extends BaseTestCase
     }
 
     /**
+     * Helper method to seed a test credit card
+     *
+     * @return array
+     */
+    public function fakeCustomerPaymentMethod($customerPaymentMethodStub = []): array
+    {
+        $customerPaymentMethod = $this->faker->customerPaymentMethod($customerPaymentMethodStub);
+
+        $customerPaymentMethodId =
+            $this->databaseManager->table(self::TABLES['customerPaymentMethod'])
+                ->insertGetId($customerPaymentMethod);
+
+        $customerPaymentMethod['id'] = $customerPaymentMethodId;
+
+        return $customerPaymentMethod;
+    }
+
+    /**
      * Helper method to seed a test payment
      *
      * @return array
@@ -1148,5 +1171,86 @@ class EcommerceTestCase extends BaseTestCase
                 print_r($actualIncludes, true)
             );
         }
+    }
+
+    protected function addRecommendedProducts($dataStub = [])
+    {
+        /*
+         to specify seed data for recommended products, $dataStub should contain key/index of recommended product and array value
+        for example, to specify data only for 2nd and 5th products:
+        $dataStub = [
+            1 => [
+                ... // 2nd product data
+            ],
+            4 => [
+                ... // 5th product data
+            ],
+        ];
+        */
+
+        $brand = config('ecommerce.brand');
+        $recommendedProducts = config('ecommerce.recommended_products')[$brand];
+
+        $products = [];
+        $addedSkus = [];
+        $index = 0;
+
+        foreach ($recommendedProducts as $recommendedProductData) {
+            // add config sku & active
+            $productData = [
+                'sku' => $recommendedProductData['sku'],
+                'active' => 1,
+            ];
+
+            // if dataStub is specified for this recommended product, merge it
+            if (isset($dataStub[$index]) && is_array($dataStub[$index])) {
+                $productData += $dataStub[$index];
+            }
+
+            // seed product
+            $product = $this->fakeProduct($productData);
+
+            $addedSkus[$recommendedProductData['sku']] = true;
+
+            if (
+                isset($recommendedProductData['excluded_skus'])
+                && is_array($recommendedProductData['excluded_skus'])
+                && !empty($recommendedProductData['excluded_skus'])
+            ) {
+                // if recommended product can be excluded by other products, such as variants or membership types, seed them
+                foreach ($recommendedProductData['excluded_skus'] as $sku) {
+                    if (!isset($addedSkus[$sku])) {
+                        $this->fakeProduct([
+                            'sku' => $sku,
+                            'active' => 1,
+                        ]);
+                        $addedSkus[$sku] = true;
+                    }
+                }
+                $product['excluded_skus'] = $recommendedProductData['excluded_skus'];
+            }
+
+            // add config recommended product overrides and specific data
+            if (isset($recommendedProductData['name_override'])) {
+                $product['name_override'] = $recommendedProductData['name_override'];
+            }
+
+            if (isset($recommendedProductData['sales_page_url_override'])) {
+                $product['sales_page_url'] = $recommendedProductData['sales_page_url_override'];
+            }
+
+            if (isset($recommendedProductData['cta'])) {
+                $product['cta'] = $recommendedProductData['cta'];
+            }
+
+            if (isset($recommendedProductData['add_directly_to_cart'])) {
+                $product['add_directly_to_cart'] = $recommendedProductData['add_directly_to_cart'];
+            }
+
+            $products[] = $product;
+            $index++;
+        }
+
+        return $products;
     }
 }

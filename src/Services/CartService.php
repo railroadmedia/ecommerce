@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Doctrine\ORM\ORMException;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\OrderDiscount;
 use Railroad\Ecommerce\Entities\OrderItem;
@@ -51,11 +52,23 @@ class CartService
      */
     private $locationService;
 
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
+
+    const DEFAULT_RECOMMENDED_PRODUCTS_COUNT = 3;
 
     /**
      * CartService constructor.
@@ -65,13 +78,17 @@ class CartService
      * @param TaxService $taxService
      * @param ShippingService $shippingService
      * @param LocationService $locationService
+     * @param UserProductService $userProductService
+     * @param UserProviderInterface $userProvider
      */
     public function __construct(
         DiscountService $discountService,
         ProductRepository $productRepository,
         TaxService $taxService,
         ShippingService $shippingService,
-        LocationService $locationService
+        LocationService $locationService,
+        UserProductService $userProductService,
+        UserProviderInterface $userProvider
     )
     {
         $this->discountService = $discountService;
@@ -79,6 +96,8 @@ class CartService
         $this->taxService = $taxService;
         $this->shippingService = $shippingService;
         $this->locationService = $locationService;
+        $this->userProductService = $userProductService;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -114,6 +133,8 @@ class CartService
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
             $this->cart->toSession();
+
+            session()->put('bonuses', []);
         }
 
         // promo code
@@ -236,7 +257,7 @@ class CartService
 
         $due = $this->getDueForOrder();
 
-        if ($due < config('ecommerce.payment_plan_minimum_price') ||
+        if (!$this->isPaymentPlanEligible() ||
             !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
 
             throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
@@ -258,6 +279,24 @@ class CartService
 
         foreach ($products as $product) {
             if (in_array($product->getType(), [Product::TYPE_DIGITAL_SUBSCRIPTION])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return bool
+     *
+     * @throws ORMException
+     */
+    public function hasAnyPhysicalProducts()
+    {
+        $products = $this->productRepository->byCart($this->getCart());
+
+        foreach ($products as $product) {
+            if (in_array($product->getType(), [Product::TYPE_PHYSICAL_ONE_TIME])) {
                 return true;
             }
         }
@@ -496,7 +535,8 @@ class CartService
 
         // Customers can only finance the order item price, product taxes, and finance.
         // All shipping costs and shipping taxes must be paid on the first payment.
-        $initialPaymentAmount = round($costPerPaymentAfterTaxes + $financeDuePerPayment +
+        $initialPaymentAmount = round(
+            $costPerPaymentAfterTaxes + $financeDuePerPayment +
             $shippingDue +
             $shippingTaxDue,
             2
@@ -532,14 +572,15 @@ class CartService
     public function getDueForPaymentPlanPayments(
         $taxRate,
         $numberOfPaymentsOverride = null
-    ) {
+    )
+    {
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
         $totalItemCostPerPayment = round($totalItemCostDue / $numberOfPayments, 2);
         $taxPerPayment = round($totalItemCostPerPayment * $taxRate, 2);
         $financePerPayment = ($numberOfPayments > 1) ?
-                                config('ecommerce.financing_cost_per_order', 1) /  $numberOfPayments : 0;
+            config('ecommerce.financing_cost_per_order', 1) / $numberOfPayments : 0;
 
         return max(
             0,
@@ -617,6 +658,28 @@ class CartService
     public function refreshCart()
     {
         $this->cart = Cart::fromSession();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPaymentPlanEligible()
+    {
+        $orderDue = $this->getDueForOrder();
+
+        if (!$this->hasAnyRecurringSubscriptionProducts() &&
+            $this->hasAnyPhysicalProducts() &&
+            $orderDue > config('ecommerce.payment_plan_minimum_price_with_physical_items', 100)) {
+            return true;
+        }
+
+        if (!$this->hasAnyRecurringSubscriptionProducts() &&
+            !$this->hasAnyPhysicalProducts() &&
+            $orderDue > config('ecommerce.payment_plan_minimum_price_without_physical_items', 100)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -709,52 +772,40 @@ class CartService
                 continue;
             }
 
-            $items[] = [
-                'sku' => $product->getSku(),
-                'name' => $product->getName(),
-                'quantity' => $cartItem->getQuantity(),
-                'thumbnail_url' => $product->getThumbnailUrl(),
-                'description' => $product->getDescription(),
-                'stock' => $product->getStock(),
-                'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    $product->getSubscriptionIntervalType() : null,
-                'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    $product->getSubscriptionIntervalCount() : null,
-                'subscription_renewal_price' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                    round(
-                        ($product->getPrice() * $cartItem->getQuantity()) -
-                        $this->discountService->getSubscriptionItemDiscountedRenewalAmount(
-                            $this->cart,
-                            $product,
-                            $totalItemCostDue,
-                            $shippingDue
-                        ),
-                        2
-                    ) : null,
-                'price_before_discounts' => round($product->getPrice() * $cartItem->getQuantity(), 2),
-                'price_after_discounts' => max(
-                    round(
-                        ($product->getPrice() * $cartItem->getQuantity()) -
-                        $this->discountService->getItemDiscountedAmount(
-                            $this->cart,
-                            $product,
-                            $totalItemCostDue,
-                            $shippingDue
-                        ),
-                        2
-                    ),
-                    0
-                ),
-                'requires_shipping' => $product->getIsPhysical(),
-                'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                    $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
-            ];
+            $items[] = $this->getCartItemData($product, $cartItem->getQuantity(), $totalItemCostDue, $shippingDue);
+        }
+
+        $recommendedProductsData = $this->getRecommendedProductsData();
+        $recommendedProducts = [];
+
+        if (!empty($recommendedProductsData)) {
+            $recommendedProductsBySku = $this->productRepository->bySkus(array_keys($recommendedProductsData));
+            $recommendedProductsBySku = key_array_of_entities_by($recommendedProductsBySku, 'getSku');
+
+            foreach ($recommendedProductsData as $sku => $recommendedProductData) {
+                $product = $recommendedProductsBySku[$sku];
+
+                if (empty($product)) {
+                    continue;
+                }
+
+                $recommendedProducts[] = $this->getCartItemData(
+                    $product,
+                    1,
+                    $totalItemCostDue,
+                    $shippingDue,
+                    $recommendedProductData['name_override'],
+                    $recommendedProductData['sales_page_url_override'],
+                    $recommendedProductData['add_directly_to_cart'],
+                    $recommendedProductData['cta']
+                );
+            }
         }
 
         $paymentPlanOptions = [];
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
-        if ($orderDue > config('ecommerce.payment_plan_minimum_price')) {
+        if ($this->isPaymentPlanEligible()) {
 
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
                 $orderDueForPlan = $orderDue;
@@ -786,8 +837,12 @@ class CartService
             }
         }
 
+        $bonuses = session()->get('bonuses', []);
+
         return [
             'items' => $items,
+            'recommendedProducts' => $recommendedProducts,
+            'bonuses' => $bonuses,
             'discounts' => $discounts,
             'shipping_address' => $shippingAddress,
             'billing_address' => $billingAddress,
@@ -796,5 +851,195 @@ class CartService
             'locked' => $this->cart->getLocked(),
             'totals' => $totals,
         ];
+    }
+
+    /**
+     * Returns recommended products data for current cart
+     *
+     * @return array
+     */
+    public function getRecommendedProductsData()
+    {
+        /*
+        // return format
+        [
+            'sku_string' => [
+                'name_override' => string|null
+                'sales_page_url_override' => string,
+                'add_directly_to_cart' => bool,
+                'cta' => string|null
+            ],
+            ...
+        ]
+        */
+
+        $cartSkusMap = [];
+
+        foreach ($this->cart->getItems() as $cartItem) {
+            $cartSkusMap[$cartItem->getSku()] = true;
+        }
+
+        $count = config('ecommerce.recommended_products_count') ?? self::DEFAULT_RECOMMENDED_PRODUCTS_COUNT;
+        $brand = config('ecommerce.brand');
+        $configProductsData = config('ecommerce.recommended_products', []);
+
+        $userProductsSkusMap = [];
+
+        $currentUserId = $this->userProvider->getCurrentUserId();
+
+        if ($currentUserId) {
+            $userProducts = $this->userProductService->getAllUsersProducts($currentUserId);
+
+            foreach ($userProducts as $userProduct) {
+                $product = $userProduct->getProduct();
+                $userProductsSkusMap[$product->getSku()] = true;
+            }
+        }
+
+        $configProductsSkus = [];
+
+        foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
+            $configProductsSkus[] = $recommendedProductData['sku'];
+        }
+
+        $configProductsMap = $this->productRepository->bySkus(array_keys($configProductsSkus));
+        $configProductsMap = key_array_of_entities_by($configProductsMap, 'getSku');
+
+        $result = [];
+
+        foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
+
+            $sku = $recommendedProductData['sku'];
+
+            if (!$count) {
+                break;
+            }
+
+            if (
+                isset($cartSkusMap[$sku])
+                || isset($userProductsSkusMap[$sku])
+                || (isset($configProductsMap[$sku]) && $configProductsMap[$sku]->getStock() === 0)
+            ) {
+                continue;
+            }
+
+            if (
+                isset($recommendedProductData['excluded_skus'])
+                && is_array($recommendedProductData['excluded_skus'])
+                && !empty($recommendedProductData['excluded_skus'])
+            ) {
+                $isExcluded = false;
+
+                foreach ($recommendedProductData['excluded_skus'] as $excludedSku) {
+                    if (isset($cartSkusMap[$excludedSku]) || isset($userProductsSkusMap[$excludedSku])) {
+                        $isExcluded = true;
+                        break;
+                    }
+                }
+
+                if ($isExcluded) {
+                    continue;
+                }
+            }
+
+            $result[$sku] = [
+                'name_override' => isset($recommendedProductData['name_override']) ?
+                                    $recommendedProductData['name_override'] : null,
+                'sales_page_url_override' => isset($recommendedProductData['sales_page_url_override']) ?
+                                    $recommendedProductData['sales_page_url_override'] : null,
+                'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
+                                    $recommendedProductData['add_directly_to_cart'] : true,
+                'cta' => isset($recommendedProductData['cta']) ?
+                                    $recommendedProductData['cta'] : null,
+            ];
+
+            $count--;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns cart item array serialization
+     *
+     * @param Product $product
+     * @param int $quantity
+     * @param float $totalItemCostDue
+     * @param float $shippingDue
+     * @param string|null $nameOverride
+     * @param string|null $salePageUrlOverride
+     * @param bool|null $addDirectlyToCart
+     *
+     * @return array
+     */
+    public function getCartItemData(
+        Product $product,
+        $quantity,
+        $totalItemCostDue,
+        $shippingDue,
+        $nameOverride = null,
+        $salePageUrlOverride = null,
+        $addDirectlyToCart = null,
+        $callToActionLabel = null
+    ) {
+        $serialization = [
+            'sku' => $product->getSku(),
+            'name' => $product->getName(),
+            'quantity' => $quantity,
+            'thumbnail_url' => $product->getThumbnailUrl(),
+            'sales_page_url' => $product->getSalesPageUrl(),
+            'description' => $product->getDescription(),
+            'stock' => $product->getStock(),
+            'subscription_interval_type' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                $product->getSubscriptionIntervalType() : null,
+            'subscription_interval_count' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                $product->getSubscriptionIntervalCount() : null,
+            'subscription_renewal_price' => $product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ?
+                round(
+                    ($product->getPrice() * $quantity) -
+                    $this->discountService->getSubscriptionItemDiscountedRenewalAmount(
+                        $this->cart,
+                        $product,
+                        $totalItemCostDue,
+                        $shippingDue
+                    ),
+                    2
+                ) : null,
+            'price_before_discounts' => round($product->getPrice() * $quantity, 2),
+            'price_after_discounts' => max(
+                round(
+                    ($product->getPrice() * $quantity) -
+                    $this->discountService->getItemDiscountedAmount(
+                        $this->cart,
+                        $product,
+                        $totalItemCostDue,
+                        $shippingDue
+                    ),
+                    2
+                ),
+                0
+            ),
+            'requires_shipping' => $product->getIsPhysical(),
+            'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
+                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
+        ];
+
+        if ($nameOverride !== null) {
+            $serialization['name'] = $nameOverride;
+        }
+
+        if ($salePageUrlOverride !== null) {
+            $serialization['sales_page_url'] = $salePageUrlOverride;
+        }
+
+        if ($addDirectlyToCart !== null) {
+            $serialization['add_directly_to_cart'] = $addDirectlyToCart;
+        }
+
+        if ($callToActionLabel !== null) {
+            $serialization['cta'] = $callToActionLabel;
+        }
+
+        return $serialization;
     }
 }

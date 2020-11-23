@@ -66,7 +66,7 @@ class Address implements AddressInterface
     protected $user;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
+     * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\Customer")
      * @ORM\JoinColumn(name="customer_id", referencedColumnName="id")
      */
     protected $customer;

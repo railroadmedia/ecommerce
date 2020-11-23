@@ -138,11 +138,12 @@ class OrderRepository extends RepositoryBase
         $decoratedQb = $this->createQueryBuilder($alias);
 
         $decoratedQb->orderByRequest($request, $alias)
-            ->select(['o', 'oi', 'ba', 'sa', 'p'])
+            ->select(['o', 'oi', 'ba', 'sa', 'p', 'oc'])
             ->leftJoin('o.orderItems', 'oi')
             ->leftJoin('oi.product', 'p')
             ->leftJoin('o.billingAddress', 'ba')
             ->leftJoin('o.shippingAddress', 'sa')
+            ->leftJoin('o.customer', 'oc')
             ->where($decoratedQb->expr()->in('o.id', $ordersIds));
 
         $results =

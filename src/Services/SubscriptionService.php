@@ -342,10 +342,18 @@ class SubscriptionService
 
         $oldSubscription = clone($subscription);
 
-        // check for payment plan if the user have already paid all the cycles
-        if (($subscription->getType() == config('ecommerce.type_payment_plan')) &&
-            ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue())) {
-            return null;
+        // check for payment plan if the user have already paid all the cycles, or is malformed
+        if (($subscription->getType() == config('ecommerce.type_payment_plan'))) {
+
+            if(is_null($subscription->getTotalCyclesDue())){
+                $msg = $subscription->getId() . " is a payment plan that does not have total_cycles_due value set.";
+                error_log($msg);
+                throw new Exception($msg);
+            }
+
+            if ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue()) {
+                throw new Exception("Cannot renew completed payment plan (total_cycles_paid is equal to or greater than total_cycles_due)");
+            }
         }
 
         /** @var $paymentMethod PaymentMethod */

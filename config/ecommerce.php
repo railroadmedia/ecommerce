@@ -208,6 +208,111 @@ return [
             ],
         ],
     ],
+
+    'recommended_products_count' => 3,
+
+    'recommended_products' => [
+        'drumeo' => [
+            [
+                'sku' => 'DLM-Trial-1-month',
+                'name_override' => 'Drumeo Edge 7-Day Trial',
+                'excluded_skus' => [
+                    'DLM-1-month',
+                    'DLM-1-year',
+                    'DLM-Trial-1-month',
+                    'DLM-6-month',
+                    'DLM-teachers-1-year',
+                    'DLM-teachers-upgrade-1-month',
+                    'DLM-teachers-upgrade-1-year',
+                    'DLM-3-month',
+                    'DLM-UPSELL-2-month',
+                    'DLM-Trial-Best-Book-1-month',
+                    'edge-membership-6-months',
+                    'DLM-Trial-Drummers-Toolbox-1-month',
+                    'DLM-Lifetime',
+                    'drumeo_edge_30_days_access',
+                    'DLM-Trial-30-Day',
+                ],
+                'cta' => '7 Days Free, Then $29/mo',
+            ],
+            [
+                'sku' => 'quietpad',
+            ],
+            [
+                'sku' => 'Drumeo-VaterSticks',
+            ],
+            [
+                'sku' => 'the-drummers-toolbox-book',
+            ],
+            [
+                'sku' => 'BeginnerBook',
+            ],
+            [
+                'sku' => 'tone-control-kit',
+            ],
+        ],
+        'pianote' => [
+            [
+                'sku' => 'PIANOTE-MEMBERSHIP-TRIAL',
+                'name_override' => 'Pianote 7-Day Trial',
+                'excluded_skus' => [
+                    'PIANOTE-MEMBERSHIP-1-MONTH',
+                    'PIANOTE-MEMBERSHIP-1-YEAR',
+                    'PIANOTE-MEMBERSHIP-LIFETIME',
+                    'PIANOTE-MEMBERSHIP-LIFETIME-EXISTING-MEMBERS',
+                    '1-DOLLAR',
+                    'PIANOTE-MEMBERSHIP-6-MONTH',
+                    'PIANOTE-MEMBERSHIP-TRIAL',
+                    'PIANOTE-MEMBERSHIP-TRIAL-30-DAY',
+                ],
+                'cta' => '7 Days Free, Then $29/mo',
+            ],
+            [
+                'sku' => 'pianote-foundation',
+            ],
+            [
+                'sku' => 'Sweatshirt-Hooded-Black-S',
+                'name_override' => 'Iconic Pianote Hoodie',
+                'excluded_skus' => [
+                    'Sweatshirt-Hooded-Black-S',
+                    'Sweatshirt-Hooded-Black-M',
+                    'Sweatshirt-Hooded-Black-L',
+                    'Sweatshirt-Hooded-Black-XL',
+                    'Sweatshirt-Hooded-Black-XXL',
+                    'Sweatshirt-Hooded-Black-XXXL',
+                ],
+                'cta' => 'See Details',
+                'add_directly_to_cart' => false,
+            ],
+            [
+                'sku' => '2019-TSHIRT-S',
+                'name_override' => 'Iconic Pianote T-Shirt',
+                'excluded_skus' => [
+                    '2019-TSHIRT-S',
+                    '2019-TSHIRT-M',
+                    '2019-TSHIRT-L',
+                    '2019-TSHIRT-XL',
+                    '2019-TSHIRT-XXL',
+                ],
+                'cta' => 'See Details',
+                'add_directly_to_cart' => false,
+            ],
+            [
+                'sku' => 'Tshirt-Floral-Black-XS',
+                'name_override' => "Women's Floral Shirt",
+                'excluded_skus' => [
+                    'Tshirt-Floral-Black-XS',
+                    'Tshirt-Floral-Black-S',
+                    'Tshirt-Floral-Black-L',
+                    'Tshirt-Floral-Black-M',
+                    'Tshirt-Floral-Black-XL',
+                ],
+                'cta' => 'See Details',
+                'add_directly_to_cart' => false,
+            ],
+        ],
+    ],
+
 //
 //    //the countries and the region names should be lowercase
 //    'product_tax_rate' => [
@@ -307,7 +412,8 @@ return [
     // payment plans
     'financing_cost_per_order' => 1,
     'payment_plan_options' => [1, 2, 5],
-    'payment_plan_minimum_price' => 20,
+    'payment_plan_minimum_price_with_physical_items' => 1,
+    'payment_plan_minimum_price_without_physical_items' => 1,
 
     // gateways
     'default_gateway' => 'drumeo',
@@ -525,5 +631,7 @@ return [
     'subscription_renewal_date' => 90, // todo - to be removed
     'failed_payments_before_de_activation' => 1,
 
-    'trial_days_number' => 7
+    'trial_days_number' => 7,
+
+    'password_creation_rules' => 'confirmed|min:8|max:128', // also defined in usora
 ];

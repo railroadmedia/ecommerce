@@ -9,20 +9,12 @@ use Railroad\Ecommerce\Entities\Customer;
 class CustomerTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = [];
-    protected $customersOrdersMap;
 
     /**
      * CustomerTransformer constructor.
-     *
-     * @param array $customersOrdersMap
      */
-    public function __construct(array $customersOrdersMap = [])
+    public function __construct()
     {
-        $this->customersOrdersMap = $customersOrdersMap;
-
-        if (!empty($customersOrdersMap)) {
-            $this->defaultIncludes[] = 'order';
-        }
     }
 
     /**
@@ -45,27 +37,5 @@ class CustomerTransformer extends TransformerAbstract
                 $customer->getUpdatedAt()
                     ->toDateTimeString() : null,
         ];
-    }
-
-    /**
-     * @param Customer $customer
-     *
-     * @return Item|null
-     */
-    public function includeOrder(Customer $customer)
-    {
-        if (!isset($this->customersOrdersMap[$customer->getId()])) {
-            return null;
-        }
-
-        $transformer = new OrderTransformer();
-        $defaultIncludes = $transformer->getDefaultIncludes();
-        $transformer->setDefaultIncludes(array_diff($defaultIncludes, ['customer']));
-
-        return $this->item(
-            $this->customersOrdersMap[$customer->getId()],
-            $transformer,
-            'order'
-        );
     }
 }

@@ -97,7 +97,7 @@ class OrderTransformer extends TransformerAbstract
             return null;
         }
 
-        if ($order->getCustomer() instanceof Proxy) {
+        if ($order->getCustomer() instanceof Proxy && !$order->getCustomer()->__isInitialized()) {
             return $this->item(
                 $order->getCustomer(),
                 new EntityReferenceTransformer(),

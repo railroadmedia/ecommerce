@@ -188,7 +188,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        $paymentMethods = $this->paymentMethodRepository->getCustomerPaymentMethods($customer, $request);
+        $paymentMethods = $this->paymentMethodRepository->getCustomerPaymentMethods($customer, $request->get('brand'));
 
         return ResponseService::paymentMethod(
             $paymentMethods
