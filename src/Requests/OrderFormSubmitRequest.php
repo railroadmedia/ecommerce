@@ -143,14 +143,14 @@ class OrderFormSubmitRequest extends FormRequest
 
         // billing address
         $rules += [
-            'billing_country' => 'string|required|in:' .
+            'billing_country' => 'string|required_without:payment_method_id|in:' .
                     implode(',', config('location.countries')),
         ];
 
         // if the country is in canada we must also get the region and zip
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
-                'billing_region' => 'string|required|regex:/^[0-9a-zA-Z-_ ]+$/|in:' .
+                'billing_region' => 'string|required_without:payment_method_id|regex:/^[0-9a-zA-Z-_ ]+$/|in:' .
                     implode(',', config('location.country_regions.Canada')),
                 'billing_zip_or_postal_code' => 'string|regex:/^[0-9a-zA-Z-_ ]+$/',
             ];
