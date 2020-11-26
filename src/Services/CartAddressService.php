@@ -89,15 +89,15 @@ class CartAddressService
 
         $currentAddress = $this->getShippingAddress();
 
-        $address->merge($currentAddress);
+        $currentAddress->merge($address);
 
         $cart = $this->cartService->getCart();
 
-        $cart->setShippingAddress($address);
+        $cart->setShippingAddress($currentAddress);
 
         $cart->toSession();
 
-        return $address;
+        return $currentAddress;
     }
 
     /**
@@ -111,14 +111,14 @@ class CartAddressService
 
         $currentAddress = $this->getBillingAddress();
 
-        $address->merge($currentAddress);
+        $currentAddress->merge($address);
 
         $cart = $this->cartService->getCart();
 
-        $cart->setBillingAddress($address);
+        $cart->setBillingAddress($currentAddress);
 
         $cart->toSession();
 
-        return $address;
+        return $currentAddress;
     }
 }

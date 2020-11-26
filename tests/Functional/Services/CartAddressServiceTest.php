@@ -80,7 +80,7 @@ class CartAddressServiceTest extends EcommerceTestCase
 
         $this->assertEquals(Address::class, get_class($sessionAddress));
 
-        $this->assertEquals($storedCountry, $sessionAddress->getCountry());
+        $this->assertEquals($newCountry, $sessionAddress->getCountry());
 
         $this->assertEquals($newRegion, $sessionAddress->getRegion());
     }

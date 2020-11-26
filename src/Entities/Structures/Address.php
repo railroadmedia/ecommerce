@@ -212,9 +212,11 @@ class Address implements AddressInterface, Serializable
             $currentValue = call_user_func([$this, $getterName]);
             $newValue = call_user_func([$address, $getterName]);
 
-            if (!$currentValue && $newValue) {
-                call_user_func([$this, $setterName], $newValue);
+            if (empty($newValue)) {
+                $newValue = null;
             }
+
+            call_user_func([$this, $setterName], $newValue);
         }
     }
 
@@ -224,14 +226,14 @@ class Address implements AddressInterface, Serializable
     public function toArray(): array
     {
         return [
-            'zip_or_postal_code' => $this->zip,
-            'street_line_two' => $this->streetLine2,
-            'street_line_one' => $this->streetLine1,
-            'last_name' => $this->lastName,
-            'first_name' => $this->firstName,
-            'region' => $this->region,
-            'country' => $this->country,
-            'city' => $this->city,
+            'zip_or_postal_code' => !empty($this->zip) ? $this->zip : null,
+            'street_line_two' => !empty($this->streetLine2) ? $this->streetLine2 : null,
+            'street_line_one' => !empty($this->streetLine1) ? $this->streetLine1 : null,
+            'last_name' => !empty($this->lastName) ? $this->lastName : null,
+            'first_name' => !empty($this->firstName) ? $this->firstName : null,
+            'region' => !empty($this->region) ? $this->region : null,
+            'country' => !empty($this->country) ? $this->country : null,
+            'city' => !empty($this->city) ? $this->city : null,
         ];
     }
 

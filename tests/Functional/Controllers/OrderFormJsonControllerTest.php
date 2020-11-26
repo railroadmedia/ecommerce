@@ -510,11 +510,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The card token field is required when payment method type is credit_card.',
                     'title' => 'Validation failed.'
                 ],
-                [
-                    'source' => 'account_creation_password',
-                    'detail' => 'The account creation password must be at least 8 characters.',
-                    'title' => 'Validation failed.'
-                ],
             ],
             $results->decodeResponseJson('errors')
         );
@@ -566,7 +561,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'billing_region',
-                    'detail' => 'The billing region field is required.',
+                    'detail' => 'The billing region field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -10158,8 +10153,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_payment_plan_taxes_and_shipping_totals()
     {
-        $this->markTestSkipped('We no longer support payment plans for physical items.');
-
         $userId = $this->createAndLogInNewUser();
         $currency = 'USD';
 
