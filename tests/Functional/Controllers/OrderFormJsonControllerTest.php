@@ -637,7 +637,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $cardToken = 'token' . rand();
-        $accountCreationPassword = $this->faker->password;
+        $accountCreationPassword = $this->faker->password . '1231251234';
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
