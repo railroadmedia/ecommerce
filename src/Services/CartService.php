@@ -241,6 +241,7 @@ class CartService
     {
         $this->cart = new Cart();
         $this->cart->toSession();
+        session()->put('bonuses', []);
     }
 
     /**

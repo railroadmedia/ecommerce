@@ -496,7 +496,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
                 'account_creation_password' => $password,
-                'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
                 'brand' => 'drumeo',
             ]
@@ -509,11 +508,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 [
                     'source' => 'card_token',
                     'detail' => 'The card token field is required when payment method type is credit_card.',
-                    'title' => 'Validation failed.'
-                ],
-                [
-                    'source' => 'account_creation_password',
-                    'detail' => 'The account creation password must be at least 8 characters.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -556,7 +550,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'billing_country' => 'Canada',
                 'account_creation_email' => $this->faker->email,
                 'account_creation_password' => $password,
-                'account_creation_password_confirmation' => $password,
                 'gateway' => 'drumeo',
                 'brand' => 'drumeo',
             ]
@@ -568,7 +561,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'billing_region',
-                    'detail' => 'The billing region field is required.',
+                    'detail' => 'The billing region field is required when payment method id is not present.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -644,7 +637,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         );
 
         $cardToken = 'token' . rand();
-        $accountCreationPassword = $this->faker->password;
+        $accountCreationPassword = $this->faker->password . '1231251234';
 
         $requestData = [
             'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
@@ -663,7 +656,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'account_creation_email' => $email,
             'account_creation_password' => $accountCreationPassword,
-            'account_creation_password_confirmation' => $accountCreationPassword,
         ];
 
         $response = $this->call(
@@ -9169,7 +9161,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency,
             'account_creation_email' => $accountCreationMail,
             'account_creation_password' => $accountCreationPassword,
-            'account_creation_password_confirmation' => $accountCreationPassword,
         ];
 
         $this->expectsEvents(
@@ -10162,8 +10153,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
     public function test_payment_plan_taxes_and_shipping_totals()
     {
-        $this->markTestSkipped('We no longer support payment plans for physical items.');
-
         $userId = $this->createAndLogInNewUser();
         $currency = 'USD';
 

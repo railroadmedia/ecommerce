@@ -663,8 +663,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_no_taxes_with_shipping_with_payment_plan()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 100;
         $shippingCost = 5;
         $country = 'United States';
@@ -1020,8 +1018,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_alberta()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 100;
         $shippingCost = 10;
         $country = 'Canada';
@@ -1291,8 +1287,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_bc()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 100;
         $shippingCost = 10;
         $country = 'Canada';
@@ -1452,8 +1446,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_bc_simulate_renewals()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 100;
         $shippingCost = 10;
         $country = 'Canada';
@@ -1776,8 +1768,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_bc_simulate_renewals_uneven_split()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 101.13;
         $shippingCost = 10;
         $country = 'Canada';
@@ -2417,8 +2407,6 @@ class OrderValuesTest extends EcommerceTestCase
 
     public function test_basic_order_with_taxes_with_shipping_with_payment_plan_bc_simulate_renewals_uneven_split_4()
     {
-        $this->markTestSkipped('We no longer allow payment plans on shippable orders.');
-
         $productCost = 59.00;
         $shippingCost = 27.00;
         $country = 'Canada';

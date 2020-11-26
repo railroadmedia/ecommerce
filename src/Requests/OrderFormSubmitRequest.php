@@ -143,16 +143,16 @@ class OrderFormSubmitRequest extends FormRequest
 
         // billing address
         $rules += [
-            'billing_country' => 'string|required|in:' .
+            'billing_country' => 'string|required_without:payment_method_id|in:' .
                     implode(',', config('location.countries')),
         ];
 
         // if the country is in canada we must also get the region and zip
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
-                'billing_region' => 'string|required|regex:/^[0-9a-zA-Z-_ ]+$/|in:' .
+                'billing_region' => 'string|required_without:payment_method_id|in:' .
                     implode(',', config('location.country_regions.Canada')),
-                'billing_zip_or_postal_code' => 'string|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'billing_zip_or_postal_code' => 'string',
             ];
         }
 
@@ -164,13 +164,13 @@ class OrderFormSubmitRequest extends FormRequest
                     '.' .
                     'ecommerce_addresses' .
                     ',id',
-                'shipping_first_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping_last_name' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_\' ]+$/',
-                'shipping_address_line_1' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_.\' ]+$/',
-                'shipping_address_line_2' => 'nullable|string|regex:/^[0-9a-zA-Z-_.\' ]+$/',
-                'shipping_city' => 'string|required_without:shipping_address_id|regex:/^[a-zA-Z-_ ]+$/',
-                'shipping_region' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
-                'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id|regex:/^[0-9a-zA-Z-_ ]+$/',
+                'shipping_first_name' => 'string|required_without:shipping_address_id',
+                'shipping_last_name' => 'string|required_without:shipping_address_id',
+                'shipping_address_line_1' => 'string|required_without:shipping_address_id',
+                'shipping_address_line_2' => 'nullable|string',
+                'shipping_city' => 'string|required_without:shipping_address_id',
+                'shipping_region' => 'string|required_without:shipping_address_id',
+                'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id',
                 'shipping_country' => 'string|required_without:shipping_address_id|in:' .
                     implode(',', config('location.countries')),
             ];
@@ -202,7 +202,7 @@ class OrderFormSubmitRequest extends FormRequest
                         ',' .
                         config('ecommerce.database_info_for_unique_user_email_validation.email_column'),
                     'account_creation_password' => 'required_with:account_creation_email|' .
-                        config('ecommerce.password_creation_rules', 'confirmed|min:8|max:128'),
+                        config('ecommerce.password_creation_rules', 'min:8|max:128'),
                 ];
             }
         }
