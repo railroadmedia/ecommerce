@@ -156,6 +156,13 @@ class OrderFormSubmitRequest extends FormRequest
             ];
         }
 
+        // unset billing location rules if they chose an existing payment method
+        if (!empty(request()->get('payment_method_id'))) {
+            unset($rules['billing_region']);
+            unset($rules['billing_zip_or_postal_code']);
+            unset($rules['billing_country']);
+        }
+
         // if the cart has any items that need shipping
         if ($this->shippingService->doesCartHaveAnyPhysicalItems($this->cartService->getCart())) {
             $rules += [

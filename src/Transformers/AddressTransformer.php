@@ -20,12 +20,16 @@ class AddressTransformer extends TransformerAbstract
      */
     public function transform(Address $address)
     {
-        if ($address->getUser()) {
+        if (!empty($address->getUser())) {
             $this->defaultIncludes[] = 'user';
+        } else {
+            $this->defaultIncludes = array_diff($this->defaultIncludes, ['user']);
         }
 
-        if ($address->getCustomer()) {
+        if (!empty($address->getCustomer())) {
             $this->defaultIncludes[] = 'customer';
+        } else {
+            $this->defaultIncludes = array_diff($this->defaultIncludes, ['customer']);
         }
 
         return [
