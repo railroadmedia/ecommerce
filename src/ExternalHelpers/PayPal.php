@@ -103,9 +103,8 @@ class PayPal
         $response = $this->sendRequest('DoReferenceTransaction', $nvp);
 
         if ($this->payPalResponseFailed($response) || strtolower($response['PAYMENTSTATUS']) != 'completed') {
-            error_log(var_export($response, true));
             throw new CreateReferenceTransactionException(
-                'PayPal Response: ' . var_export($response, true) . ', NVPSTR: ' . $nvp
+                $response['L_SHORTMESSAGE0'] ?? ''
             );
         }
 
