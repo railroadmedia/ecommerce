@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
 use Datetime;
+use Illuminate\Database\DatabaseManager;
 use Railroad\Ecommerce\Entities\AccessCode;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -174,65 +175,125 @@ class AccessCodeService
         /**
          * @var $product Product
          */
-        foreach ($accessCodeProducts as $product) {
+        foreach ($accessCodeProducts as $accessCodeProduct) {
 
-            if (isset($processedProductsIds[$product->getId()])) {
+            $currentMembershipUserProducts = [];
+
+            /*
+             * Do not process here if already processed in subscription-handling loop above. This is for cases where
+             * a user does not have access via a subscription. Typically this is either a user who does not yet have
+             * access, or a user who's access is from a previously-redeemed access-code. In the case of the latter, what
+             * was happening before previously is that rather than add to their access time, another user product would
+             * be added that duplicated their already access but failed to extend their access.
+             *
+             * Jonathan M, Nov 2020
+             */
+            if (isset($processedProductsIds[$accessCodeProduct->getId()])) {
                 continue;
             }
 
-            $intervalCount = $product->getSubscriptionIntervalCount();
-            $expirationDate = null;
+            $codeRedeemProductHackMap = config('ecommerce.code_redeem_product_sku_swap', []);
+            if(array_key_exists($accessCodeProduct->getSku(), $codeRedeemProductHackMap)){
+                $replaceWithSku = $codeRedeemProductHackMap[$accessCodeProduct->getSku()];
+                $accessCodeProduct = $this->productRepository->bySku($replaceWithSku);
+            }
 
-            switch ($product->getSubscriptionIntervalType()) {
+            $usersProducts = $this->userProductService->getAllUsersProducts($user->getId());
+
+            $membershipProductSkus = config('ecommerce.membership_product_skus_for_code_redeem', []);
+
+            foreach($usersProducts as $userProduct){
+
+                $userProductSku = $userProduct->getProduct()->getSku();
+
+                $isMembershipProduct = in_array($userProductSku, $membershipProductSkus);
+
+                if($isMembershipProduct){
+
+                    $userProductExpirationDate = Carbon::parse($userProduct->getExpirationDate());
+
+                    $now = Carbon::now();
+
+                    if(empty($userProductExpirationDate)) {
+                        continue;
+                    }
+
+                    if($userProductExpirationDate->greaterThan($now)){
+                        $currentMembershipUserProducts[] = $userProduct;
+                    }
+                }
+            }
+
+            // order by expiry date descending
+            usort($currentMembershipUserProducts, function($a, $b) {
+                /** @var $a UserProduct */
+                /** @var $b UserProduct */
+                $aDateTime = new Datetime($a->getExpirationDate());
+                $bDateTime = new Datetime($b->getExpirationDate());
+                return $aDateTime < $bDateTime;
+            });
+
+            $userProduct = reset($currentMembershipUserProducts);
+
+            $expirationDate = Carbon::now();
+
+            if(!empty($userProduct)){
+                /** @var UserProduct $userProduct */
+                $expirationDate = $userProduct->getExpirationDate();
+            }
+
+            if(empty($userProduct)){
+                $userProduct = new UserProduct();
+                $userProduct->setUser($user);
+                $userProduct->setProduct($accessCodeProduct);
+                $userProduct->setQuantity(1);
+            }
+
+            $intervalCount = $accessCodeProduct->getSubscriptionIntervalCount();
+
+            switch ($accessCodeProduct->getSubscriptionIntervalType()) {
                 case config('ecommerce.interval_type_monthly'):
-                    $expirationDate =
-                        Carbon::now()
-                            ->addMonths($intervalCount)
-                            ->startOfDay();
+                    $expirationDate = $expirationDate->addMonths($intervalCount)->startOfDay();
                     break;
 
                 case config('ecommerce.interval_type_yearly'):
-                    $expirationDate =
-                        Carbon::now()
-                            ->addYears($intervalCount)
-                            ->startOfDay();
+                    $expirationDate = $expirationDate->addYears($intervalCount)->startOfDay();
                     break;
 
                 case config('ecommerce.interval_type_daily'):
-                    $expirationDate =
-                        Carbon::now()
-                            ->addDays($intervalCount)
-                            ->startOfDay();
+                    $expirationDate = $expirationDate->addDays($intervalCount)->startOfDay();
+                    break;
+
+                case null:
+                    $expirationDate = null;
+                    break;
+
+                default:
+                    $format = 'Unknown subscription interval type for product id %s: %s';
+                    $message = sprintf($format, $accessCodeProduct->getId(), $accessCodeProduct->getSubscriptionIntervalType());
+
+                    throw new UnprocessableEntityException($message);
                     break;
             }
 
-            if($product->getSku() === 'DLM-6mo'){
-                /*
-                 * 6-month PDF code (sku: "DLM-6mo") purchaser will generally not be the one the one redeeming it, but
-                 * their account will have DLM-6mo recorded as an purchased product. Thus that product it cannot be an
-                 * edge-granting product, lest the purchaser also get access when redeemed by another user.
-                 *
-                 * Instead, in these cases we assign redeemer a different product that grants edge in the desired
-                 * manner. Namely, for six months, but not renewing. (sku: "edge-membership-6-months")
-                 *
-                 * So far this is the only situation such a thing is needed, thus this hard-coded section rather than a
-                 * more complicated solution.
-                 *
-                 * Jonathan M, Jan 2020
-                 */
-                $expirationDate = Carbon::now()->addMonths(6)->startOfDay();
-                $product = $this->productRepository->bySku('edge-membership-6-months');
+            if(!is_null($expirationDate)){
+                if(get_class($expirationDate) !== Carbon::class){
+                    $type = gettype($expirationDate);
+                    if($type === 'object'){
+                        $type = 'object of class "' . get_class($expirationDate) . '"")';
+                    }
+                    $message = '$expirationDate unexpected type of ' . $type . ' for user ' . $user->getId() .
+                        ' redeeming code ' . $rawAccessCode;
+                    throw new UnprocessableEntityException($message);
+                    break;
+                }
+                $userProduct->setExpirationDate($expirationDate->copy());
             }
-
-            $userProduct = new UserProduct();
-
-            $userProduct->setUser($user);
-            $userProduct->setProduct($product);
-            $userProduct->setQuantity(1);
-            $userProduct->setExpirationDate($expirationDate);
 
             $this->entityManager->persist($userProduct);
             $this->entityManager->flush();
+
+//            $_foo_b_after = app(DatabaseManager::class)->table('ecommerce_user_products')->get();
 
             event(new UserProductCreated($userProduct));
         }

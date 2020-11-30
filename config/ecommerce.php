@@ -634,4 +634,8 @@ return [
     'trial_days_number' => 7,
 
     'password_creation_rules' => 'confirmed|min:8|max:128', // also defined in usora
+
+    'membership_product_skus_for_code_redeem' => [],
+
+    'code_redeem_product_sku_swap' => [],
 ];
