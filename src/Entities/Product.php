@@ -67,6 +67,13 @@ class Product
     protected $sku;
 
     /**
+     * @ORM\Column(type="string")
+     *
+     * @var string
+     */
+    protected $fulfillmentSku;
+
+    /**
      * @ORM\Column(type="decimal", precision=8, scale=2)
      *
      * @var float
@@ -203,6 +210,22 @@ class Product
     public function getSku(): ?string
     {
         return $this->sku;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getFulfillmentSku(): ?string
+    {
+        return $this->fulfillmentSku;
+    }
+
+    /**
+     * @param string|null $fulfillmentSku
+     */
+    public function setFulfillmentSku(?string $fulfillmentSku): void
+    {
+        $this->fulfillmentSku = $fulfillmentSku;
     }
 
     /**

@@ -152,6 +152,9 @@ class ShippingFulfillmentJsonController extends Controller
                         ->getName(),
                     $fulfillment->getOrderItem()
                         ->getProduct()
+                        ->getFulfillmentSku(),
+                    $fulfillment->getOrderItem()
+                        ->getProduct()
                         ->getSku(),
                     $fulfillment->getOrderItem()
                         ->getProduct()
@@ -196,7 +199,8 @@ class ShippingFulfillmentJsonController extends Controller
                     'Order Item ID',
                     'Product ID',
                     'Product Name',
-                    'Product SKU',
+                    'Product Fulfillment SKU',
+                    'Product Marketing SKU',
                     'Product Weight *',
                     'Quantity',
                     'Item Total $',

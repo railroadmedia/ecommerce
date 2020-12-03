@@ -29,6 +29,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.brand' => 'brand',
             'data.attributes.name' => 'name',
             'data.attributes.sku' => 'sku',
+            'data.attributes.fulfillment_sku' => 'fulfillment sku',
             'data.attributes.price' => 'price',
             'data.attributes.type' => 'type',
             'data.attributes.active' => 'active',
@@ -60,6 +61,7 @@ class ProductUpdateRequest extends FormRequest
                 ',sku,' .
                 Request::route('productId') .
                 '|max:255',
+            'data.attributes.fulfillment_sku' => 'max:255',
             'data.attributes.price' => 'numeric|min:0',
             'data.attributes.type' => 'max:255|in:' . implode(
                     ',',
@@ -93,6 +95,7 @@ class ProductUpdateRequest extends FormRequest
                 'data.attributes.name',
                 'data.attributes.brand',
                 'data.attributes.sku',
+                'data.attributes.fulfillment_sku',
                 'data.attributes.price',
                 'data.attributes.type',
                 'data.attributes.active',

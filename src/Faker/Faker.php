@@ -39,6 +39,7 @@ class Faker extends Generator
             [
                 'name' => $this->word,
                 'sku' => $this->word . rand(100000, 10000000),
+                'fulfillment_sku' => $this->word . rand(100000, 10000000),
                 'price' => $this->numberBetween(1, 1000),
                 'type' => $this->randomElement(
                     [
