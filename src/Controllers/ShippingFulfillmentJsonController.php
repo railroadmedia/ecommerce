@@ -199,7 +199,7 @@ class ShippingFulfillmentJsonController extends Controller
                     'Order Item ID',
                     'Product ID',
                     'Product Name',
-                    'Product Fulfillment SKU',
+                    'Product Fulfillment/Inventory Name',
                     'Product Marketing SKU',
                     'Product Weight *',
                     'Quantity',
