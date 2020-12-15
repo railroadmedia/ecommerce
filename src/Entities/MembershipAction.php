@@ -78,7 +78,10 @@ class MembershipAction
 
     public const ACTION_PAUSE_FOR_AMOUNT_OF_DAYS = 'paused for amount of days';
     public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS = 'extended for amount of days';
+    public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS_GRATIS_FOR_RETENTION =
+        'extended for amount of days gratis for retention offer';
     public const ACTION_SWITCH_TO_NEW_PRICE = 'switched to new price';
+    public const ACTION_SWITCH_TO_NEW_PRICE_IN_CENTS = 'switched to new price in cents';
     public const ACTION_SWITCH_BILLING_INTERVAL_TO_MONTHLY = 'switched billing interval to monthly';
     public const ACTION_SWITCH_BILLING_INTERVAL_TO_YEARLY = 'switched billing interval to yearly';
     public const ACTION_REQUESTED_HELP = 'requested help';
