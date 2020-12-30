@@ -128,6 +128,12 @@ class CartJsonController extends Controller
             }
         }
 
+        if ($request->has('payment-plan') &&
+            is_numeric($request->get('payment-plan', 1)) &&
+            in_array($request->get('payment-plan', 1), config('ecommerce.payment_plan_options'))) {
+            $this->cartService->getCart()->setPaymentPlanNumberOfPayments($request->get('payment-plan', 1));
+        }
+
         $cartArray = $this->cartService->toArray();
 
         if (!empty($errors)) {
