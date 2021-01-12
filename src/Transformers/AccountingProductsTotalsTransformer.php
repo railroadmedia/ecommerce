@@ -30,6 +30,7 @@ class AccountingProductsTotalsTransformer extends TransformerAbstract
             'finance_paid' => $accountingProductTotals->getFinancePaid(),
             'refunded' => $accountingProductTotals->getRefunded(),
             'net_product' => $accountingProductTotals->getNetProduct(),
+            'net_recurring_product' => $accountingProductTotals->getNetRecurringProduct(),
             'net_paid' => $accountingProductTotals->getNetPaid(),
         ];
     }

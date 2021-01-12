@@ -26,6 +26,7 @@ class AccountingProductTransformer extends TransformerAbstract
             'refunded_quantity' => $accountingProduct->getRefundedQuantity(),
             'free_quantity' => $accountingProduct->getFreeQuantity(),
             'net_product' => $accountingProduct->getNetProduct(),
+            'net_recurring_product' => $accountingProduct->getNetRecurringProduct(),
             'net_paid' => $accountingProduct->getNetPaid(),
         ];
     }

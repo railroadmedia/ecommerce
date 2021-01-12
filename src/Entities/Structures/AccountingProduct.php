@@ -62,6 +62,11 @@ class AccountingProduct
     /**
      * @var float
      */
+    private $netRecurringProduct = 0;
+
+    /**
+     * @var float
+     */
     private $netPaid;
 
     public function __construct($productId)
@@ -219,6 +224,22 @@ class AccountingProduct
     public function setFreeQuantity(int $freeQuantity)
     {
         $this->freeQuantity = $freeQuantity;
+    }
+
+    /**
+     * @return float
+     */
+    public function getNetRecurringProduct(): float
+    {
+        return $this->netRecurringProduct;
+    }
+
+    /**
+     * @param float $netRecurringProduct
+     */
+    public function setNetRecurringProduct(float $netRecurringProduct): void
+    {
+        $this->netRecurringProduct = $netRecurringProduct;
     }
 
     /**

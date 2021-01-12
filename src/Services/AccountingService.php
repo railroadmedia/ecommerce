@@ -452,6 +452,7 @@ class AccountingService
             'taxPaid' => 0,
             'shippingPaid' => 0,
             'financePaid' => 0,
+            'recurringProductPaid' => 0, // only for subscription product renewals, and only including payments after the first
             'productPaid' => 0,
             'grossPaid' => 0, // this is the grand total paid for the product itself (excluding tax, shipping finance)
             'netPaid' => 0, // this is the net paid including tax, shipping, finance, and with subtracted refunds
@@ -666,6 +667,10 @@ class AccountingService
                     $productPaid = -$productPaid * $refundRatio;
                     $taxPaid = -$taxPaid * $refundRatio;
                     $quantity = -$quantity * $refundRatio;
+
+                    $productMap['recurringProductPaid'] += ($paymentData['payment_total_paid'] - ($paymentData['payment_total_paid'] * $refundRatio));
+                } else {
+                    $productMap['recurringProductPaid'] += $paymentData['payment_total_paid'];
                 }
 
                 $productMap['productPaid'] += $productPaid;
@@ -751,6 +756,7 @@ class AccountingService
             $productStatistics->setTotalQuantity($productData['quantity']);
             $productStatistics->setRefundedQuantity($productData['refundedQuantity']);
             $productStatistics->setFreeQuantity($productData['freeQuantity']);
+            $productStatistics->setNetRecurringProduct(round($productData['recurringProductPaid'], 2));
             $productStatistics->setNetProduct(round($productData['productPaid'], 2));
             $productStatistics->setNetPaid(round($productData['netPaid'], 2));
 
@@ -822,6 +828,13 @@ class AccountingService
             $result->setNetProduct($result->getNetProduct() + $accountingProduct->getNetProduct());
         }
         $result->setNetProduct(round($result->getNetProduct(), 2));
+
+        // gross recurring product
+        $result->setNetRecurringProduct(0);
+        foreach ($result->getAccountingProducts() as $accountingProduct) {
+            $result->setNetRecurringProduct($result->getNetRecurringProduct() + $accountingProduct->getNetRecurringProduct());
+        }
+        $result->setNetRecurringProduct(round($result->getNetRecurringProduct(), 2));
 
         // net paid
         $result->setNetPaid(0);

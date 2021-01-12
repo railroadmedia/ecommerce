@@ -37,6 +37,11 @@ class AccountingProductTotals
     /**
      * @var float
      */
+    private $netRecurringProduct = 0;
+
+    /**
+     * @var float
+     */
     private $netPaid;
 
     /**
@@ -137,6 +142,22 @@ class AccountingProductTotals
     public function setNetProduct(float $netProduct)
     {
         $this->netProduct = $netProduct;
+    }
+
+    /**
+     * @return float
+     */
+    public function getNetRecurringProduct(): float
+    {
+        return $this->netRecurringProduct;
+    }
+
+    /**
+     * @param float $netRecurringProduct
+     */
+    public function setNetRecurringProduct(float $netRecurringProduct): void
+    {
+        $this->netRecurringProduct = $netRecurringProduct;
     }
 
     /**
