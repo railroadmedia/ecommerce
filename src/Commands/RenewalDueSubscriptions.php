@@ -94,6 +94,15 @@ class RenewalDueSubscriptions extends Command
 
             } catch (Throwable $throwable) {
 
+                error_log('---------------------------- RENEWAL ERROR ------------------------------------');
+                error_log($throwable);
+
+                $this->info($throwable->getMessage());
+                $this->info($throwable->getTraceAsString());
+                $this->info($throwable->getFile());
+                $this->info($throwable->getLine());
+                $this->info($throwable->getCode());
+
                 $payment = null;
 
                 if ($throwable instanceof PaymentFailedException) {
