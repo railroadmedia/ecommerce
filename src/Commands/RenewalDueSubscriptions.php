@@ -73,11 +73,14 @@ class RenewalDueSubscriptions extends Command
     {
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
+        $tStart = microtime(true);
         $dueSubscriptions = $this->subscriptionRepository->getSubscriptionsDueToRenew();
+        $this->info('Query time: ' . (microtime(true) - $tStart));
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
+            $this->info("Memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB");
 
             /** @var $dueSubscription Subscription */
 
