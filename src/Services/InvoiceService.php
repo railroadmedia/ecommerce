@@ -86,6 +86,44 @@ class InvoiceService
 
     /**
      * @param Order $order
+     * @return array
+     */
+    public function getViewDataForZeroDollarOrderInvoice(Order $order)
+    {
+        $addressToUseForTax =
+            !empty($order->getShippingAddress()) ? $order->getShippingAddress() : $order->getBillingAddress();
+
+        $taxesPerType = $this->taxService->getTaxesDuePerType(
+            $order->getProductDue(),
+            $order->getShippingDue(),
+            !empty($addressToUseForTax) ? $addressToUseForTax->toStructure() : null
+        );
+
+        $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
+
+
+        /*
+         * supply $paymentTotalPaid and $paymentCurrency to views/order_invoice.blade.php so that $payment object not invoked.
+         */
+        return [
+            'order' => $order,
+            'paymentPlan' => $paymentPlan,
+            'orderItems' => $order->getOrderItems(),
+            'currencySymbol' => '$',
+            'taxesPerType' => $taxesPerType,
+            'paymentCurrency' => 'USD',
+            'paymentTotalPaid' => 0,
+            'invoiceSenderEmail' => config(
+                'ecommerce.invoice_email_details.' . $order->getBrand() . '.order_invoice.invoice_sender'
+            ),
+            'invoiceSenderAddress' => config(
+                'ecommerce.invoice_email_details.' . $order->getBrand() . '.order_invoice.invoice_address'
+            ),
+        ];
+    }
+
+    /**
+     * @param Order $order
      * @param Payment $payment
      * @throws Exception
      */
