@@ -311,8 +311,11 @@
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td class="content-block">
-                                        <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($paymentTotalPaid ?? $payment->getTotalPaid(), 2) }} Paid</h1>
-
+                                        @if($zeroDueZeroPaid ?? false)
+                                            <h1 class="aligncenter">{{$currencySymbol}}0.00 Paid</h1>
+                                        @else
+                                            <h1 class="aligncenter">{{$currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }} Paid</h1>
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>
@@ -360,7 +363,7 @@
                                                             <tr>
                                                                 <td>Shipping</td>
                                                                 <td class="alignright">
-                                                                    {{ $currencySymbol}}{{ number_format($order->getShippingDue(), 2) }} {{ $paymentCurrency ?? $payment->getCurrency() }}
+                                                                    {{ $currencySymbol}}{{ number_format($order->getShippingDue(), 2) }} {{ $currency }}
                                                                 </td>
                                                             </tr>
                                                         @endif
@@ -369,7 +372,7 @@
                                                             <tr>
                                                                 <td>Financing Fee</td>
                                                                 <td class="alignright">
-                                                                    {{ $currencySymbol}}{{ number_format($order->getFinanceDue(), 2) }} {{ $paymentCurrency ?? $payment->getCurrency() }}
+                                                                    {{ $currencySymbol}}{{ number_format($order->getFinanceDue(), 2) }} {{ $currency }}
                                                                 </td>
                                                             </tr>
                                                         @endif
@@ -378,7 +381,7 @@
                                                                 <tr>
                                                                     <td>Grand Total Due For Order</td>
                                                                     <td class="alignright">
-                                                                        {{ $currencySymbol}}{{ number_format($order->getTotalDue(), 2) }} {{ $paymentCurrency ?? $payment->getCurrency() }}
+                                                                        {{ $currencySymbol}}{{ number_format($order->getTotalDue(), 2) }} {{ $currency }}
                                                                     </td>
                                                                 </tr>
                                                         @endif
@@ -391,7 +394,11 @@
                                                             @endif
 
                                                             <td class="alignright">
-                                                                {{ $currencySymbol}}{{ number_format($paymentTotalPaid ?? $payment->getTotalPaid(), 2) }} {{ $paymentCurrency ?? $payment->getCurrency() }}
+                                                                @if($zeroDueZeroPaid ?? false)
+                                                                    {{ $currencySymbol}}0.00 {{ $currency }}
+                                                                @else
+                                                                    {{ $currencySymbol}}{{ number_format($payment->getTotalPaid(), 2) }} {{ $currency }}
+                                                                @endif
                                                             </td>
                                                         </tr>
 

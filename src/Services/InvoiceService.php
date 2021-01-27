@@ -75,6 +75,8 @@ class InvoiceService
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
             'taxesPerType' => $taxesPerType,
+            'currency' => $payment->getCurrency(),
+            'zeroDueZeroPaid' => null,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
@@ -101,18 +103,15 @@ class InvoiceService
 
         $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
 
-
-        /*
-         * supply $paymentTotalPaid and $paymentCurrency to views/order_invoice.blade.php so that $payment object not invoked.
-         */
         return [
             'order' => $order,
             'paymentPlan' => $paymentPlan,
             'orderItems' => $order->getOrderItems(),
+            'payment' => null,
             'currencySymbol' => '$',
             'taxesPerType' => $taxesPerType,
-            'paymentCurrency' => 'USD',
-            'paymentTotalPaid' => 0,
+            'currency' => 'USD',
+            'zeroDueZeroPaid' => $order->getTotalDue() == 0,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $order->getBrand() . '.order_invoice.invoice_sender'
             ),
