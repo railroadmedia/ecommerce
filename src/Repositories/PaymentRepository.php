@@ -851,7 +851,7 @@ class PaymentRepository extends RepositoryBase
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        $qb = $qb->select(['pr.id', 'pr.sku', 'SUM(oi.finalPrice) AS sales', 'COUNT(pr.id) AS sold'])
+        $qb = $qb->select(['p', 'op', 'o', 'oi', 'pr'])
             ->from(Payment::class, 'p')
             ->join('p.orderPayment', 'op')
             ->join('op.order', 'o')
@@ -862,7 +862,6 @@ class PaymentRepository extends RepositoryBase
                     ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
             )
             ->andWhere($qb->expr()->neq('p.status', ':failed'))
-            ->groupBy('pr.id')
             ->setParameter('smallDateTime', $day)
             ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('failed', Payment::STATUS_FAILED);
@@ -875,7 +874,74 @@ class PaymentRepository extends RepositoryBase
                 ->setParameter('brand', $brand);
         }
 
-        return $qb->getQuery()->getResult();
+        /**
+         * @var $results Payment[]
+         */
+        $results = $qb->getQuery()->getResult();
+
+        // We must set the price per each order item properly based on how much was actually paid in the payment.
+        // There is a bug where payment plan renewal payments are being counted at full order value, causing large over
+        // reporting. For example the 2nd payment on an order for a $1000 lifetime product (with a 5 payment plan), will
+        // report $1000 paid for EACH payment, instead of $200. This is because we are using the order item final price.
+        // We'll use the ratios of paid to total due and payment plan to fix this.
+
+        // this is the final return format required for this func:
+//        ^ array:27 [
+//          0 => array:4 [
+//              "id" => 77
+//              "sku" => "DSYS2-DIGI"
+//              "sales" => "338.00"
+//              "sold" => "130"
+//          ]
+//          1 => array:4 [
+//              "id" => 86
+//              "sku" => "SD-DIGI"
+//              "sales" => "94.00"
+//              "sold" => "128"
+//          ]
+//        ]
+
+        $returnArray = [];
+
+        foreach ($results as $result) {
+            $totalPaid = $result->getTotalPaid();
+
+            // spread the total paid across each order item based on their ratio
+            $sumOfAllOrderItemsFinalPrice = 0;
+
+            foreach ($result->getOrder()->getOrderItems() as $orderItem) {
+                $sumOfAllOrderItemsFinalPrice += $orderItem->getFinalPrice();
+            }
+
+            foreach ($result->getOrder()->getOrderItems() as $orderItem) {
+                if ($sumOfAllOrderItemsFinalPrice * $totalPaid > 0) {
+                    $paidForThisOrderItem =
+                        round($orderItem->getFinalPrice() / $sumOfAllOrderItemsFinalPrice * $totalPaid, 2);
+                } else {
+                    $paidForThisOrderItem = 0;
+                }
+
+                $returnArray[$orderItem->getProduct()->getId()]['id'] = $orderItem->getProduct()->getId();
+                $returnArray[$orderItem->getProduct()->getId()]['sku'] = $orderItem->getProduct()->getSku();
+
+                if (empty($returnArray[$orderItem->getProduct()->getId()]['sales'])) {
+                    $returnArray[$orderItem->getProduct()->getId()]['sales'] = 0;
+                }
+
+                $returnArray[$orderItem->getProduct()->getId()]['sales'] += $paidForThisOrderItem;
+
+                if (empty($returnArray[$orderItem->getProduct()->getId()]['sold'])) {
+                    $returnArray[$orderItem->getProduct()->getId()]['sold'] = 0;
+                }
+
+                if ($result->getType() == Payment::TYPE_INITIAL_ORDER) {
+                    $returnArray[$orderItem->getProduct()->getId()]['sold'] += 1;
+                }
+            }
+
+        }
+
+        return $returnArray;
     }
 
     /**

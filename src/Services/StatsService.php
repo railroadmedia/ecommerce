@@ -100,6 +100,7 @@ class StatsService
         $brand = $request->get('brand');
 
         $grandTotalRevenueReportedPerProduct = 0;
+        $orderTotalRevenueReportedPerProduct = 0;
         $grandTotalRevenueReported = 0;
 
         while ($currentDay <= $bigDateTime) {
@@ -246,6 +247,8 @@ class StatsService
             foreach ($dailyStatistic->getProductStatistics() as $productStatistic) {
                 $grandTotalRevenueReportedPerProduct += $productStatistic->getTotalSales();
                 $grandTotalRevenueReportedPerProduct += $productStatistic->getTotalRenewalSales();
+
+                $orderTotalRevenueReportedPerProduct += $productStatistic->getTotalSales();
             }
 
             $grandTotalRevenueReported += $dailyStatistic->getTotalSales();
@@ -257,17 +260,27 @@ class StatsService
             $currentDay->addDay();
         }
 
-        if ($grandTotalRevenueReported > 0 && $grandTotalRevenueReportedPerProduct > 0) {
-            $paidRatio = $grandTotalRevenueReported / $grandTotalRevenueReportedPerProduct;
+        // we'll spread the difference among all the products based on their ratio to the entire amount paid
+        $reportedDifference = abs($grandTotalRevenueReportedPerProduct - $grandTotalRevenueReported);
 
-            foreach ($results as $result) {
-                foreach ($result->getProductStatistics() as $productStatistic) {
-                    $productStatistic->setTotalSales($productStatistic->getTotalSales() * $paidRatio);
-                    $productStatistic->setTotalRenewalSales($productStatistic->getTotalRenewalSales() * $paidRatio);
+        foreach ($results as $dailyStatistic) {
+            foreach ($dailyStatistic->getProductStatistics() as $productStatistic) {
+                if ($orderTotalRevenueReportedPerProduct > 0) {
+                    $productStatistic->setTotalSales($productStatistic->getTotalSales() + ($reportedDifference * ($productStatistic->getTotalSales() / $orderTotalRevenueReportedPerProduct)));
                 }
             }
+
+            $productStats = $dailyStatistic->getProductStatistics();
+
+            usort($productStats, function ($a, $b) {
+                return ($a->getTotalSales() + $a->getTotalRenewalSales()) < ($b->getTotalSales() + $b->getTotalRenewalSales()) ? 1 : -1;
+            });
+
+            $dailyStatistic->setProductStatistics($productStats);
         }
 
-        return array_reverse(array_values($results));
+        $results = array_reverse(array_values($results));
+
+        return $results;
     }
 }

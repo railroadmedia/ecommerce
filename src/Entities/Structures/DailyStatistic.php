@@ -193,4 +193,12 @@ class DailyStatistic
     {
         $this->productStatistics[] = $productStatistic;
     }
+
+    /**
+     * @param ProductStatistic[] $productStatistics
+     */
+    public function setProductStatistics(array $productStatistics): void
+    {
+        $this->productStatistics = $productStatistics;
+    }
 }
