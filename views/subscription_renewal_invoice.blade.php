@@ -350,8 +350,11 @@
                                                         @if(!empty($product))
                                                             <tr>
                                                                 <td>{{ $product->getName() }}</td>
+
+                                                                {{-- Just in case $totalPaidMinusTax isn't set everywhere this view is used, fall back to $payment->getTotalPaid, --}}
+                                                                {{-- ... but that may contain the taxes so the invoice would not be correct. (Jonathan M. January 2021)           --}}
                                                                 <td class="alignright">
-                                                                    $ {{ number_format($payment->getTotalPaid(), 2) }}
+                                                                    $ {{ number_format($totalPaidMinusTax ?? $payment->getTotalPaid(), 2) }}
                                                                     {{ $payment->getCurrency() }}
                                                                 </td>
                                                             </tr>

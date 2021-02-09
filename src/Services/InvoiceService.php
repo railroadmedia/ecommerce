@@ -120,6 +120,8 @@ class InvoiceService
      */
     public function getViewDataForSubscriptionRenewalInvoice(Subscription $subscription, Payment $payment)
     {
+        $totalTaxes = 0;
+
         switch ($payment->getCurrency()) {
             case 'USD':
             case 'CAD':
@@ -147,6 +149,12 @@ class InvoiceService
             return $this->getViewDataForOrderInvoice($subscription->getOrder(), $payment);
         }
 
+        foreach($taxesPerType as $taxForAType){
+            $totalTaxes += $taxForAType;
+        }
+
+        $totalPaidMinusTax = $payment->getTotalPaid() - $totalTaxes;
+
         return [
             'subscription' => $subscription,
             'order' => $subscription->getOrder(),
@@ -161,6 +169,7 @@ class InvoiceService
             'invoiceSenderAddress' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_address'
             ),
+            'totalPaidMinusTax' => $totalPaidMinusTax,
         ];
     }
 
