@@ -717,12 +717,20 @@ class GooglePlayStoreService
                         $purchaseItem['purchase_token']
                     );
 
-                    $existsSubscription = true;
+                    $googleReceipt = $this->googleReceiptRepository->createQueryBuilder('gr')->where('gr.purchaseToken = :token')
+                        ->andWhere('gr.email is not null')
+                        ->setParameter('token', $purchaseItem['purchase_token'])
+                        ->orderBy('gr.id', 'desc')
+                        ->getQuery()->getResult();
 
                     if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) > Carbon::now()->subDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)) &&
                         ($googleResponse->getAutoRenewing() == 1)) {
-                        return self::SHOULD_LOGIN;
+                        if(!empty($googleReceipt)) {
+                            $existsSubscription = true;
+                            return self::SHOULD_LOGIN;
+                        }
                     } else {
+                        $existsSubscription = true;
                         $existsExpiredSubscriptions = true;
                     }
 

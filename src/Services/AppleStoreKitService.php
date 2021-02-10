@@ -454,7 +454,8 @@ class AppleStoreKitService
 
         if ($syncAll) {
             foreach ($allPurchasedItems as $item) {
-                if ($item->getExpiresDate() >  Carbon::now()
+                if ($item->getExpiresDate() >
+                    Carbon::now()
                         ->subDays(
                             config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
                         ) || is_null($item->getExpiresDate())) {
@@ -624,7 +625,7 @@ class AppleStoreKitService
                 '    transaction id:' .
                 $appleReceipt->getTransactionId()
             );
-            
+
             if (!$appleReceipt->getEmail()) {
                 $shouldCreateAccount = true;
             } else {
@@ -917,7 +918,6 @@ class AppleStoreKitService
      */
     public function checkSignup($receipt)
     {
-
         if (!$receipt) {
             return self::SHOULD_SIGNUP;
         }
@@ -943,12 +943,32 @@ class AppleStoreKitService
                 return self::SHOULD_SIGNUP;
             }
 
+            $appleReceipt = null;
+            $originalTransactionId = $latestPurchaseItem->getOriginalTransactionId();
+            $appleReceipts =
+                $this->appleReceiptRepository->createQueryBuilder('ap')
+                    ->where('ap.transactionId = :transactionId')
+                    ->orWhere('ap.receipt = :receipt')
+                    ->setParameters(
+                        [
+                            'transactionId' => $originalTransactionId,
+                            'receipt' => $receipt,
+                        ]
+                    )
+                    ->orderBy('ap.id', 'desc')
+                    ->getQuery()
+                    ->getResult();
+
+            if (!empty($appleReceipts)) {
+                $appleReceipt = array_first($appleReceipts);
+            }
+
             if (($latestPurchaseItem->getExpiresDate() >
                     Carbon::now()
                         ->subDays(
                             config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
                         )) && (is_null($latestPurchaseItem->getCancellationDate()))) {
-                return self::SHOULD_LOGIN;
+                return ($appleReceipt) ? self::SHOULD_LOGIN : self::SHOULD_SIGNUP;
             } else {
                 return self::SHOULD_RENEW;
             }
