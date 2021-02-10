@@ -711,13 +711,13 @@ class GooglePlayStoreService
             if (array_key_exists($purchaseItem['product_id'], config('ecommerce.google_store_products_map'))) {
 
                 try {
-                    $existsSubscription = true;
-
                     $googleResponse = $this->googlePlayStoreGateway->getResponse(
                         $purchaseItem['package_name'],
                         $purchaseItem['product_id'],
                         $purchaseItem['purchase_token']
                     );
+
+                    $existsSubscription = true;
 
                     if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) > Carbon::now()->subDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)) &&
                         ($googleResponse->getAutoRenewing() == 1)) {
