@@ -970,7 +970,7 @@ class AppleStoreKitService
                         )) && (is_null($latestPurchaseItem->getCancellationDate()))) {
                 return ($appleReceipt) ? self::SHOULD_LOGIN : self::SHOULD_SIGNUP;
             } else {
-                return self::SHOULD_RENEW;
+                return ($appleReceipt) ? self::SHOULD_RENEW : self::SHOULD_SIGNUP;
             }
 
         } catch (Throwable $exception) {

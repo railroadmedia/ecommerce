@@ -640,14 +640,13 @@ class GooglePlayStoreService
                 )) {
                     try {
                         $shouldCreateAccount = true;
+                        $purchasedToken = $purchase;
 
                         $this->googlePlayStoreGateway->getResponse(
                             $purchase['package_name'],
                             $purchase['product_id'],
                             $purchase['purchase_token']
                         );
-
-                        $purchasedToken = $purchase;
                     } catch (\Exception $exception) {
                         continue;
                     }
@@ -730,8 +729,10 @@ class GooglePlayStoreService
                             return self::SHOULD_LOGIN;
                         }
                     } else {
-                        $existsSubscription = true;
-                        $existsExpiredSubscriptions = true;
+                        if(!empty($googleReceipt)) {
+                            $existsSubscription = true;
+                            $existsExpiredSubscriptions = true;
+                        }
                     }
 
                 } catch (\Exception $exception) {
