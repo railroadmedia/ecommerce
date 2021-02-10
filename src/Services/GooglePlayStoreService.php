@@ -639,15 +639,15 @@ class GooglePlayStoreService
                     config('iap.drumeo-app-google-play-store.productsMapping')
                 )) {
                     try {
+                        $shouldCreateAccount = true;
+
                         $this->googlePlayStoreGateway->getResponse(
                             $purchase['package_name'],
                             $purchase['product_id'],
                             $purchase['purchase_token']
                         );
 
-                        $shouldCreateAccount = true;
                         $purchasedToken = $purchase;
-
                     } catch (\Exception $exception) {
                         continue;
                     }
