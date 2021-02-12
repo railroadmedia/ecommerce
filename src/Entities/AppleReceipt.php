@@ -142,6 +142,23 @@ class AppleReceipt
     protected $purchaseType;
 
     /**
+     * @ORM\Column(type="decimal", precision=8, scale=2, name="local_price", nullable=true)
+     *
+     * @var float
+     */
+    protected $localPrice;
+
+    /**
+     * User's local currency
+     *
+     * @ORM\Column(type="string", name="local_currency", nullable=true)
+     *
+     * @var string
+     */
+    protected $localCurrency;
+
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -371,5 +388,37 @@ class AppleReceipt
     public function setPurchaseType(string $purchaseType)
     {
         $this->purchaseType = $purchaseType;
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getLocalPrice(): ?float
+    {
+        return $this->localPrice;
+    }
+
+    /**
+     * @param float $localPrice
+     */
+    public function setLocalPrice(float $localPrice)
+    {
+        $this->localPrice = $localPrice;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLocalCurrency(): ?string
+    {
+        return $this->localCurrency;
+    }
+
+    /**
+     * @param string $currency
+     */
+    public function setLocalCurrency(string $currency)
+    {
+        $this->localCurrency = $currency;
     }
 }
