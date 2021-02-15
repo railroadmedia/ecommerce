@@ -22,6 +22,7 @@ use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
@@ -727,9 +728,22 @@ class AppleStoreKitService
                 ->copy()
         );
 
-        $subscription->setTotalPrice($product->getPrice());
+        if ($receipt->getLocalCurrency() &&
+            $receipt->getLocalCurrency() != config('ecommerce.default_currency')
+            && in_array($receipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
+            $totalPaidUsd =
+                CurrencyConversion::convert(
+                    $receipt->getLocalPrice(),
+                    $receipt->getLocalCurrency(),
+                    config('ecommerce.default_currency')
+                );
+            $subscription->setTotalPrice($totalPaidUsd);
+        } else {
+            $subscription->setTotalPrice($product->getPrice());
+        }
+
         $subscription->setTax(0);
-        $subscription->setCurrency('USD');
+        $subscription->setCurrency(config('ecommerce.default_currency'));
 
         $subscription->setIntervalType($product->getSubscriptionIntervalType());
         $subscription->setIntervalCount($product->getSubscriptionIntervalCount());
@@ -774,12 +788,12 @@ class AppleStoreKitService
                     $existingPayment->setUpdatedAt(Carbon::now());
                 }
 
-                $existingPayment->setTotalDue($product->getPrice());
-                $existingPayment->setTotalPaid($product->getPrice());
+                $existingPayment->setTotalDue($subscription->getTotalPrice());
+                $existingPayment->setTotalPaid($subscription->getTotalPrice());
 
                 // if it has a cancellation date it means the transaction was refunded
                 if (!empty($purchaseItem->getCancellationDate())) {
-                    $existingPayment->setTotalRefunded($product->getPrice());
+                    $existingPayment->setTotalRefunded($subscription->getTotalPrice());
                 } else {
                     $existingPayment->setTotalRefunded(0);
                 }

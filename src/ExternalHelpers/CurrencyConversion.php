@@ -10,7 +10,7 @@ class CurrencyConversion
      * @param string $to
      * @return float|int
      */
-    public function convert($value, $from, $to = 'USD')
+    public static function convert($value, $from, $to = 'USD')
     {
         $client = new \GuzzleHttp\Client();
 

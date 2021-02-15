@@ -20,6 +20,7 @@ use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
@@ -342,7 +343,20 @@ class GooglePlayStoreService
                     );
                 }
 
-                $subscription->setTotalPrice($purchasedProduct->getPrice());
+                if ($googleReceipt->getLocalCurrency() &&
+                    $googleReceipt->getLocalCurrency() != config('ecommerce.default_currency') &&
+                    in_array($googleReceipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
+                    $totalPaidUsd =
+                        CurrencyConversion::convert(
+                            $googleReceipt->getLocalPrice(),
+                            $googleReceipt->getLocalCurrency(),
+                            config('ecommerce.default_currency')
+                        );
+                    $subscription->setTotalPrice($totalPaidUsd);
+                } else {
+                    $subscription->setTotalPrice($purchasedProduct->getPrice());
+                }
+
                 $subscription->setTax(0);
                 $subscription->setCurrency(config('ecommerce.default_currency'));
 
@@ -626,11 +640,14 @@ class GooglePlayStoreService
                 continue;
             }
 
-            $googleReceipt = $this->googleReceiptRepository->createQueryBuilder('gr')->where('gr.purchaseToken = :token')
-                ->andWhere('gr.email is not null')
-                ->setParameter('token', $purchase['purchase_token'])
-                ->orderBy('gr.id', 'desc')
-                ->getQuery()->getResult();
+            $googleReceipt =
+                $this->googleReceiptRepository->createQueryBuilder('gr')
+                    ->where('gr.purchaseToken = :token')
+                    ->andWhere('gr.email is not null')
+                    ->setParameter('token', $purchase['purchase_token'])
+                    ->orderBy('gr.id', 'desc')
+                    ->getQuery()
+                    ->getResult();
 
             if (!($googleReceipt)) {
                 //check if purchases product is membership
@@ -657,7 +674,11 @@ class GooglePlayStoreService
 
                     $receipt->setPackageName($purchase['package_name']);
                     $receipt->setProductId($purchase['product_id']);
-                    $receipt->setEmail(auth()->user()->getEmail());
+                    $receipt->setEmail(
+                        auth()
+                            ->user()
+                            ->getEmail()
+                    );
                     $receipt->setPurchaseToken($purchase['purchase_token']);
                     $receipt->setBrand(config('ecommerce.brand'));
                     $receipt->setRequestType(GoogleReceipt::MOBILE_APP_REQUEST_TYPE);
@@ -716,20 +737,26 @@ class GooglePlayStoreService
                         $purchaseItem['purchase_token']
                     );
 
-                    $googleReceipt = $this->googleReceiptRepository->createQueryBuilder('gr')->where('gr.purchaseToken = :token')
-                        ->andWhere('gr.email is not null')
-                        ->setParameter('token', $purchaseItem['purchase_token'])
-                        ->orderBy('gr.id', 'desc')
-                        ->getQuery()->getResult();
+                    $googleReceipt =
+                        $this->googleReceiptRepository->createQueryBuilder('gr')
+                            ->where('gr.purchaseToken = :token')
+                            ->andWhere('gr.email is not null')
+                            ->setParameter('token', $purchaseItem['purchase_token'])
+                            ->orderBy('gr.id', 'desc')
+                            ->getQuery()
+                            ->getResult();
 
-                    if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) > Carbon::now()->subDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)) &&
-                        ($googleResponse->getAutoRenewing() == 1)) {
-                        if(!empty($googleReceipt)) {
+                    if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) >
+                        Carbon::now()
+                            ->subDays(
+                                config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                            ) && ($googleResponse->getAutoRenewing() == 1)) {
+                        if (!empty($googleReceipt)) {
                             $existsSubscription = true;
                             return self::SHOULD_LOGIN;
                         }
                     } else {
-                        if(!empty($googleReceipt)) {
+                        if (!empty($googleReceipt)) {
                             $existsSubscription = true;
                             $existsExpiredSubscriptions = true;
                         }
