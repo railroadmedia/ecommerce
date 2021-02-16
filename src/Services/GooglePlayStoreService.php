@@ -86,6 +86,11 @@ class GooglePlayStoreService
     private $orderPaymentRepository;
 
     /**
+     * @var CurrencyConversion
+     */
+    private $currencyConvertionHelper;
+
+    /**
      * @var array
      */
     public static $cancellationReasonMap = [
@@ -123,7 +128,8 @@ class GooglePlayStoreService
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         GoogleReceiptRepository $googleReceiptRepository,
-        OrderPaymentRepository $orderPaymentRepository
+        OrderPaymentRepository $orderPaymentRepository,
+        CurrencyConversion $currencyConvertionHelper
     ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
@@ -135,6 +141,7 @@ class GooglePlayStoreService
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->googleReceiptRepository = $googleReceiptRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->currencyConvertionHelper = $currencyConvertionHelper;
     }
 
     /**
@@ -346,12 +353,11 @@ class GooglePlayStoreService
                 if ($googleReceipt->getLocalCurrency() &&
                     $googleReceipt->getLocalCurrency() != config('ecommerce.default_currency') &&
                     in_array($googleReceipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
-                    $totalPaidUsd =
-                        CurrencyConversion::convert(
-                            $googleReceipt->getLocalPrice(),
-                            $googleReceipt->getLocalCurrency(),
-                            config('ecommerce.default_currency')
-                        );
+                    $totalPaidUsd = $this->currencyConvertionHelper->convert(
+                        $googleReceipt->getLocalPrice(),
+                        $googleReceipt->getLocalCurrency(),
+                        config('ecommerce.default_currency')
+                    );
                     $subscription->setTotalPrice($totalPaidUsd);
                 } else {
                     $subscription->setTotalPrice($purchasedProduct->getPrice());
@@ -537,9 +543,23 @@ class GooglePlayStoreService
                             $payment = new Payment();
                             $payment->setAttemptNumber(0);
                             $payment->setCreatedAt(Carbon::now());
-
-                            $payment->setTotalDue($purchasedProduct->getPrice());
-                            $payment->setTotalPaid($purchasedProduct->getPrice());
+                            if ($googleReceipt->getLocalCurrency() &&
+                                $googleReceipt->getLocalCurrency() != config('ecommerce.default_currency') &&
+                                in_array(
+                                    $googleReceipt->getLocalCurrency(),
+                                    config('ecommerce.allowable_currencies')
+                                )) {
+                                $totalPaidUsd = $this->currencyConvertionHelper->convert(
+                                    $googleReceipt->getLocalPrice(),
+                                    $googleReceipt->getLocalCurrency(),
+                                    config('ecommerce.default_currency')
+                                );
+                                $payment->setTotalDue($totalPaidUsd);
+                                $payment->setTotalPaid($totalPaidUsd);
+                            } else {
+                                $payment->setTotalDue($purchasedProduct->getPrice());
+                                $payment->setTotalPaid($purchasedProduct->getPrice());
+                            }
 
                             $payment->setConversionRate(1);
 
@@ -563,8 +583,8 @@ class GooglePlayStoreService
                         if (!$orderPayment) {
                             $order = new Order();
                             $order->setUser($user);
-                            $order->setTotalPaid($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
-                            $order->setTotalDue($membershipIncludeFreePack ? 0 : $purchasedProduct->getPrice());
+                            $order->setTotalPaid($membershipIncludeFreePack ? 0 : $payment->getTotalPaid());
+                            $order->setTotalDue($membershipIncludeFreePack ? 0 : $payment->getTotalDue());
                             $order->setTaxesDue(0);
                             $order->setShippingDue(0);
                             $order->setBrand(config('ecommerce.brand'));
@@ -575,9 +595,9 @@ class GooglePlayStoreService
                             $orderItem->setOrder($order);
                             $orderItem->setProduct($purchasedProduct);
                             $orderItem->setQuantity(1);
-                            $orderItem->setInitialPrice($purchasedProduct->getPrice());
+                            $orderItem->setInitialPrice($payment->getTotalPaid());
                             $orderItem->setTotalDiscounted(0);
-                            $orderItem->setFinalPrice($purchasedProduct->getPrice());
+                            $orderItem->setFinalPrice($payment->getTotalPaid());
 
                             $this->entityManager->persist($orderItem);
 

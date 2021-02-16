@@ -34,7 +34,7 @@ class GoogleReceiptRequest extends FormRequest
             'data.type' => 'in:googleReceipt',
             'data.attributes.package_name' => 'required',
             'data.attributes.product_id' => 'required',
-            'data.attributes.purchase_token' => 'required'
+            'data.attributes.purchase_token' => 'required',
         ];
 
         if (!auth()->user()) {
@@ -63,6 +63,8 @@ class GoogleReceiptRequest extends FormRequest
                 'data.attributes.package_name',
                 'data.attributes.product_id',
                 'data.attributes.purchase_token',
+                'data.attributes.currency',
+                'data.attributes.price',
                 'data.attributes.email',
                 'data.attributes.password',
             ]

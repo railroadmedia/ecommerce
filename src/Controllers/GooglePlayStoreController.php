@@ -88,6 +88,16 @@ class GooglePlayStoreController extends Controller
         $receipt->setPassword($request->input('data.attributes.password',''));
         $receipt->setPurchaseType($request->input('data.attributes.purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE));
 
+        if($request->has('data.attributes.currency'))
+        {
+            $receipt->setLocalCurrency($request->input('data.attributes.currency'));
+        }
+
+        if($request->has('data.attributes.price'))
+        {
+            $receipt->setLocalPrice($request->input('data.attributes.price'));
+        }
+
         $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
