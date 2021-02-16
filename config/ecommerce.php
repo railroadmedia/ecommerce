@@ -638,4 +638,46 @@ return [
     'membership_product_skus_for_code_redeem' => [],
 
     'code_redeem_product_sku_swap' => [],
+
+    /**
+     * Currencies supported by the API.
+     *
+     * @var array
+     */
+    'allowable_currencies' => [
+        'EUR',
+        'CAD',
+        'HKD',
+        'ISK',
+        'PHP',
+        'DKK',
+        'HUF',
+        'CZK',
+        'AUD',
+        'RON',
+        'SEK',
+        'IDR',
+        'INR',
+        'BRL',
+        'RUB',
+        'HRK',
+        'JPY',
+        'THB',
+        'CHF',
+        'SGD',
+        'PLN',
+        'BGN',
+        'TRY',
+        'CNY',
+        'NOK',
+        'NZD',
+        'ZAR',
+        'USD',
+        'MXN',
+        'ILS',
+        'GBP',
+        'KRW',
+        'MYR',
+    ],
+
 ];
