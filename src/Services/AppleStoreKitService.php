@@ -256,6 +256,8 @@ class AppleStoreKitService
 
                 if (!empty($oldReceipts)) {
                     $receipt->setEmail($oldReceipts[0]->getEmail());
+                    $receipt->setLocalPrice($oldReceipts[0]->getLocalPrice());
+                    $receipt->setLocalCurrency($oldReceipts[0]->getLocalCurrency());
                 }
 
             } else {
