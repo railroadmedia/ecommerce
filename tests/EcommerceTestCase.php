@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\MembershipStats;
 use Railroad\Ecommerce\Entities\RetentionStats;
 use Railroad\Ecommerce\Entities\User;
+use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Faker\Factory;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -106,6 +107,11 @@ class EcommerceTestCase extends BaseTestCase
      * @var \PHPUnit\Framework\MockObject\MockObject
      */
     protected $appleStoreKitGatewayMock;
+
+    /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $currencyConversionHelperMock;
 
     /**
      * @var array
@@ -204,6 +210,11 @@ class EcommerceTestCase extends BaseTestCase
                 ->getMock();
         $this->app->instance(AppleStoreKitGateway::class, $this->appleStoreKitGatewayMock);
 
+        $this->currencyConversionHelperMock = $this->getMockBuilder(CurrencyConversion::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->app->instance(CurrencyConversion::class, $this->currencyConversionHelperMock);
+
         Carbon::setTestNow(Carbon::now());
 
         $userProvider = new UserProvider();
@@ -301,6 +312,8 @@ class EcommerceTestCase extends BaseTestCase
             'ecommerce.failed_payments_before_de_activation',
             $defaultConfig['failed_payments_before_de_activation']
         );
+
+        $app['config']->set('ecommerce.allowable_currencies', $defaultConfig['allowable_currencies']);
 
         $app['config']->set('location.environment', $locationConfig['environment']);
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);

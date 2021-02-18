@@ -22,6 +22,7 @@ use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
@@ -91,6 +92,11 @@ class AppleStoreKitService
      */
     private $orderPaymentRepository;
 
+    /**
+     * @var CurrencyConversion
+     */
+    private $currencyConvertionHelper;
+
     const RENEWAL_EXPIRATION_REASON = [
         1 => 'Apple in-app: Customer canceled their subscription.',
         2 => 'Apple in-app: Billing error.',
@@ -127,7 +133,8 @@ class AppleStoreKitService
         PaymentRepository $paymentRepository,
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         AppleReceiptRepository $appleReceiptRepository,
-        OrderPaymentRepository $orderPaymentRepository
+        OrderPaymentRepository $orderPaymentRepository,
+        CurrencyConversion $currencyConversion
     ) {
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -139,6 +146,7 @@ class AppleStoreKitService
         $this->subscriptionPaymentRepository = $subscriptionPaymentRepository;
         $this->appleReceiptRepository = $appleReceiptRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->currencyConvertionHelper = $currencyConversion;
     }
 
     /**
@@ -248,6 +256,12 @@ class AppleStoreKitService
 
                 if (!empty($oldReceipts)) {
                     $receipt->setEmail($oldReceipts[0]->getEmail());
+                    if($oldReceipts[0]->getLocalPrice()){
+                        $receipt->setLocalPrice($oldReceipts[0]->getLocalPrice());
+                    }
+                    if($oldReceipts[0]->getLocalCurrency()){
+                        $receipt->setLocalCurrency($oldReceipts[0]->getLocalCurrency());
+                    }
                 }
 
             } else {
@@ -494,7 +508,7 @@ class AppleStoreKitService
 
                 } elseif ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
-                    $this->syncPack($user, $latestPurchaseItem, $membershipIncludeFreePack, $product);
+                    $this->syncPack($user, $latestPurchaseItem, $membershipIncludeFreePack, $product, $receipt);
                 }
             }
         }
@@ -692,7 +706,7 @@ class AppleStoreKitService
             $subscription->setUser($user);
         }
 
-        if (!empty($appleResponse->getPendingRenewalInfo()[0])) {
+        if (!empty($appleResponse->getPendingRenewalInfo())) {
             $subscription->setIsActive($appleResponse->getPendingRenewalInfo()[0]->getAutoRenewStatus());
             $subscription->setCanceledOn(
                 !empty($latestPurchaseItem->getCancellationDate()) ?
@@ -727,9 +741,27 @@ class AppleStoreKitService
                 ->copy()
         );
 
-        $subscription->setTotalPrice($product->getPrice());
+        if ($receipt->getLocalCurrency() &&
+            $receipt->getLocalCurrency() != config('ecommerce.default_currency') &&
+            in_array($receipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
+
+            try {
+                $totalPaidUsd = $this->currencyConvertionHelper->convert(
+                    $receipt->getLocalPrice(),
+                    $receipt->getLocalCurrency(),
+                    config('ecommerce.default_currency')
+                );
+            }catch (Exception $e){
+                $totalPaidUsd = $product['price'];
+            }
+
+            $subscription->setTotalPrice($totalPaidUsd);
+        } else {
+            $subscription->setTotalPrice($product->getPrice());
+        }
+
         $subscription->setTax(0);
-        $subscription->setCurrency('USD');
+        $subscription->setCurrency(config('ecommerce.default_currency'));
 
         $subscription->setIntervalType($product->getSubscriptionIntervalType());
         $subscription->setIntervalCount($product->getSubscriptionIntervalCount());
@@ -750,6 +782,7 @@ class AppleStoreKitService
         foreach (array_reverse($appleResponse->getLatestReceiptInfo()) as $purchaseItem) {
             // only purchase items with the same original transaction is should be take into consideration;
             // same original transaction id means that are renewal for the same subscription
+
             if ($purchaseItem->getOriginalTransactionId() == $latestPurchaseItem->getOriginalTransactionId() &&
                 ($purchaseItem->getProductId() == $latestPurchaseItem->getProductId())) {
 
@@ -774,12 +807,12 @@ class AppleStoreKitService
                     $existingPayment->setUpdatedAt(Carbon::now());
                 }
 
-                $existingPayment->setTotalDue($product->getPrice());
-                $existingPayment->setTotalPaid($product->getPrice());
+                $existingPayment->setTotalDue($subscription->getTotalPrice());
+                $existingPayment->setTotalPaid($subscription->getTotalPrice());
 
                 // if it has a cancellation date it means the transaction was refunded
                 if (!empty($purchaseItem->getCancellationDate())) {
-                    $existingPayment->setTotalRefunded($product->getPrice());
+                    $existingPayment->setTotalRefunded($subscription->getTotalPrice());
                 } else {
                     $existingPayment->setTotalRefunded(0);
                 }
@@ -832,11 +865,18 @@ class AppleStoreKitService
      * @param PurchaseItem|null $latestPurchaseItem
      * @param bool $membershipIncludeFreePack
      * @param $product
+     * @param $receipt
      * @throws NonUniqueResultException
      * @throws ORMException
      * @throws OptimisticLockException
      */
-    private function syncPack(?User $user, ?PurchaseItem $latestPurchaseItem, bool $membershipIncludeFreePack, $product)
+    private function syncPack(
+        ?User $user,
+        ?PurchaseItem $latestPurchaseItem,
+        bool $membershipIncludeFreePack,
+        $product,
+        $receipt
+    )
     : void {
         //pack purchase
         $payment = $this->paymentRepository->getByExternalIdAndProvider(
@@ -849,8 +889,24 @@ class AppleStoreKitService
                 $payment = new Payment();
                 $payment->setCreatedAt(Carbon::now());
 
-                $payment->setTotalDue($product->getPrice());
-                $payment->setTotalPaid($product->getPrice());
+                if ($receipt->getLocalCurrency() &&
+                    $receipt->getLocalCurrency() != config('ecommerce.default_currency') &&
+                    in_array(
+                        $receipt->getLocalCurrency(),
+                        config('ecommerce.allowable_currencies')
+                    )) {
+                    $totalPaidUsd = $this->currencyConvertionHelper->convert(
+                        $receipt->getLocalPrice(),
+                        $receipt->getLocalCurrency(),
+                        config('ecommerce.default_currency')
+                    );
+                    $payment->setTotalDue($totalPaidUsd);
+                    $payment->setTotalPaid($totalPaidUsd);
+                } else {
+                    $payment->setTotalDue($product->getPrice());
+                    $payment->setTotalPaid($product->getPrice());
+                }
+
                 $payment->setAttemptNumber(0);
 
                 $payment->setConversionRate(1);
@@ -872,8 +928,8 @@ class AppleStoreKitService
             if (!$orderPayment) {
                 $order = new Order();
                 $order->setUser($user);
-                $order->setTotalPaid($membershipIncludeFreePack ? 0 : $product->getPrice());
-                $order->setTotalDue($membershipIncludeFreePack ? 0 : $product->getPrice());
+                $order->setTotalPaid($membershipIncludeFreePack ? 0 : $payment->getTotalPaid());
+                $order->setTotalDue($membershipIncludeFreePack ? 0 : $payment->getTotalPaid());
 
                 $order->setTaxesDue(0);
                 $order->setShippingDue(0);
@@ -885,9 +941,9 @@ class AppleStoreKitService
                 $orderItem->setOrder($order);
                 $orderItem->setProduct($product);
                 $orderItem->setQuantity($latestPurchaseItem->getQuantity());
-                $orderItem->setInitialPrice($product->getPrice());
+                $orderItem->setInitialPrice($payment->getTotalPaid());
                 $orderItem->setTotalDiscounted(0);
-                $orderItem->setFinalPrice($product->getPrice());
+                $orderItem->setFinalPrice($payment->getTotalPaid());
 
                 $this->entityManager->persist($orderItem);
 

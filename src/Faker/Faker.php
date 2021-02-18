@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Faker;
 
 use Carbon\Carbon;
+use Entities\Ecommerce\GoogleReceipt;
 use Faker\Generator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
@@ -424,6 +425,33 @@ class Faker extends Generator
                 'start_date' => Carbon::now()->subDays(10)->toDateTimeString(),
                 'expiration_date' => Carbon::now()->addDays(10)->toDateTimeString(),
                 'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ],
+            $override
+        );
+    }
+
+    public function googleReceipt(array $override = [])
+    {
+        return array_merge(
+            [
+                'purchase_token' => $this->text,
+                'package_name' => $this->text,
+                'product_id' => $this->numberBetween(1, 5),
+                'request_type' => $this->text,
+                'notification_type' => $this->text,
+                'email' => $this->text,
+                'brand' => $this->text,
+                'validation_error' => $this->text,
+                'payment_id' => $this->numberBetween(1,50),
+                'order_id' => $this->numberBetween(1,50),
+                'raw_receipt_response' => $this->text,
+                'purchase_type' => $this->text,
+                'local_price' => null,
+                'local_currency' => null,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+                'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
             $override

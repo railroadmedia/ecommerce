@@ -57,6 +57,8 @@ class AppleReceiptRequest extends FormRequest
             [
                 'data.attributes.type',
                 'data.attributes.receipt',
+                'data.attributes.currency',
+                'data.attributes.price',
                 'data.attributes.email',
                 'data.attributes.password',
             ]

@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
+use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Requests\GoogleReceiptRequest;
 use Railroad\Ecommerce\Services\GooglePlayStoreService;
@@ -42,6 +43,11 @@ class GooglePlayStoreController extends Controller
      */
     private $userProvider;
 
+    /**
+     * @var $googleReceiptRepository
+     */
+    private $googleReceiptRepository;
+
 	/**
      * AppleStoreKitController constructor.
      *
@@ -54,13 +60,15 @@ class GooglePlayStoreController extends Controller
         GooglePlayStoreService $googlePlayStoreService,
         JsonApiHydrator $jsonApiHydrator,
         SubscriptionRepository $subscriptionRepository,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        GoogleReceiptRepository $googleReceiptRepository
     )
     {
         $this->googlePlayStoreService = $googlePlayStoreService;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProvider = $userProvider;
+        $this->googleReceiptRepository = $googleReceiptRepository;
     }
 
     /**
@@ -87,6 +95,16 @@ class GooglePlayStoreController extends Controller
 
         $receipt->setPassword($request->input('data.attributes.password',''));
         $receipt->setPurchaseType($request->input('data.attributes.purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE));
+
+        if($request->has('data.attributes.currency'))
+        {
+            $receipt->setLocalCurrency($request->input('data.attributes.currency'));
+        }
+
+        if($request->has('data.attributes.price'))
+        {
+            $receipt->setLocalPrice($request->input('data.attributes.price'));
+        }
 
         $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
 
@@ -124,6 +142,14 @@ class GooglePlayStoreController extends Controller
             if (strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ||
                 strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_CANCELED) {
 
+                    $oldReceipt =   $this->googleReceiptRepository->createQueryBuilder('gp')
+                        ->where('gp.purchaseToken  = :purchase_token')
+                        ->andWhere('gp.purchaseType = :purchase_type')
+                        ->setParameter('purchase_token', $subscriptionNotification->purchaseToken)
+                        ->setParameter('purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE)
+                        ->getQuery()->getResult();
+
+
                 $receipt = new GoogleReceipt();
                 $notificationType = strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ?
                     GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE:
@@ -135,6 +161,15 @@ class GooglePlayStoreController extends Controller
                 $receipt->setRequestType(GoogleReceipt::GOOGLE_NOTIFICATION_REQUEST_TYPE);
                 $receipt->setNotificationType($notificationType);
                 $receipt->setBrand(config('ecommerce.brand'));
+
+                if (!empty($oldReceipt)) {
+                    if($oldReceipt[0]->getLocalCurrency()){
+                        $receipt->setLocalCurrency($oldReceipt[0]->getLocalCurrency());
+                    }
+                    if($oldReceipt[0]->getLocalPrice()) {
+                        $receipt->setLocalPrice($oldReceipt[0]->getLocalPrice());
+                    }
+                }
 
                 $subscription = $this->subscriptionRepository
                     ->findOneBy(['externalAppStoreId' => $subscriptionNotification->purchaseToken]);
