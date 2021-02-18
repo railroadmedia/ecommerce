@@ -488,6 +488,13 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $email
+        ]);
+
         $response = $this->call(
             'POST',
             '/apple/handle-server-notification',
@@ -625,15 +632,12 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
-        $response = $this->call(
-            'POST',
-            '/apple/handle-server-notification',
-            [
-                'notification_type' => 'RENEWAL',
-                'web_order_line_item_id' => $renewalWebOrderLineItemId,
-                'latest_receipt' => $receipt,
-            ]
-        );
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $email
+        ]);
 
         $response = $this->call(
             'POST',
@@ -655,18 +659,13 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertDatabaseHas(
-            'ecommerce_apple_receipts',
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
             [
-                'id' => 1,
-                'receipt' => $receipt,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
-                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
-                'valid' => true,
-                'validation_error' => null,
-                'subscription_id' => 1,
-                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
             ]
         );
 
@@ -681,7 +680,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'validation_error' => null,
                 'subscription_id' => 1,
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
-                'created_at' => Carbon::now(),
+                'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
 
@@ -689,6 +688,21 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'ecommerce_apple_receipts',
             [
                 'id' => 3,
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'id' => 4,
                 'receipt' => $receipt,
                 'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
@@ -827,6 +841,13 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
+
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $this->faker->email
+        ]);
 
         $response = $this->call(
             'POST',
@@ -984,6 +1005,13 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->appleStoreKitGatewayMock->method('getResponse')
             ->willReturn($validationResponse);
 
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $this->faker->email
+        ]);
+
         $response = $this->call(
             'POST',
             '/apple/handle-server-notification',
@@ -1134,6 +1162,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'expires_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
             'transaction_id' => $originalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $subscriptionWebOrderItemId,
             'purchase_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
@@ -1147,6 +1176,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$productSku],
             'expires_date_ms' => $expirationDate->timestamp * 1000,
             'transaction_id' => $renewalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $renewalWebOrderItemId,
             'purchase_date_ms' => Carbon::now()->timestamp * 1000,
             'original_purchase_date' => Carbon::now()->timestamp * 1000,
@@ -1636,4 +1666,296 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_process_notification_subscription_renewal_local_price()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $userId = $this->createAndLogInNewUser($email);
+        $receipt = $this->faker->word;
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate =
+            Carbon::now()
+                ->addYear();
+
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $validationResponse = $this->getFirstRenewalPurchaseReceiptResponse(
+            $originalTransactionId,
+            $renewalTransactionId,
+            $originalWebOrderLineItemId,
+            $renewalWebOrderLineItemId,
+            $product['sku'],
+            $expirationDate->copy()
+        );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $localCurrency = $this->faker->randomElement(config('ecommerce.allowable_currencies'));
+        $localPrice = $this->faker->randomNumber();
+
+        $amountWithTaxesInUsd = $this->faker->numberBetween();
+
+        $this->currencyConversionHelperMock->method('convert')
+            ->willReturn($amountWithTaxesInUsd);
+
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $email,
+            'local_currency' => $localCurrency,
+            'local_price' => $localPrice
+        ]);
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $amountWithTaxesInUsd,
+                'total_paid' => $amountWithTaxesInUsd,
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => $expirationDate->copy()
+                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscription_payments',
+            [
+                'subscription_id' => 1,
+                'payment_id' => 1,
+            ]
+        );
+    }
+
+    public function test_process_notification_subscription_renewal_local_currency_not_supported_by_exchange_api()
+    {
+        $brand = 'brand';
+        config()->set('ecommerce.brand', $brand);
+
+        Mail::fake();
+
+        $email = $this->faker->email;
+
+        $userId = $this->createAndLogInNewUser($email);
+        $receipt = $this->faker->word;
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $originalWebOrderLineItemId = $this->faker->word;
+        $renewalWebOrderLineItemId = $this->faker->word;
+        $originalTransactionId = $this->faker->word;
+        $renewalTransactionId = $this->faker->word;
+        $expirationDate =
+            Carbon::now()
+                ->addYear();
+
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $product['sku'],
+            ]
+        );
+
+        $validationResponse = $this->getFirstRenewalPurchaseReceiptResponse(
+            $originalTransactionId,
+            $renewalTransactionId,
+            $originalWebOrderLineItemId,
+            $renewalWebOrderLineItemId,
+            $product['sku'],
+            $expirationDate->copy()
+        );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $localCurrency = $this->faker->word;
+        $localPrice = $this->faker->randomNumber();
+
+        $amountWithTaxesInUsd = $this->faker->numberBetween();
+
+        $this->currencyConversionHelperMock->method('convert')
+            ->willReturn($amountWithTaxesInUsd);
+
+        $this->fakeAppleReceipt([
+            'receipt' => $receipt,
+            'transaction_id' => $renewalTransactionId,
+            'subscription_id' => $subscription['id'],
+            'email' => $email,
+            'local_currency' => $localCurrency,
+            'local_price' => $localPrice
+        ]);
+
+        $response = $this->call(
+            'POST',
+            '/apple/handle-server-notification',
+            [
+                'notification_type' => 'RENEWAL',
+                'web_order_line_item_id' => $renewalWebOrderLineItemId,
+                'latest_receipt' => $receipt,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
+                'valid' => true,
+                'validation_error' => null,
+                'subscription_id' => 1,
+                'local_currency' => $localCurrency,
+                'local_price' => $localPrice,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
+                'total_refunded' => 0,
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'external_id' => $renewalTransactionId,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'total_price' => $product['price'],
+                'paid_until' => $expirationDate->toDateTimeString(),
+                'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+    }
+
 }
