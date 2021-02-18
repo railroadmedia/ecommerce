@@ -142,13 +142,13 @@ class GooglePlayStoreController extends Controller
             if (strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ||
                 strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_CANCELED) {
 
-                $oldReceipt =   $this->googleReceiptRepository->createQueryBuilder('gp')
-    ->where('gp.purchase_token  = :purchase_token')
-    ->andWhere('gp.purchase_type = :purchase_type')
-    ->setParameter('purchase_token', $subscriptionNotification->purchaseToken)
-    ->setParameter('purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE)
-    ->getQuery()
-    ->getResult();
+                    $oldReceipt =   $this->googleReceiptRepository->createQueryBuilder('gp')
+                        ->where('gp.purchaseToken  = :purchase_token')
+                        ->andWhere('gp.purchaseType = :purchase_type')
+                        ->setParameter('purchase_token', $subscriptionNotification->purchaseToken)
+                        ->setParameter('purchase_type', GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE)
+                        ->getQuery()->getResult();
+
 
                 $receipt = new GoogleReceipt();
                 $notificationType = strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ?
@@ -162,9 +162,13 @@ class GooglePlayStoreController extends Controller
                 $receipt->setNotificationType($notificationType);
                 $receipt->setBrand(config('ecommerce.brand'));
 
-                if (!empty($oldReceipts)) {
-                    $receipt->setLocalCurrency($oldReceipt->getLocalCurrency());
-                    $receipt->setLocalPrice($oldReceipt->getLocalPrice());
+                if (!empty($oldReceipt)) {
+                    if($oldReceipt[0]->getLocalCurrency()){
+                        $receipt->setLocalCurrency($oldReceipt[0]->getLocalCurrency());
+                    }
+                    if($oldReceipt[0]->getLocalPrice()) {
+                        $receipt->setLocalPrice($oldReceipt[0]->getLocalPrice());
+                    }
                 }
 
                 $subscription = $this->subscriptionRepository
