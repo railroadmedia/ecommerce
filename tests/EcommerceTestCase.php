@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
 use Doctrine\ORM\EntityManager;
+use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Schema\Blueprint;
@@ -63,6 +64,7 @@ class EcommerceTestCase extends BaseTestCase
         'userStripeCustomerId' => 'ecommerce_user_stripe_customer_ids',
         'discountCriteriasProducts' => 'ecommerce_discount_criterias_products',
         'appleReceipts' => 'ecommerce_apple_receipts',
+        'googleReceipts' => 'ecommerce_google_receipts',
         'membershipStats' => 'ecommerce_membership_stats',
         'retentionStats' => 'ecommerce_retention_stats',
         'membershipActions' => 'ecommerce_membership_actions',
@@ -1008,6 +1010,32 @@ class EcommerceTestCase extends BaseTestCase
 
         $newRecordId =
             $this->databaseManager->table(self::TABLES['appleReceipts'])
+                ->insertGetId($data);
+
+        $data['id'] = $newRecordId;
+
+        return $data;
+    }
+
+    /**
+     * Helper method to seed a test google receipt record
+     *
+     * @return array
+     */
+    public function fakeGoogleReceipt($dataStub = []): array
+    {
+        $data = $dataStub + [
+                'purchase_token' => $this->faker->word,
+                'package_name' => $this->faker->word,
+                'request_type' => GoogleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'brand' => config('ecommerce.brand'),
+                'valid' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => null,
+            ];
+
+        $newRecordId =
+            $this->databaseManager->table(self::TABLES['googleReceipts'])
                 ->insertGetId($data);
 
         $data['id'] = $newRecordId;
