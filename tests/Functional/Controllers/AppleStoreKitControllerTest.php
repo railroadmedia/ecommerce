@@ -1217,6 +1217,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'expires_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
             'transaction_id' => $originalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $subscriptionWebOrderItemId,
             'purchase_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
@@ -1230,6 +1231,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$productSku],
             'expires_date_ms' => $expirationDate->timestamp * 1000,
             'transaction_id' => $renewalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $renewalWebOrderItemId,
             'purchase_date_ms' => Carbon::now()->timestamp * 1000,
             'original_purchase_date' => Carbon::now()->timestamp * 1000,
@@ -1283,6 +1285,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'expires_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
             'transaction_id' => $originalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $subscriptionWebOrderItemId,
             'purchase_date_ms' => Carbon::now()
                     ->subDays(7)->timestamp * 1000,
@@ -1296,6 +1299,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             'product_id' => $appleProductsMap[$productSku],
             'expires_date_ms' => $expirationDate->timestamp * 1000,
             'transaction_id' => $renewalTransactionId,
+            'original_transaction_id' => $originalTransactionId,
             'web_order_line_item_id' => $renewalWebOrderItemId,
             'purchase_date_ms' => Carbon::now()->timestamp * 1000,
             'original_purchase_date' => Carbon::now()->timestamp * 1000,

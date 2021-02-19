@@ -618,6 +618,14 @@ class GooglePlayStoreService
                         }
 
                         event(new MobileOrderEvent($order, null, null));
+                    } else{
+                        //assign user free product included with the membership
+                        $this->userProductService->assignUserProduct(
+                            $user,
+                            $purchasedProduct,
+                            null,
+                            1
+                        );
                     }
                 }
             }

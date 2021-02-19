@@ -75,7 +75,7 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription1['id'],
                 'receipt' => $appleReceipt1,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
             ]
         );
@@ -110,7 +110,7 @@ class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription2['id'],
                 'receipt' => $appleReceipt2,
-                'request_type' => AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
                 'notification_type' => AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE,
             ]
         );
