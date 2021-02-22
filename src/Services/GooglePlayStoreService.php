@@ -678,10 +678,10 @@ class GooglePlayStoreService
                     ->getResult();
 
             if (!($googleReceipt)) {
-                //check if purchases product is membership
+                 //check if purchases product is membership
                 if (array_key_exists(
                     $purchase['product_id'],
-                    config('iap.drumeo-app-google-play-store.productsMapping')
+                    config('ecommerce.google_store_products_map')
                 )) {
                     try {
                         $shouldCreateAccount = true;

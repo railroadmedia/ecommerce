@@ -562,7 +562,7 @@ class AppleStoreKitService
         foreach ($allPurchasedItems as $purchaseItem) {
             if (array_key_exists(
                 $purchaseItem->getProductId(),
-                config('iap.drumeo-app-apple-store.productsMapping')
+                config('ecommerce.apple_store_products_map', [])
             )) {
                 $latestPurchaseItem = $purchaseItem;
                 break;
@@ -608,7 +608,7 @@ class AppleStoreKitService
                 //check if purchases product is membership
                 if (array_key_exists(
                     $purchaseItem->getProductId(),
-                    config('iap.drumeo-app-apple-store.productsMapping')
+                    config('ecommerce.apple_store_products_map', [])
                 )) {
                     $shouldCreateAccount = true;
                 } elseif (auth()->id()) {
@@ -648,7 +648,7 @@ class AppleStoreKitService
                 //sync
                 $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
 
-                if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+                if (!auth()->id() || (auth()->id() != $receiptUser->getId())) {
 
                     $shouldLogin = true;
 
@@ -988,7 +988,7 @@ class AppleStoreKitService
             foreach ($allPurchasedItems as $purchaseItem) {
                 if (array_key_exists(
                     $purchaseItem->getProductId(),
-                    config('iap.drumeo-app-apple-store.productsMapping')
+                    config('ecommerce.apple_store_products_map', [])
                 )) {
                     $latestPurchaseItem = $purchaseItem;
                     break;
