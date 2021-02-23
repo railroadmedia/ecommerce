@@ -2294,11 +2294,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(array_key_exists('shouldLogin', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('token', $response->decodeResponseJson()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldLogin']);
-
-        $this->assertEquals($email, $response->decodeResponseJson()['email']);
+        $this->assertTrue($response->decodeResponseJson()['success']);
 
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',

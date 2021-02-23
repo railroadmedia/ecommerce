@@ -236,9 +236,6 @@ class AppleStoreKitController extends Controller
                     'success' => true,
                     'token' => $userAuthToken,
                     'tokenType' => 'bearer',
-                    'expiresIn' => auth('api')
-                            ->factory()
-                            ->getTTL() * 60,
                     'userId' => $user->getId(),
                 ]
             );

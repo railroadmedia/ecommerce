@@ -611,8 +611,8 @@ class AppleStoreKitService
                     config('ecommerce.apple_store_products_map', [])
                 )) {
                     $shouldCreateAccount = true;
-                } elseif (auth()->id()) {
-                    $user = $this->userProvider->getUserById(auth()->id());
+                } elseif ($this->userProvider->getCurrentUserId()) {
+                    $user = $this->userProvider->getCurrentUser();
 
                     $appleReceipt = new AppleReceipt();
                     $appleReceipt->setReceipt($receipt);
@@ -648,7 +648,7 @@ class AppleStoreKitService
                 //sync
                 $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
 
-                if (!auth()->id() || (auth()->id() != $receiptUser->getId())) {
+                if (!$this->userProvider->getCurrentUserId() || ($this->userProvider->getCurrentUserId() != $receiptUser->getId())) {
 
                     $shouldLogin = true;
 

@@ -2419,7 +2419,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
     }
 
 
-    public function _test_restore_when_exists_expired_subscription()
+    public function test_restore_when_exists_expired_subscription()
     {
         $orderId = $this->faker->word . rand();
         Mail::fake();
@@ -2473,7 +2473,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'purchase_token' => $purchaseToken,
                 'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
-                'product_id' => $product['id'],
+                'product_id' => $googleProductId,
                 'email' => $email
             ]
         );
@@ -2508,15 +2508,13 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 ],
             ]
         );
-dd($response);
+
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertTrue(array_key_exists('shouldLogin', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('token', $response->decodeResponseJson()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldLogin']);
-
-        $this->assertEquals($email, $response->decodeResponseJson('email'));
+        $this->assertTrue($response->decodeResponseJson()['success']);
 
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',

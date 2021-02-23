@@ -283,14 +283,7 @@ class GooglePlayStoreController extends Controller
                 [
                     'success' => true,
                     'token' => $userAuthToken,
-                    'isEdge' => UserAccessService::isEdge($user->getId()),
-                    'isEdgeExpired' => UserAccessService::isEdgeExpired($user->getId()),
-                    'edgeExpirationDate' => UserAccessService::getEdgeExpirationDate($user->getId()),
-                    'isPackOwner' => UserAccessService::isPackOwner($user->getId()),
                     'tokenType' => 'bearer',
-                    'expiresIn' => auth('api')
-                            ->factory()
-                            ->getTTL() * 60,
                     'userId' => $user->getId(),
                 ]
             );
