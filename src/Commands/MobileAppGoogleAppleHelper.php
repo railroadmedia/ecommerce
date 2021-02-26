@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Illuminate\Console\Command;
+use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
@@ -43,6 +44,11 @@ class MobileAppGoogleAppleHelper extends Command
     private $appleReceiptRepository;
 
     /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
+
+    /**
      * MobileAppGoogleAppleHelper constructor.
      *
      * @param AppleStoreKitGateway $appleStoreKitGateway
@@ -52,7 +58,8 @@ class MobileAppGoogleAppleHelper extends Command
     public function __construct(
         AppleStoreKitGateway $appleStoreKitGateway,
         AppleStoreKitService $appleStoreKitService,
-        AppleReceiptRepository $appleReceiptRepository
+        AppleReceiptRepository $appleReceiptRepository,
+        UserProviderInterface $userProvider
     )
     {
         parent::__construct();
@@ -60,6 +67,7 @@ class MobileAppGoogleAppleHelper extends Command
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->appleStoreKitService = $appleStoreKitService;
         $this->appleReceiptRepository = $appleReceiptRepository;
+        $this->userProvider = $userProvider;
     }
 
     /**
@@ -100,20 +108,44 @@ class MobileAppGoogleAppleHelper extends Command
             $receiptEntity = $this->appleReceiptRepository->findOneBy(['receipt' => $this->argument('receiptString')]);
             $response = $this->appleStoreKitGateway->getResponse($this->argument('receiptString'));
 
+            // create user if doesn't exist
+            $user = $this->userProvider->getUserByEmail($receiptEntity->getEmail());
+
+            if (empty($user)) {
+                $randomPassword = $this->generatePassword();
+                $user = $this->userProvider->createUser($receiptEntity->getEmail(), $randomPassword);
+
+                $this->info('User created. Email: ' . $user->getEmail() . ' - Password: ' . $randomPassword);
+            } else {
+                $this->info('Found user ' . $user->getId());
+            }
+
             if (empty($receiptEntity)) {
                 $this->info('Could not find that receipt row in the database.');
 
                 return;
             }
 
-            $this->appleStoreKitService->syncPurchasedItems($response, $receiptEntity);
-            $this->info('Synced successfully.');
+            $this->appleStoreKitService->syncPurchasedItems($response, $receiptEntity, $user);
 
+            $this->info('Synced successfully.');
         }
     }
 
     private function google()
     {
 
+    }
+
+    private function generatePassword($len = 10)
+    {
+        $charRange = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789!@#$%^&*()";
+        $pw = null;
+        $length = strlen($charRange);
+        for ($x = 0; $x < $len; $x++) {
+            $n = rand(0, $length);
+            $pw .= $charRange[$n];
+        }
+        return $pw;
     }
 }
