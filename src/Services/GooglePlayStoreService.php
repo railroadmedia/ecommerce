@@ -684,15 +684,18 @@ class GooglePlayStoreService
                     config('iap.drumeo-app-google-play-store.productsMapping')
                 )) {
                     try {
-                        $shouldCreateAccount = true;
-                        $purchasedToken = $purchase;
-
-                        $this->googlePlayStoreGateway->getResponse(
+                          $this->googlePlayStoreGateway->getResponse(
                             $purchase['package_name'],
                             $purchase['product_id'],
                             $purchase['purchase_token']
                         );
+                        $shouldCreateAccount = true;
+                        $purchasedToken = $purchase;
                     } catch (\Exception $exception) {
+                        //The subscription purchase is no longer available for query because it has been expired for too long
+                        if($exception->getCode() == 410){
+                            $shouldCreateAccount = true;
+                        }
                         continue;
                     }
 
