@@ -11,22 +11,22 @@ Route::group([
         ->name('apple_store_kit.process_receipt');
 
     Route::post(
-        '/apple/signup',
+        '/api/apple/signup',
         Railroad\Ecommerce\Controllers\AppleStoreKitController::class . '@signup'
     ) ->name('apple_store_kit.signup');
 
-    Route::post('/apple/restore',
+    Route::post('/api/apple/restore',
         Railroad\Ecommerce\Controllers\AppleStoreKitController::class . '@restorePurchase') ->name('apple_store_kit.restore');
 
     Route::post('/google/verify-receipt-and-process-payment', Railroad\Ecommerce\Controllers\GooglePlayStoreController::class . '@processReceipt')
         ->name('google_play_store.process_receipt');
 
     Route::post(
-        '/google/signup',
+        '//api/google/signup',
         Railroad\Ecommerce\Controllers\GooglePlayStoreController::class . '@signup'
     ) ->name('google_play_store.signup');
 
-    Route::post('/google/restore',
+    Route::post('/api/google/restore',
         Railroad\Ecommerce\Controllers\GooglePlayStoreController::class . '@restorePurchase') ->name('google_play_store.restore');
 });
 
