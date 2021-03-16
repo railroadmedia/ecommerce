@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
+use Railroad\Location\Services\CountryListService;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {

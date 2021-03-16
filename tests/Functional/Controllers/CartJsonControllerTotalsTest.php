@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Location\Services\ConfigService;
+use Railroad\Location\Services\LocationReferenceService;
 
 class CartJsonControllerTotalsTest extends EcommerceTestCase
 {
@@ -80,7 +81,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
 
         // set the shipping address, since there are no physical items tax should still be set
         $shippingAddress = [
-            'shipping_country' => 'United States',
+            'shipping_country' => LocationReferenceService::name('US'),
             'shipping_region' => 'Ohio',
         ];
 
@@ -112,7 +113,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
 
         // now change the billing address so there is no more tax
         $billingAddress= [
-            'billing_country' => 'United States',
+            'billing_country' => LocationReferenceService::name('US'),
             'billing_region' => 'Ohio',
         ];
 

@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Requests;
 
+use Railroad\Location\Services\CountryListService;
+
 class SessionStoreAddressRequest extends FormRequest
 {
     /**

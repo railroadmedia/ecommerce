@@ -30,6 +30,7 @@ use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Location\Services\ConfigService;
+use Railroad\Location\Services\CountryListService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
@@ -406,7 +407,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(EcommerceServiceProvider::class);
         $app->register(LocationServiceProvider::class);
         $app->register(RemoteStorageServiceProvider::class);
-        $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
         $app->register(ActionLogServiceProvider::class);
 

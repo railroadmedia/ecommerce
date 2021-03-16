@@ -8,6 +8,7 @@ use Faker\Generator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Location\Services\CountryListService;
 
 class Faker extends Generator
 {
