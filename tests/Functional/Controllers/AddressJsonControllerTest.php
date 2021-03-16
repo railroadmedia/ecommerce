@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
-use Railroad\Location\Services\LocationService;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
@@ -362,7 +361,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                         'city' => $this->faker->city,
                         'zip' => $this->faker->postcode,
                         'region' => $this->faker->word,
-                        'country' => $this->faker->randomElement(LocationService::countries()),
+                        'country' => $this->faker->randomElement(CountryListService::all()),
                     ],
                 ],
             ]

@@ -8,7 +8,6 @@ use Faker\Generator;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Location\Services\LocationService;
 
 class Faker extends Generator
 {
@@ -108,7 +107,7 @@ class Faker extends Generator
                 'city' => $this->city,
                 'zip' => $this->postcode,
                 'region' => $this->word,
-                'country' => $this->randomElement(LocationService::countries()),
+                'country' => $this->randomElement(CountryListService::all()),
                 'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),

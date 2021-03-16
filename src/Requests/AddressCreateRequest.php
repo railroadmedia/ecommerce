@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Railroad\Ecommerce\Entities\Address;
-use Railroad\Location\Services\LocationService;
 
 class AddressCreateRequest extends FormRequest
 {
@@ -59,7 +58,7 @@ class AddressCreateRequest extends FormRequest
             'data.attributes.city' => 'nullable|max:255',
             'data.attributes.zip' => 'nullable|max:255',
             'data.attributes.region' => 'nullable|max:255',
-            'data.attributes.country' => 'required|max:255|in:' . implode(',', LocationService::countries()),
+            'data.attributes.country' => 'required|max:255|in:' . implode(',', CountryListService::allWeCanShipTo()),
             'data.attributes.note' => 'nullable|string',
             'data.relationships.customer.data.type' => 'nullable|in:customer',
             'data.relationships.customer.data.id' => 'integer|nullable|exists:' . 'ecommerce_customers' . ',id',
