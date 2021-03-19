@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Requests;
 
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Location\Services\CountryListService;
 
 class AddressUpdateRequest extends FormRequest
 {

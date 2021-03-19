@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Validation\Validator;
 use Webpatser\Countries\Countries;
+use Railroad\Location\Services\CountryListService;
 
 class CustomValidationRules extends Validator
 {
