@@ -9,7 +9,7 @@
     "doctrine/dbal": "^2.5",
     "ramsey/uuid": "^3.6",
     "stripe/stripe-php": "^4.4",
-    "railroad/location": "dev-2.0-",
+    "railroad/location": "dev-v2.0-",
     "railroad/permissions": "^1.0",
     "railroad/remotestorage": "^1.0",
     "railroad/resora": ">=1.0.10 <1.1",
