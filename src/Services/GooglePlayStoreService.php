@@ -678,10 +678,10 @@ class GooglePlayStoreService
                     ->getResult();
 
             if (!($googleReceipt)) {
-                //check if purchases product is membership
+                 //check if purchases product is membership
                 if (array_key_exists(
                     $purchase['product_id'],
-                    config('iap.drumeo-app-google-play-store.productsMapping')
+                    config('ecommerce.google_store_products_map')
                 )) {
                     try {
                           $this->googlePlayStoreGateway->getResponse(
@@ -699,15 +699,14 @@ class GooglePlayStoreService
                         continue;
                     }
 
-                } elseif (auth()->id()) {
+                } elseif ($this->userProvider->getCurrentUserId()) {
                     //pack purchase that should be restored
                     $receipt = new GoogleReceipt();
 
                     $receipt->setPackageName($purchase['package_name']);
                     $receipt->setProductId($purchase['product_id']);
                     $receipt->setEmail(
-                        auth()
-                            ->user()
+                        $this->userProvider->getCurrentUser()
                             ->getEmail()
                     );
                     $receipt->setPurchaseToken($purchase['purchase_token']);
@@ -723,7 +722,7 @@ class GooglePlayStoreService
 
                 $receiptUser = $this->userProvider->getUserByEmail($googleReceipt[0]->getEmail());
 
-                if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+                if (!$this->userProvider->getCurrentUserId()|| $this->userProvider->getCurrentUserId() != $receiptUser->getId()) {
 
                     $shouldLogin = true;
 

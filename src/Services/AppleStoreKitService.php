@@ -562,7 +562,7 @@ class AppleStoreKitService
         foreach ($allPurchasedItems as $purchaseItem) {
             if (array_key_exists(
                 $purchaseItem->getProductId(),
-                config('iap.drumeo-app-apple-store.productsMapping')
+                config('ecommerce.apple_store_products_map', [])
             )) {
                 $latestPurchaseItem = $purchaseItem;
                 break;
@@ -608,11 +608,11 @@ class AppleStoreKitService
                 //check if purchases product is membership
                 if (array_key_exists(
                     $purchaseItem->getProductId(),
-                    config('iap.drumeo-app-apple-store.productsMapping')
+                    config('ecommerce.apple_store_products_map', [])
                 )) {
                     $shouldCreateAccount = true;
-                } elseif (auth()->id()) {
-                    $user = $this->userProvider->getUserById(auth()->id());
+                } elseif ($this->userProvider->getCurrentUserId()) {
+                    $user = $this->userProvider->getCurrentUser();
 
                     $appleReceipt = new AppleReceipt();
                     $appleReceipt->setReceipt($receipt);
@@ -648,7 +648,7 @@ class AppleStoreKitService
                 //sync
                 $this->syncPurchasedItems($appleResponse, $appleReceipt, $receiptUser, true);
 
-                if (!auth()->id() || auth()->id() != $receiptUser->getId()) {
+                if (!$this->userProvider->getCurrentUserId() || ($this->userProvider->getCurrentUserId() != $receiptUser->getId())) {
 
                     $shouldLogin = true;
 
@@ -988,7 +988,7 @@ class AppleStoreKitService
             foreach ($allPurchasedItems as $purchaseItem) {
                 if (array_key_exists(
                     $purchaseItem->getProductId(),
-                    config('iap.drumeo-app-apple-store.productsMapping')
+                    config('ecommerce.apple_store_products_map', [])
                 )) {
                     $latestPurchaseItem = $purchaseItem;
                     break;

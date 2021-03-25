@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Fixtures;
 
 use Doctrine\Common\Inflector\Inflector;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use League\Fractal\TransformerAbstract;
@@ -66,11 +67,11 @@ class UserProvider implements UserProviderInterface
      */
     public function getCurrentUser(): ?User
     {
-        if (!auth()->id()) {
+        if (!Auth::id()) {
             return null;
         }
 
-        return $this->getUserById(auth()->id());
+        return $this->getUserById(Auth::id());
     }
 
     /**
@@ -78,7 +79,7 @@ class UserProvider implements UserProviderInterface
      */
     public function getCurrentUserId(): ?int
     {
-        return auth()->id();
+        return Auth::id();
     }
 
     /**
