@@ -262,6 +262,9 @@ class TaxService
      */
     private function isTaxTypeApplicable($country, $region, $taxType, $paymentGatewayName)
     {
+        $country = strtolower($country);
+        $region = strtolower($region);
+
         $taxOptions = config('ecommerce.tax_rates_and_options', []);
 
         if (!empty($taxOptions[$country][$region])) {
