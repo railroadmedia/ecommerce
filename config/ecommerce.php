@@ -184,6 +184,9 @@ return [
                     'type' => 'QST',
                     'rate' => 0.09975,
                     'applies_to_shipping_costs' => false,
+
+                    // do not apply this tax for the given payment gateways (brands)
+                    'gateway_blacklist' => ['pianote', 'guitareo'],
                 ],
             ],
             'saskatchewan' => [
