@@ -353,12 +353,15 @@ class GooglePlayStoreService
                 if ($googleReceipt->getLocalCurrency() &&
                     $googleReceipt->getLocalCurrency() != config('ecommerce.default_currency') &&
                     in_array($googleReceipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
+
                     $totalPaidUsd = $this->currencyConvertionHelper->convert(
                         $googleReceipt->getLocalPrice(),
                         $googleReceipt->getLocalCurrency(),
                         config('ecommerce.default_currency')
                     );
-                    $subscription->setTotalPrice($totalPaidUsd);
+
+                    $subscription->setTotalPrice($totalPaidUsd ?? $purchasedProduct->getPrice());
+
                 } else {
                     $subscription->setTotalPrice($purchasedProduct->getPrice());
                 }
@@ -549,13 +552,15 @@ class GooglePlayStoreService
                                     $googleReceipt->getLocalCurrency(),
                                     config('ecommerce.allowable_currencies')
                                 )) {
+
                                 $totalPaidUsd = $this->currencyConvertionHelper->convert(
                                     $googleReceipt->getLocalPrice(),
                                     $googleReceipt->getLocalCurrency(),
                                     config('ecommerce.default_currency')
                                 );
-                                $payment->setTotalDue($totalPaidUsd);
-                                $payment->setTotalPaid($totalPaidUsd);
+
+                                $payment->setTotalDue($totalPaidUsd ?? $purchasedProduct->getPrice());
+                                $payment->setTotalPaid($totalPaidUsd ?? $purchasedProduct->getPrice());
                             } else {
                                 $payment->setTotalDue($purchasedProduct->getPrice());
                                 $payment->setTotalPaid($purchasedProduct->getPrice());
@@ -618,7 +623,7 @@ class GooglePlayStoreService
                         }
 
                         event(new MobileOrderEvent($order, null, null));
-                    } else{
+                    } else {
                         //assign user free product included with the membership
                         $this->userProductService->assignUserProduct(
                             $user,
@@ -678,13 +683,13 @@ class GooglePlayStoreService
                     ->getResult();
 
             if (!($googleReceipt)) {
-                 //check if purchases product is membership
+                //check if purchases product is membership
                 if (array_key_exists(
                     $purchase['product_id'],
                     config('ecommerce.google_store_products_map')
                 )) {
                     try {
-                          $this->googlePlayStoreGateway->getResponse(
+                        $this->googlePlayStoreGateway->getResponse(
                             $purchase['package_name'],
                             $purchase['product_id'],
                             $purchase['purchase_token']
@@ -693,7 +698,7 @@ class GooglePlayStoreService
                         $purchasedToken = $purchase;
                     } catch (\Exception $exception) {
                         //The subscription purchase is no longer available for query because it has been expired for too long
-                        if($exception->getCode() == 410){
+                        if ($exception->getCode() == 410) {
                             $shouldCreateAccount = true;
                         }
                         continue;
@@ -722,7 +727,8 @@ class GooglePlayStoreService
 
                 $receiptUser = $this->userProvider->getUserByEmail($googleReceipt[0]->getEmail());
 
-                if (!$this->userProvider->getCurrentUserId()|| $this->userProvider->getCurrentUserId() != $receiptUser->getId()) {
+                if (!$this->userProvider->getCurrentUserId() ||
+                    $this->userProvider->getCurrentUserId() != $receiptUser->getId()) {
 
                     $shouldLogin = true;
 

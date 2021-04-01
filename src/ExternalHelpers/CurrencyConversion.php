@@ -8,23 +8,51 @@ class CurrencyConversion
      * @param $value
      * @param $from
      * @param string $to
-     * @return float|int
+     * @return float|void|null
      */
     public function convert($value, $from, $to = 'USD')
     {
-        $client = new \GuzzleHttp\Client();
+        $cache =
+            app()
+                ->make('EcommerceRedisCache')
+                ->getRedis();
 
-        $url = 'https://api.exchangeratesapi.io/latest?symbols=' . $to . '&base=' . $from;
+        if ($cache->get('exchangeRates')) {
+            $response = $cache->get('exchangeRates');
+        } else {
+            //$url = 'https://api.exchangeratesapi.io/latest?symbols=' . $to . '&base=' . $from;
+            try {
+                //return null if api key is not defined
+                if (!config('ecommerce.exchangeRateApiToken')) {
+                    return null;
+                }
 
-        $exchangeRate = json_decode(
-            $client->get($url)
-                ->getBody()
-                ->getContents(),
-            true
-        )['rates'][$to];
+                $url =
+                    'https://v6.exchangerate-api.com/v6/' .
+                    config('ecommerce.exchangeRateApiToken') .
+                    '/latest/' .
+                    $from;
 
-        $amountUSD = (float)$exchangeRate * $value;
+                $response_json = file_get_contents($url);
+                $response = json_decode($response_json);
 
-        return $amountUSD;
+                // Check for success
+                $existError =
+                    property_exists($response, 'error') ||
+                    (property_exists($response, 'result') && $response->result != 'success');
+
+                if ($existError) {
+                    return null;
+                }
+
+                //cache exchangeRates
+                $cache->set('exchangeRates', $response, $response->time_next_update_unix);
+
+            } catch (Exception $e) {
+                return null;
+            }
+        }
+
+        return round(($value * $response->conversion_rates->$to), 2);
     }
 }
