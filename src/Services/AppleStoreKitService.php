@@ -755,7 +755,7 @@ class AppleStoreKitService
                 $totalPaidUsd = $product['price'];
             }
 
-            $subscription->setTotalPrice($totalPaidUsd);
+            $subscription->setTotalPrice($totalPaidUsd ?? $product->getPrice());
         } else {
             $subscription->setTotalPrice($product->getPrice());
         }
@@ -900,8 +900,8 @@ class AppleStoreKitService
                         $receipt->getLocalCurrency(),
                         config('ecommerce.default_currency')
                     );
-                    $payment->setTotalDue($totalPaidUsd);
-                    $payment->setTotalPaid($totalPaidUsd);
+                    $payment->setTotalDue($totalPaidUsd ?? $product->getPrice());
+                    $payment->setTotalPaid($totalPaidUsd ?? $product->getPrice());
                 } else {
                     $payment->setTotalDue($product->getPrice());
                     $payment->setTotalPaid($product->getPrice());
