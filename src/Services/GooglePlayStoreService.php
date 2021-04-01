@@ -178,6 +178,8 @@ class GooglePlayStoreService
             }
 
             $receipt->setValid(true);
+            $receipt->setLocalCurrency($googleResponse->getRawResponse()->getPriceCurrencyCode());
+            $receipt->setLocalPrice(round($googleResponse->getRawResponse()->getPriceAmountMicros() / 1000000, 2));
 
             $receipt->setOrderId(
                 $googleResponse->getRawResponse()
@@ -237,6 +239,8 @@ class GooglePlayStoreService
             );
 
             $receipt->setValid(true);
+            $receipt->setLocalCurrency($googleResponse->getRawResponse()->getPriceCurrencyCode());
+            $receipt->setLocalPrice(round($googleResponse->getRawResponse()->getPriceAmountMicros() / 1000000, 2));
 
             $receipt->setOrderId(
                 $googleResponse->getRawResponse()
