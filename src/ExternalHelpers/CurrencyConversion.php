@@ -23,13 +23,13 @@ class CurrencyConversion
             //$url = 'https://api.exchangeratesapi.io/latest?symbols=' . $to . '&base=' . $from;
             try {
                 //return null if api key is not defined
-                if (!config('ecommerce.exchangeRateApiToken')) {
+                if (!config('ecommerce.exchange_rate_api_token')) {
                     return null;
                 }
 
                 $url =
                     'https://v6.exchangerate-api.com/v6/' .
-                    config('ecommerce.exchangeRateApiToken') .
+                    config('ecommerce.exchange_rate_api_token') .
                     '/latest/' .
                     $from;
 

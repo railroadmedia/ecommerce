@@ -683,4 +683,6 @@ return [
         'MYR',
     ],
 
+    // exchangerate-api.com
+    'exchange_rate_api_token' => 'api-key'
 ];
