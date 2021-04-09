@@ -30,6 +30,64 @@ class TaxServiceTest extends EcommerceTestCase
         $this->assertEquals(12.5, $srv->getTaxesDueTotal($price, $shipping, $address));
     }
 
+    public function test_get_total_tax_due_payment_gateway_not_blacklisted()
+    {
+        config()->set('ecommerce.brand', 'drumeo');
+
+        $srv = $this->app->make(TaxService::class);
+
+        $price = 100; // 14.975
+        $shipping = 10; // 0.50
+        $country = 'canada';
+        $region = 'quebec';
+
+        $address = new Address();
+
+        $address->setCountry($country);
+        $address->setRegion($region);
+
+        $this->assertEquals(15.48, $srv->getTaxesDueTotal($price, $shipping, $address));
+    }
+
+    public function test_get_total_tax_due_payment_gateway_is_blacklisted_by_config()
+    {
+        config()->set('ecommerce.brand', 'pianote');
+
+        $srv = $this->app->make(TaxService::class);
+
+        $price = 100; // 5
+        $shipping = 10; // 0.50
+        $country = 'canada';
+        $region = 'quebec';
+
+        $address = new Address();
+
+        $address->setCountry($country);
+        $address->setRegion($region);
+
+        $this->assertEquals(5.50, $srv->getTaxesDueTotal($price, $shipping, $address));
+    }
+
+    public function test_get_total_tax_due_payment_gateway_is_blacklisted_by_request()
+    {
+        $this->permissionServiceMock->method('can')->willReturn(true);
+        request()->merge(['brand' => 'pianote']);
+
+        $srv = $this->app->make(TaxService::class);
+
+        $price = 100; // 5
+        $shipping = 10; // 0.50
+        $country = 'canada';
+        $region = 'quebec';
+
+        $address = new Address();
+
+        $address->setCountry($country);
+        $address->setRegion($region);
+
+        $this->assertEquals(5.50, $srv->getTaxesDueTotal($price, $shipping, $address));
+    }
+
     public function test_get_product_tax_rate()
     {
         $srv = $this->app->make(TaxService::class);

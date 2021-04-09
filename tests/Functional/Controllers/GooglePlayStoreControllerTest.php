@@ -63,11 +63,14 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // see: docs/in-app-purchases/android-receipt-data-dump.txt
         // to use this, put the google api json credentials file in the root, named api.json
 
-        config()->set('ecommerce.payment_gateways.google_play_store', [
-            'credentials' => '/app/ecommerce/api.json',
-            'application_name' => 'com.drumeo',
-            'scope' => ['https://www.googleapis.com/auth/androidpublisher'],
-        ]);
+        config()->set(
+            'ecommerce.payment_gateways.google_play_store',
+            [
+                'credentials' => '/app/ecommerce/api.json',
+                'application_name' => 'com.drumeo',
+                'scope' => ['https://www.googleapis.com/auth/androidpublisher'],
+            ]
+        );
 
         /**
          * @var $gateway GooglePlayStoreGateway
@@ -75,13 +78,13 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $gateway = app(GooglePlayStoreGateway::class);
 
         // change these manually to pull real data
-//        $response = $gateway->getResponse(
-//            'com.drumeo',
-//            'drumeo_app_1_month_member',
-//            'kjlodknlagepgpeinbiljjfg.AO-J1Oy9PGdSDwwHwez8qy7o9aABZyU4gaYEr98lv1v_8Xg8dswA0mN6vdCUrUD-oG0BreD9wDhnqhklghoETFigquzPFc5O62GsM3XdNQzuqSAGsYYw6YgXwdnaMCxjfNX9D-ZrBxGV'
-//        );
+        //        $response = $gateway->getResponse(
+        //            'com.drumeo',
+        //            'drumeo_app_1_month_member',
+        //            'kjlodknlagepgpeinbiljjfg.AO-J1Oy9PGdSDwwHwez8qy7o9aABZyU4gaYEr98lv1v_8Xg8dswA0mN6vdCUrUD-oG0BreD9wDhnqhklghoETFigquzPFc5O62GsM3XdNQzuqSAGsYYw6YgXwdnaMCxjfNX9D-ZrBxGV'
+        //        );
 
-//        dd($response);
+        //        dd($response);
 
         $this->assertTrue(true);
 
@@ -134,7 +137,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
     {
         $orderId = $this->faker->word . rand();
         $email = $this->faker->email;
-        $expiryTime = Carbon::now()->addWeek();
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
         $brand = 'drumeo';
 
         config()->set('ecommerce.brand', $brand);
@@ -188,8 +193,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_token' => $purchaseToken,
                         'email' => $email,
                         'password' => $this->faker->word,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -223,7 +228,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()->addWeek()->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addWeek()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -264,7 +271,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // on initial order. It's dictated by the payment state
         $orderId = $this->faker->word . rand();
         $email = $this->faker->email;
-        $expiryTime = Carbon::now()->addMonth();
+        $expiryTime =
+            Carbon::now()
+                ->addMonth();
         $startTime = Carbon::now();
         $brand = 'drumeo';
 
@@ -319,8 +328,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_token' => $purchaseToken,
                         'email' => $email,
                         'password' => $this->faker->word,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -394,8 +403,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only'))
+                'expiration_date' => $expiryTime->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only')
+                    )
                     ->toDateTimeString(),
             ]
         );
@@ -406,7 +416,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $orderId = $this->faker->word . rand();
         $email = $this->faker->email;
         $newEmail = $this->faker->email;
-        $expiryTime = Carbon::now()->addWeek();
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
         $brand = 'drumeo';
 
         config()->set('ecommerce.brand', $brand);
@@ -460,8 +472,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_token' => $purchaseToken,
                         'email' => $email,
                         'password' => $this->faker->word,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -477,8 +489,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_token' => $purchaseToken,
                         'email' => $newEmail,
                         'password' => $this->faker->word,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -493,7 +505,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->assertEquals('The purchase token has already been taken.', $decodedResponse['errors'][0]['detail']);
     }
 
-
     public function test_process_receipt_validation()
     {
         $response = $this->call('POST', '/google/verify-receipt-and-process-payment', []);
@@ -502,33 +513,36 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->assertEquals(422, $response->getStatusCode());
 
         // assert that all the validation errors are returned
-        $this->assertEquals([
+        $this->assertEquals(
             [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.package_name',
-                'detail' => 'The package name field is required.',
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.package_name',
+                    'detail' => 'The package name field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.product_id',
+                    'detail' => 'The product id field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.purchase_token',
+                    'detail' => 'The purchase token field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.email',
+                    'detail' => 'The email field is required.',
+                ],
+                [
+                    'title' => 'Validation failed.',
+                    'source' => 'data.attributes.password',
+                    'detail' => 'The password field is required.',
+                ],
             ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.product_id',
-                'detail' => 'The product id field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.purchase_token',
-                'detail' => 'The purchase token field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.email',
-                'detail' => 'The email field is required.',
-            ],
-            [
-                'title' => 'Validation failed.',
-                'source' => 'data.attributes.password',
-                'detail' => 'The password field is required.',
-            ],
-        ], $response->decodeResponseJson('errors'));
+            $response->decodeResponseJson('errors')
+        );
     }
 
     public function test_process_notification_subscription_renewal_one()
@@ -537,8 +551,12 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand() . '..0';
-        $expiryTime = Carbon::now()->addMonth(1);
-        $startTime = Carbon::now()->subDays(7);
+        $expiryTime =
+            Carbon::now()
+                ->addMonth(1);
+        $startTime =
+            Carbon::now()
+                ->subDays(7);
 
         Mail::fake();
 
@@ -550,30 +568,34 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $user['id'],
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user['id'],
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -602,7 +624,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -613,7 +635,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -641,7 +663,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => $expiryTime->copy()->subMonth()->toDateTimeString(),
+                'created_at' => $expiryTime->copy()
+                    ->subMonth()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -663,8 +687,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                'expiration_date' => $expiryTime->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
+                    )
                     ->toDateTimeString(),
             ]
         );
@@ -676,8 +701,14 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand() . '..1';
-        $expiryTime = Carbon::now()->addMonth()->subHour();
-        $startTime = Carbon::now()->subDays(7)->subMonth();
+        $expiryTime =
+            Carbon::now()
+                ->addMonth()
+                ->subHour();
+        $startTime =
+            Carbon::now()
+                ->subDays(7)
+                ->subMonth();
 
         Mail::fake();
 
@@ -689,30 +720,34 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $user['id'],
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user['id'],
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -741,7 +776,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -752,7 +787,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -782,7 +817,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->subHour()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->subHour()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -796,7 +833,10 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->subMonth()->subHour()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->subMonth()
+                    ->subHour()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -817,8 +857,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                'expiration_date' => $expiryTime->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
+                    )
                     ->toDateTimeString(),
             ]
         );
@@ -830,8 +871,13 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand() . '..1';
-        $expiryTime = Carbon::now()->addMonth();
-        $startTime = Carbon::now()->subDays(7)->subMonth();
+        $expiryTime =
+            Carbon::now()
+                ->addMonth();
+        $startTime =
+            Carbon::now()
+                ->subDays(7)
+                ->subMonth();
 
         Mail::fake();
 
@@ -843,30 +889,34 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $user['id'],
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user['id'],
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -895,7 +945,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -906,7 +956,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -916,7 +966,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -926,7 +976,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -956,7 +1006,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -970,7 +1021,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->subMonth()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->subMonth()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1012,8 +1065,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                'expiration_date' => $expiryTime->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
+                    )
                     ->toDateTimeString(),
             ]
         );
@@ -1026,39 +1080,46 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $userId = $this->createAndLogInNewUser();
 
-        $expiryTime = Carbon::now()->addDays(2);
+        $expiryTime =
+            Carbon::now()
+                ->addDays(2);
         $cancelTime = Carbon::now();
         $cancelReason = 2;
         $orderId = $this->faker->word . rand();
 
         $receipt = $this->faker->word;
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
-        $paidUntil = Carbon::now()
-            ->addDays(10)
-            ->startOfDay()
-            ->toDateTimeString();
+        $paidUntil =
+            Carbon::now()
+                ->addDays(10)
+                ->startOfDay()
+                ->toDateTimeString();
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $userId,
-            'total_price' => $product['price'],
-            'paid_until' => $paidUntil,
-            'is_active' => 1,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $userId,
+                'total_price' => $product['price'],
+                'paid_until' => $paidUntil,
+                'is_active' => 1,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -1092,7 +1153,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -1103,7 +1164,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -1140,8 +1201,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
      * @param $expiryTimestamp
      * @return SubscriptionResponse
      */
-    protected function getTestReceiptInitialTrial($orderId, $expiryTimestamp): SubscriptionResponse
-    {
+    protected function getTestReceiptInitialTrial($orderId, $expiryTimestamp)
+    : SubscriptionResponse {
         $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
 
         $dependency->setAutoRenewing(true);
@@ -1158,8 +1219,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
      * @param $startTimestamp
      * @return SubscriptionResponse
      */
-    protected function getTestReceiptPaidRenewal($orderId, $expiryTimestamp, $startTimestamp): SubscriptionResponse
-    {
+    protected function getTestReceiptPaidRenewal($orderId, $expiryTimestamp, $startTimestamp)
+    : SubscriptionResponse {
         $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
 
         $dependency->setAutoRenewing(true);
@@ -1183,7 +1244,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $cancelReasonNumber,
         $expiryTimestamp,
         $cancelTimestamp
-    ): SubscriptionResponse {
+    )
+    : SubscriptionResponse {
 
         $dependency = new Google_Service_AndroidPublisher_SubscriptionPurchase();
 
@@ -1204,8 +1266,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
      * @param $productId
      * @return PurchaseResponse
      */
-    protected function getTestReceiptProduct($orderId, $productId): PurchaseResponse
-    {
+    protected function getTestReceiptProduct($orderId, $productId)
+    : PurchaseResponse {
         $dependency = new \Google_Service_AndroidPublisher_ProductPurchase();
 
         $dependency->setOrderId($orderId);
@@ -1270,9 +1332,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_token' => $purchaseToken,
                         'email' => $email,
                         'password' => $this->faker->word,
-                        'purchase_type' => GoogleReceipt::GOOGLE_PRODUCT_PURCHASE
-                    ]
-                ]
+                        'purchase_type' => GoogleReceipt::GOOGLE_PRODUCT_PURCHASE,
+                    ],
+                ],
             ]
         );
 
@@ -1316,7 +1378,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_paid' => $product['price'],
                 'type' => Payment::TYPE_INITIAL_ORDER,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1326,7 +1389,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => null
+                'expiration_date' => null,
             ]
         );
     }
@@ -1335,8 +1398,13 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
     {
         $orderId = $this->faker->word;
         $email = $this->faker->email;
-        $startTime = Carbon::now()->subDays(7)->subMonth();
-        $expiryTime = Carbon::now()->addWeek();
+        $startTime =
+            Carbon::now()
+                ->subDays(7)
+                ->subMonth();
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
         $brand = 'drumeo';
 
         config()->set('ecommerce.brand', $brand);
@@ -1401,9 +1469,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'product_id' => $googleProductId,
                         'purchase_token' => $purchaseToken,
                         'email' => $email,
-                        'password' => $this->faker->word
-                    ]
-                ]
+                        'password' => $this->faker->word,
+                    ],
+                ],
             ]
         );
 
@@ -1430,7 +1498,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'raw_receipt_response' => base64_encode(serialize($validationResponse)),
                 'created_at' => Carbon::now(),
                 'local_currency' => null,
-                'local_price' => null
+                'local_price' => null,
             ]
         );
 
@@ -1440,7 +1508,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_due' => $product['price'],
                 'total_paid' => $product['price'],
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
-                'status' => Payment::STATUS_PAID
+                'status' => Payment::STATUS_PAID,
             ]
         );
 
@@ -1457,8 +1525,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'quantity' => 1,
-                'expiration_date' => $expiryTime
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                'expiration_date' => $expiryTime->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
+                    )
                     ->toDateTimeString(),
             ]
         );
@@ -1479,18 +1548,20 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()->addWeek()->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addWeek()
+                    ->toDateTimeString(),
             ]
         );
     }
-
-
 
     public function test_process_subscription_purchase_user_currency()
     {
         $orderId = $this->faker->word . rand();
         $email = $this->faker->email;
-        $expiryTime = Carbon::now()->addWeek();
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
         $brand = 'drumeo';
 
         config()->set('ecommerce.brand', $brand);
@@ -1553,8 +1624,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'password' => $this->faker->word,
                         'price' => $priceInLocalCurrency,
                         'currency' => $currency,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -1590,7 +1661,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'user_id' => 1,
                 'product_id' => $product['id'],
                 'is_active' => 1,
-                'paid_until' => Carbon::now()->addWeek()->toDateTimeString(),
+                'paid_until' => Carbon::now()
+                    ->addWeek()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1604,7 +1677,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
     }
-
 
     public function test_process_receipt_pack_purchase_user_currency()
     {
@@ -1657,7 +1729,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->currencyConversionHelperMock->method('convert')
             ->willReturn($amountWithTaxesInUsd);
 
-
         $response = $this->call(
             'POST',
             '/google/verify-receipt-and-process-payment',
@@ -1672,8 +1743,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                         'purchase_type' => GoogleReceipt::GOOGLE_PRODUCT_PURCHASE,
                         'price' => $priceInLocalCurrency,
                         'currency' => $currency,
-                    ]
-                ]
+                    ],
+                ],
             ]
         );
 
@@ -1709,7 +1780,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'id' => 1,
                 'total_due' => $amountWithTaxesInUsd,
-                'total_paid' => $amountWithTaxesInUsd
+                'total_paid' => $amountWithTaxesInUsd,
             ]
         );
 
@@ -1718,7 +1789,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'id' => 1,
                 'initial_price' => $amountWithTaxesInUsd,
-                'final_price' => $amountWithTaxesInUsd
+                'final_price' => $amountWithTaxesInUsd,
             ]
         );
 
@@ -1729,7 +1800,8 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_paid' => $amountWithTaxesInUsd,
                 'type' => Payment::TYPE_INITIAL_ORDER,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => Carbon::now()->toDateTimeString(),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }
@@ -1740,8 +1812,12 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand() . '..0';
-        $expiryTime = Carbon::now()->addMonth(1);
-        $startTime = Carbon::now()->subDays(7);
+        $expiryTime =
+            Carbon::now()
+                ->addMonth(1);
+        $startTime =
+            Carbon::now()
+                ->subDays(7);
 
         Mail::fake();
 
@@ -1753,30 +1829,34 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $user['id'],
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user['id'],
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -1786,7 +1866,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 $googleProductId => $product['sku'],
             ]
         );
-
 
         $googleStoreKitGateway =
             $this->getMockBuilder(GooglePlayStoreGateway::class)
@@ -1806,13 +1885,15 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->currencyConversionHelperMock->method('convert')
             ->willReturn($amountWithTaxesInUsd);
 
-        $this->fakeGoogleReceipt([
-            'purchase_token' => $purchaseToken,
-            'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
-            'product_id' => $product['id'],
-            'local_currency' => $localCurrency,
-            'local_price' => $localPrice
-        ]);
+        $this->fakeGoogleReceipt(
+            [
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'product_id' => $product['id'],
+                'local_currency' => $localCurrency,
+                'local_price' => $localPrice,
+            ]
+        );
 
         $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
 
@@ -1822,7 +1903,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -1833,7 +1914,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -1864,7 +1945,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => $expiryTime->copy()->subMonth()->toDateTimeString(),
+                'created_at' => $expiryTime->copy()
+                    ->subMonth()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1889,8 +1972,12 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         config()->set('ecommerce.brand', $brand);
 
         $orderId = $this->faker->word . rand() . '..0';
-        $expiryTime = Carbon::now()->addMonth(1);
-        $startTime = Carbon::now()->subDays(7);
+        $expiryTime =
+            Carbon::now()
+                ->addMonth(1);
+        $startTime =
+            Carbon::now()
+                ->subDays(7);
 
         Mail::fake();
 
@@ -1902,30 +1989,34 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             ]
         );
 
-        $product = $this->fakeProduct([
-            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'price' => 12.95,
-            'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
-            'subscription_interval_count' => 1,
-        ]);
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'price' => 12.95,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
 
         $packageName = $this->faker->word;
         $purchaseToken = $this->faker->word;
 
-        $subscription = $this->fakeSubscription([
-            'product_id' => $product['id'],
-            'payment_method_id' => null,
-            'user_id' => $user['id'],
-            'total_price' => $product['price'],
-            'paid_until' => Carbon::now()
-                ->subDay()
-                ->startOfDay()
-                ->toDateTimeString(),
-            'is_active' => 0,
-            'interval_count' => 1,
-            'interval_type' => config('ecommerce.interval_type_monthly'),
-            'external_app_store_id' => $purchaseToken
-        ]);
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user['id'],
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
 
         $googleProductId = $this->faker->word;
 
@@ -1935,7 +2026,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 $googleProductId => $product['sku'],
             ]
         );
-
 
         $googleStoreKitGateway =
             $this->getMockBuilder(GooglePlayStoreGateway::class)
@@ -1955,13 +2045,15 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->currencyConversionHelperMock->method('convert')
             ->willReturn($amountWithTaxesInUsd);
 
-        $this->fakeGoogleReceipt([
-            'purchase_token' => $purchaseToken,
-            'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
-            'product_id' => $product['id'],
-            'local_currency' => $localCurrency,
-            'local_price' => $localPrice
-        ]);
+        $this->fakeGoogleReceipt(
+            [
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'product_id' => $product['id'],
+                'local_currency' => $localCurrency,
+                'local_price' => $localPrice,
+            ]
+        );
 
         $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
 
@@ -1971,7 +2063,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'purchaseToken' => $purchaseToken,
                 'subscriptionId' => $googleProductId,
             ],
-            'packageName' => $packageName
+            'packageName' => $packageName,
         ];
 
         $enceodedRequestData = base64_encode(json_encode($requestData));
@@ -1982,7 +2074,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
             [
                 'message' => [
                     'data' => $enceodedRequestData,
-                ]
+                ],
             ]
         );
 
@@ -2013,7 +2105,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'total_refunded' => 0,
                 'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
                 'status' => Payment::STATUS_PAID,
-                'created_at' => $expiryTime->copy()->subMonth()->toDateTimeString(),
+                'created_at' => $expiryTime->copy()
+                    ->subMonth()
+                    ->toDateTimeString(),
             ]
         );
 
@@ -2028,6 +2122,407 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'start_date' => $startTime->toDateTimeString(),
                 'total_price' => $product['price'],
                 'currency' => config('ecommerce.default_currency'),
+            ]
+        );
+    }
+
+    public function test_signup_when_exists_active_subscription()
+    {
+        $orderId = $this->faker->word . rand();
+        $email = $this->faker->email;
+
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $this->fakeGoogleReceipt(
+            [
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'product_id' => $product['id'],
+                'email' => $email
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/google/signup',
+            [
+                'purchases' => [
+                    [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertTrue(isset($decodedResponse['shouldLogin']));
+    }
+
+    public function test_signup_when_exists_expired_subscription()
+    {
+        $orderId = $this->faker->word . rand();
+        $email = $this->faker->email;
+
+        $expiryTime =
+            Carbon::now()
+                ->subWeek(1);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $this->fakeGoogleReceipt(
+            [
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'product_id' => $product['id'],
+                'email' => $email
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/google/signup',
+            [
+                'purchases' => [
+                    [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertTrue(array_key_exists('shouldRenew', $response->decodeResponseJson()));
+
+        $this->assertTrue($response->decodeResponseJson()['shouldRenew']);
+    }
+
+    public function test_signup_when_not_exists_subscription()
+    {
+        $orderId = $this->faker->word . rand();
+
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/signup',
+            [
+                'purchases' => [
+                    [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertTrue(isset($decodedResponse['shouldSignup']));
+    }
+
+    public function test_restore_when_not_exists_data_in_db()
+    {
+        $orderId = $this->faker->word . rand();
+
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $response = $this->call(
+            'POST',
+            '/google/restore',
+            [
+                'purchases' => [
+                    [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        $this->assertTrue(isset($decodedResponse['shouldCreateAccount']));
+    }
+
+
+    public function test_restore_when_exists_expired_subscription()
+    {
+        $orderId = $this->faker->word . rand();
+        Mail::fake();
+
+        $email = $this->faker->email;
+        $user = $this->createAndLogInNewUser($email);
+
+        $expiryTime =
+            Carbon::now()
+                ->addWeeks(1);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptInitialTrial($orderId, $expiryTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $this->fakeGoogleReceipt(
+            [
+                'purchase_token' => $purchaseToken,
+                'purchase_type' => GoogleReceipt::GOOGLE_SUBSCRIPTION_PURCHASE,
+                'product_id' => $googleProductId,
+                'email' => $email
+            ]
+        );
+
+        $subscription = $this->fakeSubscription(
+            [
+                'product_id' => $product['id'],
+                'payment_method_id' => null,
+                'user_id' => $user,
+                'total_price' => $product['price'],
+                'paid_until' => Carbon::now()
+                    ->subDay()
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'interval_count' => 1,
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'external_app_store_id' => $purchaseToken,
+            ]
+        );
+
+        $response = $this->call(
+            'POST',
+            '/google/restore',
+            [
+                'purchases' => [
+                    [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertTrue(array_key_exists('token', $response->decodeResponseJson()));
+
+        $this->assertTrue($response->decodeResponseJson()['success']);
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => $user,
+                'product_id' => $product['id'],
+                'is_active' => 1,
+                'paid_until' => $expiryTime->toDateTimeString()
             ]
         );
     }

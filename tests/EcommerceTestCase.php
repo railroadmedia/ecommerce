@@ -244,6 +244,7 @@ class EcommerceTestCase extends BaseTestCase
     {
         // setup package config for testing
         $defaultConfig = require(__DIR__ . '/../config/ecommerce.php');
+
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 

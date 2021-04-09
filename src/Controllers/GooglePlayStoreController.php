@@ -188,4 +188,110 @@ class GooglePlayStoreController extends Controller
 
         return response()->json();
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Railroad\Ecommerce\Exceptions\ReceiptValidationException
+     * @throws \Throwable
+     */
+    public function signup(Request $request)
+    {
+        error_log(
+            'Signup purchases request :: ' . print_r($request->all(), true)
+        );
+
+        $action = $this->googlePlayStoreService->checkSignup($request->get('purchases', []));
+
+        error_log(
+            'Signup purchases response :: ' . print_r($action, true)
+        );
+
+        switch ($action) {
+
+            case GooglePlayStoreService::SHOULD_RENEW:
+                return response()->json(
+                    [
+                        'shouldRenew' => true,
+                        'message' => 'You can not create multiple Drumeo accounts under the same google account. You already have an expired/cancelled membership. Please renew your membership.',
+                    ]
+                );
+            case GooglePlayStoreService::SHOULD_LOGIN:
+                return response()->json(
+                    [
+                        'shouldLogin' => true,
+                        'message' => 'You have an active Drumeo account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
+                    ]
+                );
+            default:
+                return response()->json(
+                    [
+                        'shouldSignup' => true,
+                    ]
+                );
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Railroad\Ecommerce\Exceptions\ReceiptValidationException
+     * @throws \Throwable
+     */
+    public function restorePurchase(Request $request)
+    {
+        $purchases = $request->get('purchases', []);
+
+        error_log(
+            'Restore purchases :: ' . print_r($request->all(), true)
+        );
+
+        if (empty($purchases)) {
+            return response()->json(
+                [
+                    'message' => 'No purchases on the request',
+                ],
+                500
+            );
+        }
+
+        $results = $this->googlePlayStoreService->restoreAndSyncPurchasedItems($purchases);
+
+        if ($results['shouldLogin'] == true) {
+
+            return response()->json(
+                [
+                    'shouldLogin' => true,
+                    'email' => $results['receiptUser']->getEmail(),
+                ]
+            );
+        }elseif ($results['shouldCreateAccount'] == true) {
+
+            return response()->json(
+                [
+                    'shouldCreateAccount' => true,
+                    'purchase' => $results['purchasedToken'],
+                ]
+            );
+
+        }else if($results['receiptUser']){
+            $user = $results['receiptUser'];
+            $userAuthToken = $this->userProvider->getUserAuthToken($user);
+
+            return response()->json(
+                [
+                    'success' => true,
+                    'token' => $userAuthToken,
+                    'tokenType' => 'bearer',
+                    'userId' => $user->getId(),
+                ]
+            );
+        }
+
+        return response()->json(
+            [
+                'success' => true
+            ]);
+    }
 }

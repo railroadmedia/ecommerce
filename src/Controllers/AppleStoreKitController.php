@@ -139,4 +139,109 @@ class AppleStoreKitController extends Controller
 
         return response()->json();
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Throwable
+     */
+    public function signup(Request $request)
+    {
+        $action = $this->appleStoreKitService->checkSignup($request->get('receipt'));
+
+        switch ($action) {
+
+            case AppleStoreKitService::SHOULD_RENEW:
+                return response()->json(
+                    [
+                        'shouldRenew' => true,
+                        'message' => 'You can not create multiple '.ucfirst(config('ecommerce.brand')).' accounts under the same apple account. You already have an expired/cancelled membership. Please renew your membership.',
+                    ]
+                );
+            case AppleStoreKitService::SHOULD_LOGIN:
+                return response()->json(
+                    [
+                        'shouldLogin' => true,
+                        'message' => 'You have an active '.ucfirst(config('ecommerce.brand')).' account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
+                    ]
+                );
+            default:
+                return response()->json(
+                    [
+                        'shouldSignup' => true,
+                    ]
+                );
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws GuzzleException
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Railroad\Ecommerce\Exceptions\ReceiptValidationException
+     * @throws \Throwable
+     */
+    public function restorePurchase(Request $request)
+    {
+        $receipt = $request->get('receipt', []);
+
+        if (empty($receipt)) {
+            return response()->json(
+                [
+                    'message' => 'No receipt on the request',
+                ],
+                500
+            );
+        }
+
+        $results = $this->appleStoreKitService->restoreAndSyncPurchasedItems($receipt);
+
+        if (!$results) {
+            return response()->json(
+                [
+                    'success' => true,
+                    'message' => 'No valid purchased items in Apple response',
+                ],
+                200
+            );
+        }
+        if ($results['shouldLogin'] == true) {
+
+            auth()->logout();
+
+            return response()->json(
+                [
+                    'shouldLogin' => true,
+                    'email' => $results['receiptUser']->getEmail(),
+                ]
+            );
+        } elseif ($results['shouldCreateAccount'] == true) {
+
+            return response()->json(
+                [
+                    'shouldCreateAccount' => true,
+                ]
+            );
+        } elseif ($results['receiptUser']) {
+
+            $user = $results['receiptUser'] ?? auth()->user();
+            $userAuthToken = $this->userProvider->getUserAuthToken($user);
+
+            return response()->json(
+                [
+                    'success' => true,
+                    'token' => $userAuthToken,
+                    'tokenType' => 'bearer',
+                    'userId' => $user->getId(),
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
+
 }

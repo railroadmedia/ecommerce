@@ -7,6 +7,7 @@ use Exception;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Permissions\Services\PermissionService;
 
 class TaxService
 {
@@ -20,6 +21,11 @@ class TaxService
      */
     private $paymentMethodRepository;
 
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
     const TAXABLE_COUNTRY = 'canada';
 
     /**
@@ -27,10 +33,15 @@ class TaxService
      * @param ShippingService $shippingService
      * @param PaymentMethodRepository $paymentMethodRepository
      */
-    public function __construct(ShippingService $shippingService, PaymentMethodRepository $paymentMethodRepository)
+    public function __construct(
+        ShippingService $shippingService,
+        PaymentMethodRepository $paymentMethodRepository,
+        PermissionService $permissionService
+    )
     {
         $this->shippingService = $shippingService;
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->permissionService = $permissionService;
     }
 
     /**
@@ -54,7 +65,15 @@ class TaxService
         $regionOptions = $countryOptions[strtolower($address->getRegion())] ?? [];
 
         foreach ($regionOptions as $regionOption) {
-            $rate += $regionOption['rate'];
+
+            if ($this->isTaxTypeApplicable(
+                $address->getCountry(),
+                $address->getRegion(),
+                $regionOption['type'],
+                $this->getTaxablePaymentGateway())) {
+
+                $rate += $regionOption['rate'];
+            }
         }
 
         return $rate;
@@ -83,8 +102,14 @@ class TaxService
         foreach ($regionOptions as $regionOption) {
 
             if (isset($regionOption['applies_to_shipping_costs']) &&
-                $regionOption['applies_to_shipping_costs'] == true) {
-
+                $regionOption['applies_to_shipping_costs'] == true &&
+                $this->isTaxTypeApplicable(
+                    $address->getCountry(),
+                    $address->getRegion(),
+                    $regionOption['type'],
+                    $this->getTaxablePaymentGateway()
+                )
+            ) {
                 $rate += $regionOption['rate'];
             }
         }
@@ -214,5 +239,46 @@ class TaxService
         }
 
         return $taxableAddress;
+    }
+
+    /**
+     * @return string|null
+     */
+    private function getTaxablePaymentGateway()
+    {
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users')) {
+            return request()->get('brand', config('ecommerce.brand'));
+        }
+
+        return config('ecommerce.brand');
+    }
+
+    /**
+     * @param $country
+     * @param $region
+     * @param $taxType
+     * @param $paymentGatewayName
+     * @return bool
+     */
+    private function isTaxTypeApplicable($country, $region, $taxType, $paymentGatewayName)
+    {
+        $country = strtolower($country);
+        $region = strtolower($region);
+
+        $taxOptions = config('ecommerce.tax_rates_and_options', []);
+
+        if (!empty($taxOptions[$country][$region])) {
+            foreach ($taxOptions[$country][$region] as $taxTypeData) {
+
+                if ($taxTypeData['type'] == $taxType &&
+                    !empty($taxTypeData['gateway_blacklist']) &&
+                    is_array($taxTypeData['gateway_blacklist']) &&
+                    in_array($paymentGatewayName, $taxTypeData['gateway_blacklist'])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
