@@ -360,7 +360,22 @@ class GooglePlayStoreService
                         config('ecommerce.default_currency')
                     );
 
-                    $subscription->setTotalPrice($totalPaidUsd ?? $purchasedProduct->getPrice());
+                    if ($totalPaidUsd && $totalPaidUsd <= ($purchasedProduct->getPrice() + 40)) {
+                        $subscription->setTotalPrice($totalPaidUsd);
+                    } else {
+                        $subscription->setTotalPrice($purchasedProduct->getPrice());
+                        error_log(
+                            'Google purchase(id='.$googleReceipt->getId().'): user currency=' .
+                            $googleReceipt->getLocalCurrency() .
+                            ' user local price=' .
+                            $googleReceipt->getLocalPrice() .
+                            ' converted price=' .
+                            $totalPaidUsd .
+                            ' is greater with more the 40 USD that the product price. Store the product price=' .
+                            $purchasedProduct->getPrice() .
+                            ' in DB.'
+                        );
+                    }
 
                 } else {
                     $subscription->setTotalPrice($purchasedProduct->getPrice());
@@ -559,8 +574,24 @@ class GooglePlayStoreService
                                     config('ecommerce.default_currency')
                                 );
 
-                                $payment->setTotalDue($totalPaidUsd ?? $purchasedProduct->getPrice());
-                                $payment->setTotalPaid($totalPaidUsd ?? $purchasedProduct->getPrice());
+                                if ($totalPaidUsd && $totalPaidUsd <= ($purchasedProduct->getPrice() + 40)) {
+                                    $payment->setTotalDue($totalPaidUsd);
+                                    $payment->setTotalPaid($totalPaidUsd);
+                                } else {
+                                    $payment->setTotalDue($purchasedProduct->getPrice());
+                                    $payment->setTotalPaid($purchasedProduct->getPrice());
+                                    error_log(
+                                        'Google purchase(id='.$googleReceipt->getId().'): user currency=' .
+                                        $googleReceipt->getLocalCurrency() .
+                                        ' user local price=' .
+                                        $googleReceipt->getLocalPrice() .
+                                        ' converted price=' .
+                                        $totalPaidUsd .
+                                        ' is greater with more the 40 USD that the product price. Store the product price=' .
+                                        $purchasedProduct->getPrice() .
+                                        ' in DB.'
+                                    );
+                                }
                             } else {
                                 $payment->setTotalDue($purchasedProduct->getPrice());
                                 $payment->setTotalPaid($purchasedProduct->getPrice());

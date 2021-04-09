@@ -751,11 +751,25 @@ class AppleStoreKitService
                     $receipt->getLocalCurrency(),
                     config('ecommerce.default_currency')
                 );
+                if ($totalPaidUsd && $totalPaidUsd <= ($product->getPrice() + 40)) {
+                    $subscription->setTotalPrice($totalPaidUsd);
+                } else {
+                    $subscription->setTotalPrice($product->getPrice());
+                    error_log(
+                        'Apple purchase(id='.$receipt->getId().'): user currency=' .
+                        $receipt->getLocalCurrency() .
+                        ' user local price=' .
+                        $receipt->getLocalPrice() .
+                        ' converted price=' .
+                        $totalPaidUsd .
+                        ' is greater with more the 40 USD that the product price. Store the product price=' .
+                        $product->getPrice() .
+                        ' in DB.'
+                    );
+                }
             }catch (Exception $e){
-                $totalPaidUsd = $product['price'];
+                $subscription->setTotalPrice($product->getPrice());
             }
-
-            $subscription->setTotalPrice($totalPaidUsd ?? $product->getPrice());
         } else {
             $subscription->setTotalPrice($product->getPrice());
         }
@@ -900,8 +914,26 @@ class AppleStoreKitService
                         $receipt->getLocalCurrency(),
                         config('ecommerce.default_currency')
                     );
-                    $payment->setTotalDue($totalPaidUsd ?? $product->getPrice());
-                    $payment->setTotalPaid($totalPaidUsd ?? $product->getPrice());
+
+                    if ($totalPaidUsd && $totalPaidUsd <= ($product->getPrice() + 40)) {
+                        $payment->setTotalDue($totalPaidUsd);
+                        $payment->setTotalPaid($totalPaidUsd);
+                    } else {
+                        $payment->setTotalDue($product->getPrice());
+                        $payment->setTotalPaid($product->getPrice());
+
+                        error_log(
+                            'Apple purchase(id = '.$receipt->getId().') user currency=' .
+                            $receipt->getLocalCurrency() .
+                            ' user local price=' .
+                            $receipt->getLocalPrice() .
+                            ' converted price=' .
+                            $totalPaidUsd .
+                            ' is greater with more the 40 USD that the product price. Store the product price=' .
+                            $product->getPrice() .
+                            ' in DB.'
+                        );
+                    }
                 } else {
                     $payment->setTotalDue($product->getPrice());
                     $payment->setTotalPaid($product->getPrice());
