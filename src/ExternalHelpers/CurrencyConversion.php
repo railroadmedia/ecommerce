@@ -31,7 +31,7 @@ class CurrencyConversion
                     'https://v6.exchangerate-api.com/v6/' .
                     config('ecommerce.exchange_rate_api_token') .
                     '/latest/' .
-                    $from;
+                    $to;
 
                 $response_json = file_get_contents($url);
                 $response = json_decode($response_json);
@@ -53,6 +53,8 @@ class CurrencyConversion
             }
         }
 
-        return round(($value * $response->conversion_rates->$to), 2);
+        $rate = $response->conversion_rates->$from;
+
+        return round(($value / $rate), 2);
     }
 }
