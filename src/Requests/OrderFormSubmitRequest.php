@@ -16,6 +16,8 @@ use Railroad\Ecommerce\Repositories\AddressRepository;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\ShippingService;
+use Railroad\Location\Services\CountryListService;
+use Railroad\Location\Services\LocationReferenceService;
 use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
@@ -127,7 +129,7 @@ class OrderFormSubmitRequest extends FormRequest
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
             'billing_country' => 'string|required_without:payment_method_id|in:' .
-                implode(',', config('location.countries')),
+                implode(',', CountryListService::all()),
             'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'string|required_without:payment_method_id',
             'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
@@ -144,14 +146,14 @@ class OrderFormSubmitRequest extends FormRequest
         // billing address
         $rules += [
             'billing_country' => 'string|required_without:payment_method_id|in:' .
-                    implode(',', config('location.countries')),
+                    implode(',', CountryListService::all()),
         ];
 
         // if the country is in canada we must also get the region and zip
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
                 'billing_region' => 'string|required_without:payment_method_id|in:' .
-                    implode(',', config('location.country_regions.Canada')),
+                    implode(',', LocationReferenceService::regions('CA')),
                 'billing_zip_or_postal_code' => 'string',
             ];
         }
@@ -179,7 +181,7 @@ class OrderFormSubmitRequest extends FormRequest
                 'shipping_region' => 'string|required_without:shipping_address_id',
                 'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id',
                 'shipping_country' => 'string|required_without:shipping_address_id|in:' .
-                    implode(',', config('location.countries')),
+                    implode(',', CountryListService::allWeCanShipTo()),
             ];
         }
 

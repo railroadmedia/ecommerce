@@ -30,6 +30,7 @@ use Railroad\Ecommerce\Providers\EcommerceServiceProvider;
 use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 use Railroad\Location\Providers\LocationServiceProvider;
 use Railroad\Location\Services\ConfigService;
+use Railroad\Location\Services\CountryListService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
@@ -322,8 +323,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('location.testing_ip', $locationConfig['testing_ip']);
         $app['config']->set('location.api', $locationConfig['api']);
         $app['config']->set('location.active_api', $locationConfig['active_api']);
-        $app['config']->set('location.countries', $locationConfig['countries']);
-        $app['config']->set('location.country_regions', $locationConfig['country_regions']);
+        $app['config']->set('location.countries', CountryListService::all());
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
         $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
@@ -408,7 +408,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(EcommerceServiceProvider::class);
         $app->register(LocationServiceProvider::class);
         $app->register(RemoteStorageServiceProvider::class);
-        $app->register(CountriesServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
         $app->register(ActionLogServiceProvider::class);
 

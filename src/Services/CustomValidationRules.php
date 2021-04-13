@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Services;
 
 use Illuminate\Validation\Validator;
 use Webpatser\Countries\Countries;
+use Railroad\Location\Services\CountryListService;
 
 class CustomValidationRules extends Validator
 {
@@ -40,13 +41,13 @@ class CustomValidationRules extends Validator
         $this->setCustomMessages($this->_custom_messages);
     }
 
-    /** Check if country value exist in the countries array provided by https://github.com/webpatser/laravel-countries package.
+    /** Check if country name is valid per our railroad/location package (... as configured in this app)
      * @param string $attribute
      * @param string $value
      * @return bool
      */
     public function validateCountry($attribute, $value)
     {
-        return (in_array($value, array_column(Countries::getCountries(), 'full_name')));
+        return (in_array($value, CountryListService::all()));
     }
 }
