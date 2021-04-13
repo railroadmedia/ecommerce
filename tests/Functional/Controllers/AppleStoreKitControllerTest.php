@@ -1739,7 +1739,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $localCurrency = $this->faker->randomElement(config('ecommerce.allowable_currencies'));
         $localPrice = $this->faker->randomNumber();
 
-        $amountWithTaxesInUsd = $this->faker->numberBetween();
+        $amountWithTaxesInUsd = $this->faker->numberBetween(2, $product['price']);
 
         $this->currencyConversionHelperMock->method('convert')
             ->willReturn($amountWithTaxesInUsd);
@@ -2035,7 +2035,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         ]);
         $response = $this->call(
             'POST',
-            '/apple/signup',
+            '/api/apple/signup',
             [
                 'receipt' => $receipt
             ]
@@ -2119,7 +2119,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         ]);
         $response = $this->call(
             'POST',
-            '/apple/signup',
+            '/api/apple/signup',
             [
                 'receipt' => $receipt
             ]
@@ -2163,7 +2163,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/apple/signup',
+            '/api/apple/signup',
             [
                 'receipt' => $receipt
             ]
@@ -2207,7 +2207,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/apple/restore',
+            '/api/apple/restore',
             [
                 'receipt' => $receipt
             ]
@@ -2288,7 +2288,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/apple/restore',
+            '/api/apple/restore',
             [
                 'receipt' => $receipt
             ]
@@ -2306,6 +2306,110 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                 'is_active' => 1,
                 'paid_until' => $expirationDate->toDateTimeString(),
                 'external_app_store_id' => $originalWebOrderLineItemId,
+            ]
+        );
+    }
+
+    public function test_process_receipt_subscription_purchase_user_currency_wrong_converted()
+    {
+        $receipt = $this->faker->word;
+        $transactionId = $this->faker->word;
+        $webOrderItemId = $this->faker->word;
+        $subscriptionExpirationDate =
+            Carbon::now()
+                ->addDays(7);
+        $email = $this->faker->email;
+        $brand = 'drumeo';
+        config()->set('ecommerce.brand', $brand);
+
+        $productOne = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+            ]
+        );
+
+        config()->set(
+            'ecommerce.apple_store_products_map',
+            [
+                $this->faker->word => $productOne['sku'],
+            ]
+        );
+
+        $validationResponse = $this->getInitialPurchaseReceiptResponse(
+            $transactionId,
+            $webOrderItemId,
+            $productOne['sku'],
+            $subscriptionExpirationDate,
+            false
+        );
+
+        $this->appleStoreKitGatewayMock->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $currency = 'EUR';
+        $amountWithTaxesInUsd = $this->faker->numberBetween($productOne['price']+50, 500);
+        $priceInLocalCurrency = $this->faker->numberBetween(50, 150);
+
+        $this->currencyConversionHelperMock->method('convert')
+            ->willReturn($amountWithTaxesInUsd);
+
+        $response = $this->call(
+            'POST',
+            '/apple/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'receipt' => $receipt,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                        'price' => $priceInLocalCurrency,
+                        'currency' => $currency,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_apple_receipts',
+            [
+                'receipt' => $receipt,
+                'request_type' => AppleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'transaction_id' => $transactionId,
+                'local_currency' => $currency,
+                'local_price' => $priceInLocalCurrency,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        //assert product price is stored if converted price exceeds product price + 40 USD
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => $productOne['price'],
+                'total_paid' => $productOne['price'],
+                'type' => Payment::TYPE_APPLE_SUBSCRIPTION_RENEWAL,
+                'status' => Payment::STATUS_PAID,
+                'created_at' => Carbon::now()
+                    ->toDateTimeString(),
             ]
         );
     }

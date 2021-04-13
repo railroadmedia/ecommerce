@@ -1880,7 +1880,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $localCurrency = $this->faker->randomElement(config('ecommerce.allowable_currencies'));
         $localPrice = $this->faker->numberBetween();
 
-        $amountWithTaxesInUsd = $this->faker->numberBetween();
+        $amountWithTaxesInUsd = $this->faker->numberBetween($product['price'], $product['price'] + 39);
 
         $this->currencyConversionHelperMock->method('convert')
             ->willReturn($amountWithTaxesInUsd);
@@ -2184,7 +2184,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/google/signup',
+            '/api/google/signup',
             [
                 'purchases' => [
                     [
@@ -2262,7 +2262,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/google/signup',
+            '/api/google/signup',
             [
                 'purchases' => [
                     [
@@ -2330,7 +2330,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/google/signup',
+            '/api/google/signup',
             [
                 'purchases' => [
                     [
@@ -2398,7 +2398,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/google/restore',
+            '/api/google/restore',
             [
                 'purchases' => [
                     [
@@ -2417,7 +2417,6 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $this->assertTrue(isset($decodedResponse['shouldCreateAccount']));
     }
-
 
     public function test_restore_when_exists_expired_subscription()
     {
@@ -2497,7 +2496,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
 
         $response = $this->call(
             'POST',
-            '/google/restore',
+            '/api/google/restore',
             [
                 'purchases' => [
                     [
@@ -2523,6 +2522,134 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                 'product_id' => $product['id'],
                 'is_active' => 1,
                 'paid_until' => $expiryTime->toDateTimeString()
+            ]
+        );
+    }
+
+    public function test_process_subscription_purchase_user_currency_wrong_converted()
+    {
+        $orderId = $this->faker->word . rand();
+        $email = $this->faker->email;
+        $expiryTime =
+            Carbon::now()
+                ->addWeek();
+
+        $startTime =
+            Carbon::now()
+                ->subDays(7);
+        $brand = 'drumeo';
+
+        config()->set('ecommerce.brand', $brand);
+
+        $product = $this->fakeProduct(
+            [
+                'sku' => 'product-one',
+                'price' => 12.95,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $googleProductId = $this->faker->word;
+
+        config()->set(
+            'ecommerce.google_store_products_map',
+            [
+                $googleProductId => $product['sku'],
+            ]
+        );
+
+        $googleStoreKitGateway =
+            $this->getMockBuilder(GooglePlayStoreGateway::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+
+        $validationResponse = $this->getTestReceiptPaidRenewal($orderId, $expiryTime->timestamp, $startTime->timestamp);
+
+        $googleStoreKitGateway->method('getResponse')
+            ->willReturn($validationResponse);
+
+        $this->app->instance(GooglePlayStoreGateway::class, $googleStoreKitGateway);
+
+        $packageName = $this->faker->word;
+        $purchaseToken = $this->faker->word;
+
+        $currency = 'EUR';
+        $amountWithTaxesInUsd = $this->faker->numberBetween($product['price']+42, 5000);
+        $priceInLocalCurrency = $this->faker->numberBetween(50, 150);
+
+        $this->currencyConversionHelperMock->method('convert')
+            ->willReturn($amountWithTaxesInUsd);
+
+        $response = $this->call(
+            'POST',
+            '/google/verify-receipt-and-process-payment',
+            [
+                'data' => [
+                    'attributes' => [
+                        'package_name' => $packageName,
+                        'product_id' => $googleProductId,
+                        'purchase_token' => $purchaseToken,
+                        'email' => $email,
+                        'password' => $this->faker->word,
+                        'price' => $priceInLocalCurrency,
+                        'currency' => $currency,
+                    ],
+                ],
+            ]
+        );
+
+        // assert the response status code
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert response has meta key with auth code
+        $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
+
+        $this->assertDatabaseHas(
+            'ecommerce_google_receipts',
+            [
+                'package_name' => $packageName,
+                'product_id' => $googleProductId,
+                'purchase_token' => $purchaseToken,
+                'request_type' => GoogleReceipt::MOBILE_APP_REQUEST_TYPE,
+                'local_currency' => $currency,
+                'local_price' => $priceInLocalCurrency,
+                'email' => $email,
+                'valid' => true,
+                'validation_error' => null,
+                'order_id' => $orderId,
+                'raw_receipt_response' => base64_encode(serialize($validationResponse)),
+                'created_at' => Carbon::now(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'user_id' => 1,
+                'product_id' => $product['id'],
+                'total_price' => $product['price'],
+                'is_active' => 1,
+                'paid_until' => Carbon::now()
+                    ->addWeek()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        // assert product price is stored into payments if we have wrong converted price
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'type' => Payment::TYPE_GOOGLE_SUBSCRIPTION_RENEWAL,
+                'total_due' => $product['price'],
+                'total_paid' => $product['price'],
             ]
         );
     }
