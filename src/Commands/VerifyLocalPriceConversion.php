@@ -1,0 +1,262 @@
+<?php
+
+namespace Railroad\Ecommerce\Commands;
+
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Console\Command;
+use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Collection;
+use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
+use Throwable;
+
+class VerifyLocalPriceConversion extends Command
+{
+    /**
+     * The console command name.
+     *
+     * @var string
+     */
+    protected $name = 'VerifyLocalPriceConversion';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Verify local price conversion ';
+
+    /**
+     * @var DatabaseManager
+     */
+    private $databaseManager;
+
+    /**
+     * @var CurrencyConversion
+     */
+    private $currencyConversionHelper;
+
+    /**
+     * VerifyLocalPriceConversion constructor.
+     *
+     * @param DatabaseManager $databaseManager
+     * @param CurrencyConversion $currencyConversionHelper
+     */
+    public function __construct(
+        DatabaseManager $databaseManager,
+        CurrencyConversion $currencyConversionHelper
+    ) {
+        parent::__construct();
+
+        $this->databaseManager = $databaseManager;
+        $this->currencyConversionHelper = $currencyConversionHelper;
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @throws GuzzleException
+     * @throws Throwable
+     */
+    public function handle()
+    {
+        $this->info('Starting LocalPriceConversionVerification.');
+
+        $start = microtime(true);
+
+        $chunkSize = 100;
+
+        $this->databaseManager->connection('musora_mysql')
+            ->table('ecommerce_apple_receipts')
+            ->select(
+                'ecommerce_apple_receipts.id',
+                'ecommerce_apple_receipts.email',
+                'ecommerce_apple_receipts.local_currency',
+                'ecommerce_apple_receipts.local_price',
+                'ecommerce_subscriptions.total_price as subscription_price',
+                'ecommerce_subscriptions.product_id',
+                'ecommerce_subscriptions.id as subscription_id',
+                'ecommerce_products.price'
+            )
+            ->leftJoin(
+                'ecommerce_subscriptions',
+                'ecommerce_apple_receipts.subscription_id',
+                '=',
+                'ecommerce_subscriptions.id'
+            )
+            ->leftJoin(
+                'ecommerce_products',
+                'ecommerce_subscriptions.product_id',
+                '=',
+                'ecommerce_products.id'
+            )
+            ->whereNotNull('ecommerce_apple_receipts.local_currency')
+            ->where('ecommerce_apple_receipts.purchase_type', '=', 'subscription')
+            ->whereNotIn('ecommerce_apple_receipts.local_currency', ["USD"])
+            ->orderBy('ecommerce_apple_receipts.id')
+            ->chunk(
+                $chunkSize,
+                function (Collection $datas) use ($chunkSize) {
+                    foreach ($datas as $data) {
+                        if ($data->subscription_price > ($data->price + 40)) {
+                            $newConvertedValue = $this->currencyConversionHelper->convert(
+                                $data->local_price,
+                                $data->local_currency,
+                                'USD'
+                            );
+
+                            $this->info(
+                                'Apple receipt id:' .
+                                $data->id .
+                                ' - ' .
+                                $data->local_price .
+                                ' ' .
+                                $data->local_currency .
+                                ' -> subscription price: ' .
+                                $data->subscription_price .
+                                ' USD    ' .
+                                ' product price ' .
+                                $data->price .
+                                '  converted price: ' .
+                                $newConvertedValue
+                            );
+
+                            if ($newConvertedValue > ($data->price + 40)) {
+                                $this->error('Converted value greater than product price + 40 =>' . $newConvertedValue);
+                            } else {
+//                                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                    ->table('ecommerce_subscriptions')
+//                                    ->where('id', $data->subscription_id)
+//                                    ->update(['total_price' => $newConvertedValue]);
+//
+//                                $payments =
+//                                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                        ->table('ecommerce_payments')
+//                                        ->select('ecommerce_payments.id')
+//                                        ->join(
+//                                            'ecommerce_subscription_payments',
+//                                            'ecommerce_payments.id',
+//                                            '=',
+//                                            'ecommerce_subscription_payments.payment_id'
+//                                        )
+//                                        ->where(
+//                                            'ecommerce_subscription_payments.subscription_id',
+//                                            $data->subscription_id
+//                                        )
+//                                        ->get()
+//                                        ->pluck('id')
+//                                        ->toArray();
+//
+//                                if (!empty($payments)) {
+//                                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                        ->table('ecommerce_payments')
+//                                        ->whereIn('id', $payments)
+//                                        ->update(
+//                                            [
+//                                                'total_due' => $newConvertedValue,
+//                                                'total_paid' => $newConvertedValue,
+//                                            ]
+//                                        );
+//                                }
+                            }
+                        }
+                    }
+                }
+            );
+
+        $this->databaseManager->connection('musora_mysql')
+            ->table('ecommerce_google_receipts')
+            ->select(
+                'ecommerce_google_receipts.id',
+                'ecommerce_google_receipts.email',
+                'ecommerce_google_receipts.local_currency',
+                'ecommerce_google_receipts.local_price',
+                'ecommerce_subscriptions.total_price as subscription_price',
+                'ecommerce_subscriptions.product_id',
+                'ecommerce_products.price',
+                'ecommerce_subscriptions.id as subscription_id'
+            )
+            ->leftJoin(
+                'ecommerce_subscriptions',
+                'ecommerce_google_receipts.purchase_token',
+                '=',
+                'ecommerce_subscriptions.external_app_store_id'
+            )
+            ->leftJoin(
+                'ecommerce_products',
+                'ecommerce_subscriptions.product_id',
+                '=',
+                'ecommerce_products.id'
+            )
+            ->whereNotNull('ecommerce_google_receipts.local_currency')
+            ->whereNotIn('ecommerce_google_receipts.local_currency', ["USD"])
+            ->where('ecommerce_google_receipts.purchase_type', '=', 'subscription')
+            ->orderBy('ecommerce_google_receipts.id')
+            ->chunk(
+                $chunkSize,
+                function (Collection $datas) use ($chunkSize) {
+                    foreach ($datas as $data) {
+                        $newConvertedValue =
+                            $this->currencyConversionHelper->convert($data->local_price, $data->local_currency, 'USD');
+
+                        $this->info(
+                            'Google receipt id:' .
+                            $data->id .
+                            ' - ' .
+                            $data->local_price .
+                            ' ' .
+                            $data->local_currency .
+                            ' -> stored on subscription: ' .
+                            $data->subscription_price .
+                            ' USD    ' .
+                            ' product price ' .
+                            $data->price .
+                            '  converted price: ' .
+                            $newConvertedValue
+                        );
+
+                        if ($newConvertedValue > ($data->price + 40)) {
+                            $this->error('Converted value greater than product price + 40 =>' . $newConvertedValue);
+                        } else {
+//                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                ->table('ecommerce_subscriptions')
+//                                ->where('id', $data->subscription_id)
+//                                ->update(['total_price' => $newConvertedValue]);
+//
+//                            $payments =
+//                                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                    ->table('ecommerce_payments')
+//                                    ->select('ecommerce_payments.id')
+//                                    ->join(
+//                                        'ecommerce_subscription_payments',
+//                                        'ecommerce_payments.id',
+//                                        '=',
+//                                        'ecommerce_subscription_payments.payment_id'
+//                                    )
+//                                    ->where('ecommerce_subscription_payments.subscription_id', $data->subscription_id)
+//                                    ->get()
+//                                    ->pluck('id')
+//                                    ->toArray();
+//
+//                            if (!empty($payments)) {
+//                                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+//                                    ->table('ecommerce_payments')
+//                                    ->whereIn('id', $payments)
+//                                    ->update(
+//                                        [
+//                                            'total_due' => $newConvertedValue,
+//                                            'total_paid' => $newConvertedValue,
+//                                        ]
+//                                    );
+//                            }
+                        }
+                    }
+                }
+            );
+
+        $finish = microtime(true) - $start;
+
+        $format = "Finished LocalPriceConversionVerification command execution in %s seconds\n";
+
+        $this->info(sprintf($format, $finish));
+    }
+}

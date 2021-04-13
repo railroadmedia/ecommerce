@@ -37,6 +37,7 @@ use Railroad\Ecommerce\Commands\RetentionReportingTool;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
 use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
+use Railroad\Ecommerce\Commands\VerifyLocalPriceConversion;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\OrderEvent;
@@ -140,6 +141,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 RetentionReportingTool::class,
                 MembershipsReportingTool::class,
                 SynchOrdersWithPaymentPlans::class,
+                VerifyLocalPriceConversion::class,
             ]
         );
 
