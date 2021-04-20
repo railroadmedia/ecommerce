@@ -129,6 +129,10 @@ class OrderFormSubmitRequest extends FormRequest
             $all['currency'] = mb_strtolower($all['currency']);
         }
 
+        if(!empty($all['shipping_country'])){
+            $all['shipping_country'] = mb_strtolower($all['shipping_country']);
+        }
+
         return $all;
     }
 
