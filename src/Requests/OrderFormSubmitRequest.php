@@ -113,6 +113,17 @@ class OrderFormSubmitRequest extends FormRequest
         return parent::getValidatorInstance();
     }
 
+    protected function validationData()
+    {
+        $all = parent::validationData();
+
+        if(!empty($all['billing_region'])){
+            $all['billing_region'] = mb_strtolower($all['billing_region']);
+        }
+
+        return $all;
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -153,7 +164,7 @@ class OrderFormSubmitRequest extends FormRequest
         if (request()->get('billing_country') == 'Canada') {
             $rules += [
                 'billing_region' => 'string|required_without:payment_method_id|in:' .
-                    implode(',', LocationReferenceService::regions('CA')),
+                    mb_strtolower(implode(',', LocationReferenceService::regions('CA'))),
                 'billing_zip_or_postal_code' => 'string',
             ];
         }
