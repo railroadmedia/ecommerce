@@ -121,6 +121,14 @@ class OrderFormSubmitRequest extends FormRequest
             $all['billing_region'] = mb_strtolower($all['billing_region']);
         }
 
+        if(!empty($all['billing_country'])){
+            $all['billing_country'] = mb_strtolower($all['billing_country']);
+        }
+
+        if(!empty($all['currency'])){
+            $all['currency'] = mb_strtolower($all['currency']);
+        }
+
         return $all;
     }
 
@@ -140,10 +148,10 @@ class OrderFormSubmitRequest extends FormRequest
             'payment_method_type' => 'string|required_without:payment_method_id',
             'payment_method_id' => 'integer|required_without:payment_method_type',
             'billing_country' => 'string|required_without:payment_method_id|in:' .
-                implode(',', CountryListService::all()),
+                mb_strtolower(implode(',', CountryListService::all())),
             'card_token' => 'string|required_if:payment_method_type,' . PaymentMethod::TYPE_CREDIT_CARD,
             'gateway' => 'string|required_without:payment_method_id',
-            'currency' => 'string|in:' . implode(',', config('ecommerce.supported_currencies')),
+            'currency' => 'string|in:' . mb_strtolower(implode(',', config('ecommerce.supported_currencies'))),
         ];
 
         if ($this->cartService->isPaymentPlanEligible()) {
@@ -157,7 +165,7 @@ class OrderFormSubmitRequest extends FormRequest
         // billing address
         $rules += [
             'billing_country' => 'string|required_without:payment_method_id|in:' .
-                    implode(',', CountryListService::all()),
+                    mb_strtolower(implode(',', CountryListService::all())),
         ];
 
         // if the country is in canada we must also get the region and zip
@@ -192,7 +200,7 @@ class OrderFormSubmitRequest extends FormRequest
                 'shipping_region' => 'string|required_without:shipping_address_id',
                 'shipping_zip_or_postal_code' => 'string|required_without:shipping_address_id',
                 'shipping_country' => 'string|required_without:shipping_address_id|in:' .
-                    implode(',', CountryListService::allWeCanShipTo()),
+                    mb_strtolower(implode(',', CountryListService::allWeCanShipTo())),
             ];
         }
 
