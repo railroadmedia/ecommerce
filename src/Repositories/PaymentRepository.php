@@ -1143,13 +1143,14 @@ class PaymentRepository extends RepositoryBase
         $brand = null
     )
     {
-        if ($this->getEntityManager()
+        $softDelFilterEnabledAtStart = $this->getEntityManager()
             ->getFilters()
-            ->isEnabled('soft-deleteable')) {
+            ->isEnabled('soft-deleteable');
 
+        if ($softDelFilterEnabledAtStart) {
             $this->getEntityManager()
                 ->getFilters()
-                ->disable('soft-deleteable');
+                ->disable('soft-deleteable'); // throws exception if filter not enabled when called
         }
 
         $allPayments = [];
@@ -1230,10 +1231,7 @@ class PaymentRepository extends RepositoryBase
             $allPayments[$payment->getId()] = $payment;
         }
 
-        if (!$this->getEntityManager()
-            ->getFilters()
-            ->isEnabled('soft-deleteable')) {
-
+        if ($softDelFilterEnabledAtStart) {
             $this->getEntityManager()
                 ->getFilters()
                 ->enable('soft-deleteable');
