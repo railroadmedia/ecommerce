@@ -500,8 +500,12 @@ class RetentionStatsService
                     var_dump($allNotRetainedUserIds);
                 }
 
-                $retentionRate =
-                    $allRetainedUserIds->count() / ($allRetainedUserIds->count() + $allNotRetainedUserIds->count());
+                if(($allRetainedUserIds->count() + $allNotRetainedUserIds->count()) == 0){
+                    $retentionRate = 0;
+                } else {
+                    $retentionRate =
+                        $allRetainedUserIds->count() / ($allRetainedUserIds->count() + $allNotRetainedUserIds->count());
+                }
 
                 // create the statistic
                 $retentionStatistic = new RetentionStatistic();
