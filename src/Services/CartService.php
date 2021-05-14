@@ -808,6 +808,23 @@ class CartService
 
         if ($this->isPaymentPlanEligible()) {
 
+            if ($numberOfPayments > 1) {
+                $totals['financing_cost_per_payment'] = round($financeCost / $numberOfPayments, 2);
+
+                // todo - update with actual values
+                $totals['tax_per_payment'] = 2.35;
+                $totals['order_total'] = 137.25;
+
+                $totals['monthly_payments'] = [];
+
+                for ($i = 1; $i < $numberOfPayments; $i++) {
+                    $totals['monthly_payments'][] = [
+                        'month' => Carbon::now()->addMonths($i)->format('F'),
+                        'payment' => 42.86
+                    ];
+                }
+            }
+
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
                 $orderDueForPlan = $orderDue;
                 $label = null;
