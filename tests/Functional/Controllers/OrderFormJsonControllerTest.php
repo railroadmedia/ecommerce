@@ -5304,15 +5304,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productQuantity = 1;
-
-        $this->cartService->addToCart(
-            $product['sku'],
-            $productQuantity,
-            false,
-            ''
-        );
-
         $discount = $this->fakeDiscount(
             [
                 'active' => true,
@@ -5330,6 +5321,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'min' => '1',
                 'max' => '2000',
             ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
         );
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
@@ -5627,15 +5627,6 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $productQuantity = 2;
-
-        $this->cartService->addToCart(
-            $product['sku'],
-            $productQuantity,
-            false,
-            ''
-        );
-
         $discount = $this->fakeDiscount(
             [
                 'active' => true,
@@ -5660,6 +5651,15 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                 'discount_criteria_id' => $discountCriteria['id'],
                 'product_id' => $product['id'],
             ]
+        );
+
+        $productQuantity = 2;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
         );
 
         $expectedProductTotalPrice = $product['price'] * $productQuantity;
