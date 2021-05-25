@@ -161,6 +161,11 @@ class CartService
 
         $this->cart->toSession();
 
+        if (!$this->isPaymentPlanEligible() && $this->cart->getPaymentPlanNumberOfPayments() > 1) {
+            $this->cart->setPaymentPlanNumberOfPayments(1);
+            $this->cart->toSession();
+        }
+
         return $product;
     }
 
@@ -185,6 +190,11 @@ class CartService
         $this->cart->removeItemBySku($sku);
 
         $this->cart->toSession();
+
+        if (!$this->isPaymentPlanEligible() && $this->cart->getPaymentPlanNumberOfPayments() > 1) {
+            $this->cart->setPaymentPlanNumberOfPayments(1);
+            $this->cart->toSession();
+        }
     }
 
     /**
@@ -232,6 +242,11 @@ class CartService
         }
 
         $this->cart->toSession();
+
+        if (!$this->isPaymentPlanEligible() && $this->cart->getPaymentPlanNumberOfPayments() > 1) {
+            $this->cart->setPaymentPlanNumberOfPayments(1);
+            $this->cart->toSession();
+        }
     }
 
     /**
@@ -807,6 +822,23 @@ class CartService
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
         if ($this->isPaymentPlanEligible()) {
+
+            if ($numberOfPayments > 1) {
+                $totals['financing_cost_per_payment'] = round($financeCost / $numberOfPayments, 2);
+
+                $totals['tax_per_payment'] = round($productTaxDue, 2);
+                $totals['order_total'] = $this->getDueForOrder();
+
+                $totals['monthly_payments'] = [];
+                $duePerPayment = $this->getDueForPaymentPlanPayments($productTaxRate);
+
+                for ($i = 1; $i < $numberOfPayments; $i++) {
+                    $totals['monthly_payments'][] = [
+                        'month' => Carbon::now()->addMonths($i)->format('F'),
+                        'payment' => $duePerPayment
+                    ];
+                }
+            }
 
             foreach (config('ecommerce.payment_plan_options') as $paymentPlanOption) {
                 $orderDueForPlan = $orderDue;
