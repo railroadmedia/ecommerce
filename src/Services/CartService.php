@@ -834,7 +834,7 @@ class CartService
 
                 for ($i = 1; $i < $numberOfPayments; $i++) {
                     $totals['monthly_payments'][] = [
-                        'month' => Carbon::now()->addMonths($i)->format('F'),
+                        'month' => Carbon::now()->addMonthsNoOverflow($i)->format('F d'),
                         'payment' => $duePerPayment
                     ];
                 }
