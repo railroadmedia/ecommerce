@@ -254,7 +254,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
 
         for ($i = 1; $i < $numberOfPayments; $i++) {
             $monthlyPayments[] = [
-                'month' => Carbon::now()->addMonths($i)->format('F'),
+                'month' => Carbon::now()->addMonthsNoOverflow($i)->format('F d'),
                 'payment' => $duePerPayment
             ];
         }
