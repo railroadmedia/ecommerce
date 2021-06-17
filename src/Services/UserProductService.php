@@ -523,4 +523,28 @@ class UserProductService
             }
         }
     }
+
+    /**
+     * If the user has or had any digital product from brand, return true. Otherwise, false.
+     *
+     * @param  User  $user
+     * @param $brand
+     * @throws Throwable
+     */
+    public function userHadOrHasAnyDigitalProductsForBrand(User $user, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb = $this->userProductRepository->createQueryBuilder('up');
+
+        $qb->select('count(up.id)')
+            ->leftJoin('up.product', 'p')
+            ->where($qb->expr()->eq('up.user', ':user'))
+            ->andWhere($qb->expr()->eq('p.brand', ':brand'))
+            ->andWhere($qb->expr()->in('p.type', ":types"))
+            ->setParameter('user', $user)
+            ->setParameter('types', [Product::TYPE_DIGITAL_ONE_TIME, Product::TYPE_DIGITAL_SUBSCRIPTION])
+            ->setParameter('brand', $brand);
+
+        return $qb->getQuery()->getSingleScalarResult() > 0;
+    }
 }
