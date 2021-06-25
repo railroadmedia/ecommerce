@@ -13,7 +13,7 @@
     "railroad/permissions": "^1.0",
     "railroad/remotestorage": "^1.0",
     "railroad/resora": ">=1.0.10 <1.1",
-    "railroad/doctrine": "^0.0",
+    "railroad/doctrine": "1.0.*",
     "ext-redis": "*",
     "railroad/doctrine-array-hydrator": "1.0.*",
     "ext-json": "*",
