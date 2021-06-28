@@ -76,7 +76,10 @@ class AccessCodeController extends Controller
 
         $this->accessCodeService->claim($request->get('access_code'), $user, $request->get('context'));
 
-        $message = ['success' => true];
+        $message = [
+            'access-code-claimed-success' => true,
+            'access-code-claimed-message' => 'Your access code has been claimed successfully!'
+        ];
 
         return $request->has('redirect') ?
             redirect()
