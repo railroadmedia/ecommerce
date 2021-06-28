@@ -19,7 +19,8 @@
     "ext-json": "*",
     "aporat/store-receipt-validator": "3.2.*",
     "railroad/railactionlog": "1.0.*",
-    "tymon/jwt-auth": "1.0.0-rc.2"
+    "tymon/jwt-auth": "1.0.0-rc.2",
+    "ext-openssl": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "~7.0",

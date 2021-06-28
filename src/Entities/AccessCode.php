@@ -55,7 +55,7 @@ class AccessCode
      *
      * @var bool
      */
-    protected $isClaimed;
+    protected $isClaimed = false;
 
     /**
      * @var User
@@ -100,6 +100,11 @@ class AccessCode
     public function setCode(string $code)
     {
         $this->code = $code;
+    }
+
+    public function generateCode()
+    {
+        $this->setCode(bin2hex(openssl_random_pseudo_bytes(24 / 2)));
     }
 
     /**

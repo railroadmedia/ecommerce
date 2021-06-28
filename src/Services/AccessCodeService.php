@@ -310,4 +310,34 @@ class AccessCodeService
 
         return $accessCode;
     }
+
+    /**
+     * @param  array  $productIds
+     * @param  string  $brand
+     * @return AccessCode
+     */
+    public function generateAccessCode(array $productIds, $brand)
+    {
+        $accessCode = new AccessCode();
+        $accessCode->setProductIds($productIds);
+        $accessCode->setBrand($brand);
+
+        $accessCode->generateCode();
+
+        $this->entityManager->persist($accessCode);
+        $this->entityManager->flush();
+
+        return $accessCode;
+    }
+
+    /**
+     * Turns: fcbd53d4b41b3264249a713e
+     * Into: fcbd - 53d4 - b41b - 3264 - 249a - 713e
+     * @param $code
+     * @return string
+     */
+    public function hyphenateCode($code)
+    {
+        return implode(" - ", str_split($code, 4));
+    }
 }
