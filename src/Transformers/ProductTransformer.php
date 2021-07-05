@@ -20,6 +20,7 @@ class ProductTransformer extends TransformerAbstract
             'name' => $product->getName(),
             'sku' => $product->getSku(),
             'fulfillment_sku' => $product->getFulfillmentSku(),
+            'inventory_control_sku' => $product->getInventoryControlSku(),
             'price' => $product->getPrice(),
             'type' => $product->getType(),
             'active' => $product->getActive(),

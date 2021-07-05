@@ -119,7 +119,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
@@ -176,7 +176,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
@@ -231,7 +231,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
@@ -296,7 +296,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         // assert the subscription data was saved in the db
         $this->assertDatabaseHas(
@@ -375,7 +375,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         // assert the user product data was saved in the db
         $this->assertDatabaseHas(
@@ -458,7 +458,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         app()->make('EcommerceArrayCache')->flushAll();
 
@@ -548,7 +548,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         $this->assertEquals(302, $response->getStatusCode());
 
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
@@ -585,7 +585,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
         $this->assertEquals(302, $response->getStatusCode());
 
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         app()->make('EcommerceArrayCache')->flushAll();
 
@@ -694,7 +694,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert the session has the success message
-        $response->assertSessionHas('success', true);
+        $response->assertSessionHas('access-code-claimed-success', true);
 
         app()->make('EcommerceArrayCache')->flushAll();
 

@@ -20,6 +20,11 @@ class AccountingProduct
     private $sku;
 
     /**
+     * @var string|null
+     */
+    private $inventoryControlSku;
+
+    /**
      * @var float
      */
     private $taxPaid;
@@ -112,6 +117,22 @@ class AccountingProduct
     public function setSku(string $sku)
     {
         $this->sku = $sku;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getInventoryControlSku(): ?string
+    {
+        return $this->inventoryControlSku;
+    }
+
+    /**
+     * @param  string|null  $inventoryControlSku
+     */
+    public function setInventoryControlSku(?string $inventoryControlSku): void
+    {
+        $this->inventoryControlSku = $inventoryControlSku;
     }
 
     /**
