@@ -29,6 +29,7 @@ class ProductCreateRequest extends FormRequest
             'data.attributes.name' => 'name',
             'data.attributes.sku' => 'sku',
             'data.attributes.fulfillment_sku' => 'fulfillment sku',
+            'data.attributes.inventory_control_sku' => 'inventory control sku',
             'data.attributes.price' => 'price',
             'data.attributes.type' => 'type',
             'data.attributes.active' => 'active',
@@ -57,6 +58,7 @@ class ProductCreateRequest extends FormRequest
             'data.attributes.name' => 'required|max:255',
             'data.attributes.sku' => 'required|unique:' . 'ecommerce_products' . ',sku|max:255',
             'data.attributes.fulfillment_sku' => 'max:255',
+            'data.attributes.inventory_control_sku' => 'max:255',
             'data.attributes.price' => 'required|numeric|min:0',
             'data.attributes.type' => 'required|max:255|in:' . implode(
                     ',',
@@ -91,6 +93,7 @@ class ProductCreateRequest extends FormRequest
                 'data.attributes.brand',
                 'data.attributes.sku',
                 'data.attributes.fulfillment_sku',
+                'data.attributes.inventory_control_sku',
                 'data.attributes.price',
                 'data.attributes.type',
                 'data.attributes.active',

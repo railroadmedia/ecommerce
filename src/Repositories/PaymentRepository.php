@@ -183,6 +183,7 @@ class PaymentRepository extends RepositoryBase
                 'oi.finalPrice',
                 'pr.id as productId',
                 'pr.sku as productSku',
+                'pr.inventoryControlSku as inventoryControlSku',
                 'pr.name as productName',
                 'pr.type as productType',
             ]

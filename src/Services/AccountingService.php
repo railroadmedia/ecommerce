@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Services;
 
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Entities\Payment;
@@ -777,6 +776,7 @@ class AccountingService
 
                 $productStatistics->setName($product->getName());
                 $productStatistics->setSku($product->getSku());
+                $productStatistics->setInventoryControlSku($product->getInventoryControlSku());
                 $productStatistics->setTaxPaid(0);
                 $productStatistics->setShippingPaid(0);
                 $productStatistics->setFinancePaid(0);
@@ -788,6 +788,9 @@ class AccountingService
                 $productStatistics->setNetPaid(0);
 
                 $result->addProductStatistics($productStatistics);
+            } else {
+                $result->getAccountingProducts()[$product->getId()]
+                    ->setInventoryControlSku($product->getInventoryControlSku());
             }
         }
 

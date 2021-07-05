@@ -18,6 +18,7 @@ class AccountingProductTransformer extends TransformerAbstract
             'id' => $accountingProduct->getId(),
             'name' => $accountingProduct->getName(),
             'sku' => $accountingProduct->getSku(),
+            'inventory_control_sku' => $accountingProduct->getInventoryControlSku(),
             'tax_paid' => $accountingProduct->getTaxPaid(),
             'shipping_paid' => $accountingProduct->getShippingPaid(),
             'finance_paid' => $accountingProduct->getFinancePaid(),
