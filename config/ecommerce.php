@@ -461,6 +461,7 @@ return [
             ],
         ],
 
+        // NOTE: this version of ecommerce is tied to stripe API version: '2016-07-06' which is hard coded in Stripe.php
         'stripe' => [
             'drumeo' => [
                 'stripe_api_secret' => '',
