@@ -180,4 +180,15 @@ class UserProvider implements UserProviderInterface
     {
         return true;
     }
+
+    /**
+     * Returns a list of brands that the user is currently a member of.
+     *
+     * @param integer $userId
+     * @return array
+     */
+    public function getBrandsUserIsAMemberOf($userId)
+    {
+        return [config('ecommerce.brand'), 'test-brand-2'];
+    }
 }

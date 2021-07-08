@@ -1041,4 +1041,51 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
 
         $this->assertFalse($metCriteria);
     }
+
+    public function test_brand_member_requirement_met()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria(
+            [
+                'min' => config('ecommerce.brand'),
+                'max' => config('ecommerce.brand'),
+            ]
+        );
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+            ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService
+            ->isMemberOfBrandRequirement($discountCriteria);
+
+        $this->assertTrue($metCriteria);
+    }
+
+    public function test_brand_member_requirement_not_met()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $em = $this->app->make(EcommerceEntityManager::class);
+
+        $discountCriteriaData = $this->fakeDiscountCriteria(
+            [
+                'min' => 'invalid-brand-3',
+                'max' => 'invalid-brand-3',
+            ]
+        );
+
+        $discountCriteria = $em->getRepository(DiscountCriteria::class)
+            ->find($discountCriteriaData['id']);
+
+        $discountCriteriaService = $this->app->make(DiscountCriteriaService::class);
+
+        $metCriteria = $discountCriteriaService->isMemberOfBrandRequirement($discountCriteria);
+
+        $this->assertFalse($metCriteria);
+    }
 }

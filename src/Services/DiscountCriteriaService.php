@@ -44,6 +44,7 @@ class DiscountCriteriaService
     const PROMO_CODE_REQUIREMENT_TYPE = 'promo code requirement';
     const PRODUCT_OWN_TYPE = 'product own requirement';
     const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'total cart items requirement';
+    const IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE = 'is member of brand requirement';
 
     /**
      * DiscountCriteriaService constructor.
@@ -107,6 +108,8 @@ class DiscountCriteriaService
                 return $this->productOwnRequirement($discountCriteria);
             case self::CART_ITEMS_TOTAL_REQUIREMENT_TYPE:
                 return $this->cartItemsTotalRequirement($discountCriteria, $cart);
+            case self::IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE:
+                return $this->isMemberOfBrandRequirement($discountCriteria);
             default:
                 return false;
         }
@@ -307,6 +310,34 @@ class DiscountCriteriaService
         }
 
         return $cartItemsCount >= $discountCriteria->getMin() && $cartItemsCount <= $discountCriteria->getMax();
+    }
+
+    /**
+     * @param DiscountCriteria $discountCriteria ,
+     * @param Cart $cart
+     *
+     * @return bool
+     */
+    public function isMemberOfBrandRequirement(DiscountCriteria $discountCriteria): bool
+    {
+        if ((integer)$discountCriteria->getMax() === 0 && !auth()->check()) {
+            return true;
+        }
+
+        if (!auth()->check()) {
+            return false;
+        }
+
+        $purchaser = $this->getPurchaser();
+
+        $brandUserIsAMemberOf = $this->userProvider->getBrandsUserIsAMemberOf($purchaser->getId());
+
+        if (in_array((string)$discountCriteria->getMax(), $brandUserIsAMemberOf) ||
+            in_array((string)$discountCriteria->getMin(), $brandUserIsAMemberOf)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

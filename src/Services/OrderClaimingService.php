@@ -389,7 +389,7 @@ class OrderClaimingService
         $subscriptionTotalPrice = round($subscriptionPricePerPayment, 2);
         $totalTaxDue = 0;
 
-        $subscription->setBrand($purchaser->getBrand());
+        $subscription->setBrand(is_null($orderItem) ? $purchaser->getBrand() : $orderItem->getProduct()->getBrand());
         $subscription->setType($type);
 
         if ($purchaser->getType() == Purchaser::USER_TYPE) {

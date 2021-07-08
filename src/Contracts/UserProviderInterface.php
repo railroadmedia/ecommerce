@@ -65,4 +65,12 @@ interface UserProviderInterface
      * @return bool
      */
     public function checkCredentials(string $email, string $password): bool;
+
+    /**
+     * Returns a list of brands that the user is currently a member of.
+     *
+     * @param integer $userId
+     * @return array
+     */
+    public function getBrandsUserIsAMemberOf($userId);
 }
