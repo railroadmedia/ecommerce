@@ -320,11 +320,7 @@ class DiscountCriteriaService
      */
     public function isMemberOfBrandRequirement(DiscountCriteria $discountCriteria): bool
     {
-        if ((integer)$discountCriteria->getMax() === 0 && !auth()->check()) {
-            return true;
-        }
-
-        if (!auth()->check()) {
+        if (!auth()->check() || empty($discountCriteria->getMax()) || empty($discountCriteria->getMin())) {
             return false;
         }
 
