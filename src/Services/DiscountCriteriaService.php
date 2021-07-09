@@ -328,9 +328,29 @@ class DiscountCriteriaService
 
         $brandUserIsAMemberOf = $this->userProvider->getBrandsUserIsAMemberOf($purchaser->getId());
 
-        if (in_array((string)$discountCriteria->getMax(), $brandUserIsAMemberOf) ||
-            in_array((string)$discountCriteria->getMin(), $brandUserIsAMemberOf)) {
+        $brandsToCheck = !empty($discountCriteria->getMin()) ?
+            unserialize($discountCriteria->getMin()) : unserialize($discountCriteria->getMax());
+
+        if (!is_array($brandsToCheck)) {
+            return false;
+        }
+
+        // the user must have a membership for ALL the set brands
+        if ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL) {
+            foreach ($brandsToCheck as $brand) {
+                if (!in_array($brand, $brandUserIsAMemberOf)) {
+                    return false;
+                }
+            }
+
             return true;
+        } // the user must have a membership to ANY the set brands
+        elseif ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY) {
+            foreach ($brandsToCheck as $brand) {
+                if (in_array($brand, $brandUserIsAMemberOf)) {
+                    return true;
+                }
+            }
         }
 
         return false;
