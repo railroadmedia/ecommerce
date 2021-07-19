@@ -850,10 +850,11 @@ EOT;
                                 )
                                 ->leftJoin(
                                     'ecommerce_subscriptions AS es',
-                                    function (Builder $builder) use ($dateIncrementEndOfDay, $dateIncrement) {
+                                    function (Builder $builder) use ($brand, $dateIncrementEndOfDay, $dateIncrement) {
 
                                         return $builder->on(
                                             function (Builder $builder) use (
+                                                $brand,
                                                 $dateIncrementEndOfDay,
                                                 $dateIncrement
                                             ) {
@@ -875,11 +876,21 @@ EOT;
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
                                                         )
+                                                    )
+                                                    ->on(
+                                                        'es.brand',
+                                                        '=',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $brand .
+                                                            '"'
+                                                        )
                                                     );
 
                                             }
                                         )->orOn(
                                             function (Builder $builder) use (
+                                                $brand,
                                                 $dateIncrementEndOfDay,
                                                 $dateIncrement
                                             ) {
@@ -899,6 +910,15 @@ EOT;
                                                         $this->databaseManager->raw(
                                                             '"' .
                                                             $dateIncrementEndOfDay->toDateTimeString() .
+                                                            '"'
+                                                        )
+                                                    )
+                                                    ->on(
+                                                        'es.brand',
+                                                        '=',
+                                                        $this->databaseManager->raw(
+                                                            '"' .
+                                                            $brand .
                                                             '"'
                                                         )
                                                     );
