@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Customer;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
@@ -209,5 +210,38 @@ class OrderRepository extends RepositoryBase
         return
             $qb->getQuery()
                 ->getResult();
+    }
+
+    /**
+     * @param $userId
+     * @param Product $product
+     *
+     * @return Order[]
+     */
+    public function getUserOrdersForProduct($userId, Product $product): array
+    {
+        /**
+         * @var $qb QueryBuilder
+         */
+        $qb = $this->createQueryBuilder('o');
+
+        $qb->select(['o', 'oi'])
+            ->leftJoin('o.orderItems', 'oi')
+            ->where(
+                $qb->expr()
+                    ->eq('o.user', ':userId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('oi.product', ':product')
+            );
+
+        /** @var $q Query */
+        $q = $qb->getQuery();
+
+        $q->setParameter('userId', $userId)
+            ->setParameter('product', $product);
+
+        return $q->getResult();
     }
 }
