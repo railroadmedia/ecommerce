@@ -327,7 +327,7 @@
                                                 <td>
                                                     <br>Invoice #{{$order->getId()}}<br>
                                                     {{ $order->getCreatedAt()->format('F j, Y') }}<br><br>
-                                                    {{ config('ecommerce.company_name_on_invoice') }}
+                                                    {{ config('ecommerce.company_name_on_invoice')[$order->getBrand()] }}
 
                                                     @if(!empty(config('ecommerce.canada_gst_hst_number')[$order->getBrand()]))
                                                         <br>GST/HST # -
