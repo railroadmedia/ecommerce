@@ -27,7 +27,6 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
 
     public function test_command()
     {
-        $userId = $this->createAndLogInNewUser();
         $due = $this->faker->numberBetween(0, 1000);
 
         $currency = $this->getCurrency();
@@ -111,9 +110,11 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 $billingAddressEntity->toStructure()
             );
 
+            $user = $this->fakeUser();
+
             $subscription = $this->fakeSubscription(
                 [
-                    'user_id' => $userId,
+                    'user_id' => $user['id'],
                     'type' => $this->faker->randomElement(
                         [Subscription::TYPE_SUBSCRIPTION, config('ecommerce.type_payment_plan')]
                     ),
@@ -185,9 +186,11 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]
         );
 
+        $mobileSubscriptionUser = $this->fakeUser();
+
         $mobileSubscription = $this->fakeSubscription(
             [
-                'user_id' => $userId,
+                'user_id' => $mobileSubscriptionUser['id'],
                 'type' => $this->faker->randomElement(
                     [Subscription::TYPE_APPLE_SUBSCRIPTION, Subscription::TYPE_GOOGLE_SUBSCRIPTION]
                 ),
@@ -1725,6 +1728,100 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
             $subscriptionThree
+        );
+    }
+
+    public function test_command_renewal_subscription_having_other_active_not_renewed()
+    {
+        $currency = $this->getCurrency();
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $userOne = $this->fakeUser();
+
+        $subscriptionOneDue = $this->fakeSubscriptionData(
+            $userOne,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->subHours(2)
+            ]
+        );
+
+        $subscriptionTwoNotDue = $this->fakeSubscriptionData(
+            $userOne,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->addDays(5)
+            ]
+        );
+
+        $userTwo = $this->fakeUser();
+
+        $subscriptionThreeDue = $this->fakeSubscriptionData(
+            $userTwo,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->subHours(2)
+            ]
+        );
+
+        $this->artisan('renewalDueSubscriptions');
+
+        // due subscription is not renewed because userOne has other active subscription
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            $subscriptionOneDue
+        );
+
+        // control due subscription renewed
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscriptionThreeDue['id'],
+                'paid_until' => Carbon::now()
+                    ->addMonth($subscriptionThreeDue['interval_count'])
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'renewal_attempt' => 0,
+                'total_cycles_paid' => $subscriptionThreeDue['total_cycles_paid'] + 1,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
         );
     }
 

@@ -82,6 +82,17 @@ class RenewalDueSubscriptions extends Command
         foreach ($dueSubscriptions as $dueSubscription) {
             $this->info("Memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB");
 
+            $activeSubscriptions =
+                $this->subscriptionRepository->getUserActiveSubscription(
+                    $dueSubscription->getUser(),
+                    $dueSubscription->getBrand()
+                );
+
+            if (!empty($activeSubscriptions)) {
+                // if the user has an other active subscription for this brand stop processing the current $dueSubscription
+                continue;
+            }
+
             /** @var $dueSubscription Subscription */
 
             $oldSubscriptionState = clone($dueSubscription);

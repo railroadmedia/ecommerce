@@ -698,10 +698,11 @@ class SubscriptionRepository extends RepositoryBase
 
     /**
      * @param User $user
+     * @param string $brand = null
      *
      * @return Subscription[]|null
      */
-    public function getUserActiveSubscription(User $user)
+    public function getUserActiveSubscription(User $user, $brand = null)
     {
         $qb =
             $this->getEntityManager()
@@ -733,6 +734,14 @@ class SubscriptionRepository extends RepositoryBase
                     ->toDateTimeString()
             )
             ->setParameter('not', false);
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
+                ->setParameter('brand', $brand);
+        }
 
         return $qb->getQuery()
             ->getResult();
