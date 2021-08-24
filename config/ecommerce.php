@@ -393,7 +393,9 @@ return [
     ],
 
     // displayed on invoices
-    'company_name_on_invoice' => 'My Company',
+    'company_name_on_invoice' => [
+        'brand' => 'My Company',
+    ],
 
     // currencies
     'supported_currencies' => [
