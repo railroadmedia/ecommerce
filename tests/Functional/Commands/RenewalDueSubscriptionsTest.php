@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
 use Railroad\ActionLog\Services\ActionLogService;
+use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -1764,8 +1765,16 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'stopped' => 0,
                 'canceled_on' => null,
                 'renewal_attempt' => 0,
+                'start_date' => Carbon::now()
+                    ->subMonths(2)
+                    ->toDateTimeString(),
                 'paid_until' => Carbon::now()
                     ->subHours(2)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'created_at' => Carbon::now()
+                    ->subMonths(2)
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1778,8 +1787,16 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'stopped' => 0,
                 'canceled_on' => null,
                 'renewal_attempt' => 0,
+                'start_date' => Carbon::now()
+                    ->subMonths(1)
+                    ->toDateTimeString(),
                 'paid_until' => Carbon::now()
                     ->addDays(5)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'created_at' => Carbon::now()
+                    ->subMonths(1)
+                    ->toDateTimeString(),
             ]
         );
 
@@ -1796,15 +1813,24 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'renewal_attempt' => 0,
                 'paid_until' => Carbon::now()
                     ->subHours(2)
+                    ->toDateTimeString(),
             ]
         );
 
         $this->artisan('renewalDueSubscriptions');
 
-        // due subscription is not renewed because userOne has other active subscription
+        // due subscription is not renewed, but canceled, because userOne has other newer active subscription
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
-            $subscriptionOneDue
+            [
+                'id' => $subscriptionOneDue['id'],
+                'canceled_on' => Carbon::now()
+                    ->toDateTimeString(),
+                'is_active' => 0,
+                'cancellation_reason' => RenewalDueSubscriptions::CANCELLED_REASON,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
         );
 
         // control due subscription renewed
@@ -1819,6 +1845,162 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                 'is_active' => 1,
                 'renewal_attempt' => 0,
                 'total_cycles_paid' => $subscriptionThreeDue['total_cycles_paid'] + 1,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_command_renewal_subscription_having_payment_plan_renewed()
+    {
+        $currency = $this->getCurrency();
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $user = $this->fakeUser();
+
+        $subscriptionOneDue = $this->fakeSubscriptionData(
+            $user,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->subHours(2)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+            ]
+        );
+
+        $subscriptionTwoPaymentPlan = $this->fakeSubscriptionData(
+            $user,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->addDays(5)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'product_id' => null,
+            ]
+        );
+
+        $this->artisan('renewalDueSubscriptions');
+
+        // control due subscription renewed
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscriptionOneDue['id'],
+                'paid_until' => Carbon::now()
+                    ->addMonth($subscriptionOneDue['interval_count'])
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'renewal_attempt' => 0,
+                'total_cycles_paid' => $subscriptionOneDue['total_cycles_paid'] + 1,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+    }
+
+    public function test_command_renew_payment_plan_having_active_subscription()
+    {
+        $currency = $this->getCurrency();
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $fakerCharge = new Charge();
+        $fakerCharge->status = 'succeeded';
+        $fakerCharge->id = rand();
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'subscription_interval_type' => config('ecommerce.interval_type_monthly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $user = $this->fakeUser();
+
+        $subscriptionOnePaymentPlanDue = $this->fakeSubscriptionData(
+            $user,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->subHours(2)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_PAYMENT_PLAN,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'product_id' => null,
+            ]
+        );
+
+        $subscriptionTwoNotDue = $this->fakeSubscriptionData(
+            $user,
+            $product,
+            $currency,
+            [
+                'is_active' => 1,
+                'stopped' => 0,
+                'canceled_on' => null,
+                'renewal_attempt' => 0,
+                'paid_until' => Carbon::now()
+                    ->addDays(5)
+                    ->toDateTimeString(),
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+            ]
+        );
+
+        $this->artisan('renewalDueSubscriptions');
+
+        // control due subscription renewed
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscriptionOnePaymentPlanDue['id'],
+                'paid_until' => Carbon::now()
+                    ->addMonth($subscriptionOnePaymentPlanDue['interval_count'])
+                    ->startOfDay()
+                    ->toDateTimeString(),
+                'is_active' => 1,
+                'renewal_attempt' => 0,
+                'total_cycles_paid' => $subscriptionOnePaymentPlanDue['total_cycles_paid'] + 1,
                 'updated_at' => Carbon::now()
                     ->toDateTimeString(),
             ]
@@ -1880,7 +2062,7 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
                     ->subYear(2),
                 'paid_until' => Carbon::now()
                     ->subDay(1),
-                'product_id' => $userData['id'],
+                'product_id' => $productData['id'],
                 'currency' => $currency,
                 'order_id' => $order['id'],
                 'brand' => config('ecommerce.brand'),

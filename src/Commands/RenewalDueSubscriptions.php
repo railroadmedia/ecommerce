@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -15,6 +16,8 @@ use Throwable;
 
 class RenewalDueSubscriptions extends Command
 {
+    const CANCELLED_REASON = 'Canceled due to having a newer active subscription';
+
     /**
      * The console command name.
      *
@@ -82,15 +85,39 @@ class RenewalDueSubscriptions extends Command
         foreach ($dueSubscriptions as $dueSubscription) {
             $this->info("Memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB");
 
-            $activeSubscriptions =
-                $this->subscriptionRepository->getUserActiveSubscription(
-                    $dueSubscription->getUser(),
-                    $dueSubscription->getBrand()
-                );
+            if ($dueSubscription->getType() == Subscription::TYPE_SUBSCRIPTION) {
 
-            if (!empty($activeSubscriptions)) {
-                // if the user has an other active subscription for this brand stop processing the current $dueSubscription
-                continue;
+                $activeSubscriptions =
+                    $this->subscriptionRepository->getUserActiveSubscription(
+                        $dueSubscription->getUser(),
+                        $dueSubscription->getBrand()
+                    );
+
+                $hasNewer = false;
+
+                foreach ($activeSubscriptions as $activeSubscription) {
+                    if (
+                        $activeSubscription->getId() != $dueSubscription->getId()
+                        && $activeSubscription->getType() == Subscription::TYPE_SUBSCRIPTION
+                        && !empty($activeSubscription->getProduct())
+                        && $activeSubscription->getCreatedAt() > $dueSubscription->getCreatedAt()
+                    ) {
+                        $hasNewer = true;
+                        break;
+                    }
+                }
+
+                if ($hasNewer) {
+                    // if the user has an newer active subscription for this brand do not renew current $dueSubscription and set it to canceled
+
+                    $dueSubscription->setIsActive(false);
+                    $dueSubscription->setCanceledOn(Carbon::now());
+                    $dueSubscription->setCancellationReason(self::CANCELLED_REASON);
+                    $dueSubscription->setUpdatedAt(Carbon::now());
+
+                    continue;
+                }
+
             }
 
             /** @var $dueSubscription Subscription */
