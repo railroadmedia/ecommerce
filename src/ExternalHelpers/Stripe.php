@@ -17,7 +17,7 @@ class Stripe
     public function __construct(StripeDependencies $stripe)
     {
         $this->stripe = $stripe;
-        \Stripe\Stripe::setApiVersion('2016-07-06');
+        // \Stripe\Stripe::setApiVersion('2016-07-06');
     }
 
     /**

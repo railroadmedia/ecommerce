@@ -42,7 +42,7 @@ class StripeDependencies
     /**
      * @var AlipayAccount
      */
-    // public $alipayAccount;
+    public $alipayAccount;
     /**
      * @var ApiRequestor
      */
@@ -213,7 +213,7 @@ class StripeDependencies
         TransferReversal $transferReversal
     )
     {
-        // $this->alipayAccount = $alipayAccount;
+        $this->alipayAccount = $alipayAccount;
         $this->apiRequestor = $apiRequestor;
         $this->applicationFee = $applicationFee;
         $this->applicationFeeRefund = $applicationFeeRefund;
