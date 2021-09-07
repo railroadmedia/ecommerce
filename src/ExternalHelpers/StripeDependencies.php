@@ -6,7 +6,7 @@ use Stripe\AlipayAccount;
 use Stripe\ApiRequestor;
 use Stripe\ApplicationFee;
 use Stripe\ApplicationFeeRefund;
-use Stripe\AttachedObject;
+// use Stripe\AttachedObject;
 use Stripe\Balance;
 use Stripe\BalanceTransaction;
 use Stripe\BankAccount;
@@ -20,7 +20,7 @@ use Stripe\Coupon;
 use Stripe\Customer;
 use Stripe\Dispute;
 use Stripe\Event;
-use Stripe\FileUpload;
+// use Stripe\FileUpload;
 use Stripe\Invoice;
 use Stripe\InvoiceItem;
 use Stripe\Order;
@@ -42,7 +42,7 @@ class StripeDependencies
     /**
      * @var AlipayAccount
      */
-    public $alipayAccount;
+    // public $alipayAccount;
     /**
      * @var ApiRequestor
      */
@@ -58,7 +58,7 @@ class StripeDependencies
     /**
      * @var AttachedObject
      */
-    public $attachedObject;
+    // public $attachedObject;
     /**
      * @var Balance
      */
@@ -114,7 +114,7 @@ class StripeDependencies
     /**
      * @var FileUpload
      */
-    public $fileUpload;
+    // public $fileUpload;
     /**
      * @var Invoice
      */
@@ -181,7 +181,7 @@ class StripeDependencies
         ApiRequestor $apiRequestor,
         ApplicationFee $applicationFee,
         ApplicationFeeRefund $applicationFeeRefund,
-        AttachedObject $attachedObject,
+        // AttachedObject $attachedObject,
         Balance $balance,
         BalanceTransaction $balanceTransaction,
         BankAccount $bankAccount,
@@ -195,7 +195,7 @@ class StripeDependencies
         Customer $customer,
         Dispute $dispute,
         Event $event,
-        FileUpload $fileUpload,
+        // FileUpload $fileUpload,
         Invoice $invoice,
         InvoiceItem $invoiceItem,
         Order $order,
@@ -213,11 +213,11 @@ class StripeDependencies
         TransferReversal $transferReversal
     )
     {
-        $this->alipayAccount = $alipayAccount;
+        // $this->alipayAccount = $alipayAccount;
         $this->apiRequestor = $apiRequestor;
         $this->applicationFee = $applicationFee;
         $this->applicationFeeRefund = $applicationFeeRefund;
-        $this->attachedObject = $attachedObject;
+        // $this->attachedObject = $attachedObject;
         $this->balance = $balance;
         $this->balanceTransaction = $balanceTransaction;
         $this->bankAccount = $bankAccount;
@@ -231,7 +231,7 @@ class StripeDependencies
         $this->customer = $customer;
         $this->dispute = $dispute;
         $this->event = $event;
-        $this->fileUpload = $fileUpload;
+        // $this->fileUpload = $fileUpload;
         $this->invoice = $invoice;
         $this->invoiceItem = $invoiceItem;
         $this->order = $order;
