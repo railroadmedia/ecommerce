@@ -43,16 +43,14 @@ class SubscriptionServiceTest extends EcommerceTestCase
             ->getCacheDriver()
             ->deleteAll();
 
-        $stripeCustomer = new Customer();
-        $stripeCustomer->id = rand();
+        $stripeCustomer = new Customer(rand());
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($stripeCustomer);
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn(new Card());
 
-        $charge = new Charge();
-        $charge->id = $this->faker->word;
+        $charge = new Charge($this->faker->word);
 
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($charge);
@@ -222,16 +220,14 @@ class SubscriptionServiceTest extends EcommerceTestCase
             ->getCacheDriver()
             ->deleteAll();
 
-        $stripeCustomer = new Customer();
-        $stripeCustomer->id = rand();
+        $stripeCustomer = new Customer(rand());
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($stripeCustomer);
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn(new Card());
 
-        $charge = new Charge();
-        $charge->id = $this->faker->word;
+        $charge = new Charge($this->faker->word);
 
         $this->stripeExternalHelperMock->method('chargeCard')
             ->willReturn($charge);

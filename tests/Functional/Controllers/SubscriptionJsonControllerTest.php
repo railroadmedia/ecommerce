@@ -1700,8 +1700,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn(new Card());
         $currency = 'USD';
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $pricePerPayment;
         $fakerCharge->status = 'succeeded';
