@@ -136,17 +136,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $gateway = 'recordeo';
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->word;
         $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
-        $fakerCard->id = $this->faker->word;
 
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($this->faker->word . rand());
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $this->faker->word . rand();
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
@@ -304,17 +302,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $gateway = 'recordeo';
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->word;
         $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
-        $fakerCard->id = $this->faker->word;
 
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($this->faker->word . rand());
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $this->faker->word . rand();
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
@@ -450,16 +446,14 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $currency = $this->faker->currencyCode;
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->creditCardType;
         $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = $cardExpirationDate->format('Y');
         $fakerCard->exp_month = $cardExpirationDate->format('m');
-        $fakerCard->id = $this->faker->word;
 
-        $cardToken = new Token();
-        $cardToken->id = rand();
+        $cardToken = new Token(rand());
         $cardToken->card = $fakerCard;
 
         $this->stripeExternalHelperMock->method('createCustomer')

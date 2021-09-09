@@ -141,21 +141,19 @@ class OrderValuesTest extends EcommerceTestCase
     {
         $this->stripeExternalHelperMock->method('getCustomersByEmail')
             ->willReturn(['data' => '']);
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($this->faker->word . rand());
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $this->faker->word . rand();
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn($fakerCustomer);
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $fingerPrint ?? $this->faker->word . $this->faker->randomNumber(6);
         $fakerCard->brand = $this->faker->word;
         $fakerCard->last4 = $this->faker->randomNumber(4);
         $fakerCard->exp_year = 2020;
         $fakerCard->exp_month = 12;
-        $fakerCard->id = $this->faker->word;
         $fakerCard->customer = $fakerCustomer->id;
         $fakerCard->name = $this->faker->word;
         $this->stripeExternalHelperMock->method('createCard')
@@ -163,8 +161,7 @@ class OrderValuesTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn($fakerCard);
 
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = 'cad';
         $fakerCharge->amount = 100;
         $fakerCharge->status = 'succeeded';

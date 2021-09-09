@@ -73,20 +73,18 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn($fakerCustomer);
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($externalId);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $creditCard['company_name'];
         $fakerCard->last4 = $creditCard['last_four_digits'];
         $fakerCard->exp_year = $cardExpirationYear;
         $fakerCard->exp_month = $cardExpirationMonth;
-        $fakerCard->id = $externalId;
         $this->stripeExternalHelperMock->method('retrieveCard')
             ->willReturn($fakerCard);
 
         $chargeId = $this->faker->word;
 
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $chargeId;
+        $fakerCharge = new Charge($chargeId);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $this->faker->numberBetween(100, 200);
         $fakerCharge->status = 'succeeded';
@@ -279,9 +277,8 @@ class PaymentServiceTest extends EcommerceTestCase
             ]
         );
 
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($externalCustomerId);
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $externalCustomerId;
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn($fakerCustomer);
@@ -290,13 +287,12 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($externalId);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $creditCard['company_name'];
         $fakerCard->last4 = $creditCard['last_four_digits'];
         $fakerCard->exp_year = $cardExpirationYear;
         $fakerCard->exp_month = $cardExpirationMonth;
-        $fakerCard->id = $externalId;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -309,8 +305,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $chargeId = $this->faker->word;
 
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $chargeId;
+        $fakerCharge = new Charge($chargeId);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $expectedPaymentTotalDue;
         $fakerCharge->status = 'succeeded';
@@ -412,9 +407,8 @@ class PaymentServiceTest extends EcommerceTestCase
         $externalId = 'card_' . $this->faker->word;
         $externalCustomerId = 'cus_' . $this->faker->word;
 
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($externalCustomerId);
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $externalCustomerId;
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
@@ -423,13 +417,12 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($externalId);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->creditCardType;
         $fakerCard->last4 = $this->faker->randomNumber(4, true);
         $fakerCard->exp_year = $cardExpirationYear;
         $fakerCard->exp_month = $cardExpirationMonth;
-        $fakerCard->id = $externalId;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 
@@ -442,8 +435,7 @@ class PaymentServiceTest extends EcommerceTestCase
 
         $chargeId = $this->faker->word;
 
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $chargeId;
+        $fakerCharge = new Charge($chargeId);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $expectedPaymentTotalDue;
         $fakerCharge->status = 'succeeded';
@@ -636,9 +628,8 @@ class PaymentServiceTest extends EcommerceTestCase
         $externalId = 'card_' . $this->faker->word;
         $externalCustomerId = 'cus_' . $this->faker->word;
 
-        $fakerCustomer = new Customer();
+        $fakerCustomer = new Customer($externalCustomerId);
         $fakerCustomer->email = $this->faker->email;
-        $fakerCustomer->id = $externalCustomerId;
 
         $this->stripeExternalHelperMock->method('createCustomer')
             ->willReturn($fakerCustomer);
@@ -647,13 +638,12 @@ class PaymentServiceTest extends EcommerceTestCase
         $this->stripeExternalHelperMock->method('retrieveToken')
             ->willReturn($fakerToken);
 
-        $fakerCard = new Card();
+        $fakerCard = new Card($externalId);
         $fakerCard->fingerprint = $this->faker->word;
         $fakerCard->brand = $this->faker->creditCardType;
         $fakerCard->last4 = $this->faker->randomNumber(4, true);
         $fakerCard->exp_year = $cardExpirationYear;
         $fakerCard->exp_month = $cardExpirationMonth;
-        $fakerCard->id = $externalId;
         $this->stripeExternalHelperMock->method('createCard')
             ->willReturn($fakerCard);
 

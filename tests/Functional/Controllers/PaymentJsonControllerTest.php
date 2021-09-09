@@ -57,8 +57,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
@@ -202,8 +201,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
@@ -497,8 +495,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
@@ -1110,8 +1107,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
@@ -1602,8 +1598,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')->willReturn(new Customer());
         $this->stripeExternalHelperMock->method('retrieveCard')->willReturn(new Card());
-        $fakerCharge = new Charge();
-        $fakerCharge->id = $this->faker->word;
+        $fakerCharge = new Charge($this->faker->word);
         $fakerCharge->currency = $currency;
         $fakerCharge->amount = $due;
         $fakerCharge->status = 'succeeded';
