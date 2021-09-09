@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -13,6 +14,7 @@ use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Services\ResponseService;
 use Spatie\Fractal\Fractal;
 use Stripe\Customer;
+use Stripe\PaymentIntent;
 use Stripe\SetupIntent;
 use Stripe\Stripe;
 use Throwable;
@@ -143,72 +145,56 @@ class OrderFormJsonController extends Controller
             throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
         }
 
+        // Stripe::setApiKey($config['stripe_api_secret']);
+
+        // $customer = Customer::create();
+
+        // $intent = SetupIntent::create(['customer' => $customer->id]);
+
+        // return response()->json([
+        //     'intent_client_secret' => $intent->client_secret,
+        // ]);
+
+        return response()->json([
+            'intent_client_secret' => 'seti_1JXoT3HhsuEXdZnAYvbtq5Sg_secret_KCCsPznfWQB3gLUMLVpNpKn3HdkVLzY',
+        ]);
+    }
+
+    public function createIntentPayment(Request $request)
+    {
+        $gatewayName = 'pianote';
+
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
+
+        if (empty($config)) {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
         Stripe::setApiKey($config['stripe_api_secret']);
 
-        $customer = Customer::create();
+        $intent = SetupIntent::retrieve('seti_1JXoT3HhsuEXdZnAYvbtq5Sg', []);
 
-        $intent = SetupIntent::create(['customer' => $customer->id]);
+        $paymentIntent = PaymentIntent::create([
+            'amount' => 8700,
+            'confirm' => true,
+            'currency' => 'usd',
+            'customer' => $intent->customer,
+            'payment_method' => $intent->payment_method
+        ]);
 
-        // $intent = SetupIntent::retrieve('seti_1JWzMRHhsuEXdZnAed7aYSrc', []);
+        // $paymentIntent = PaymentIntent::retrieve('pi_3JXoUzHhsuEXdZnA0u4VxtrY');
 
-        // initial state: status: "requires_payment_method"
-        // new state: status: "succeeded"
+        // dd($paymentIntent);
+
+        // $customer = Customer::create();
+
+        // $intent = SetupIntent::create(['customer' => $customer->id]);
 
         // dd($intent);
 
-        // dd([
-        //     'customer_id' => $customer->id,
-        //     'intent_id' => $intent->id,
-        //     'intent_client_secret' => $intent->client_secret,
-        //     'customer' => $customer,
-        //     'intent' => $intent,
-        // ]);
-
-        // return response()->json([
-        //     'customer_id' => 'cus_KBM4pZqBx6QlxB',
-        //     'intent_id' => 'seti_1JWzMRHhsuEXdZnAed7aYSrc',
-        //     'intent_client_secret' => 'seti_1JWzMRHhsuEXdZnAed7aYSrc_secret_KBM4raFxBcxGXQTZtmk19WOI7ku7wwi'
-        // ]);
-
-        // create payment intent https://stripe.com/docs/api/payment_intents/confirm?lang=php
-        // use SetupIntent payment_method: "pm_1JX4TnHhsuEXdZnAA20SKvwk"
-
-        /*
-        Stripe\SetupIntent {#2666 ▼
-          +saveWithParent: false
-          #_opts: Stripe\Util\RequestOptions {#2687 ▶}
-          #_originalValues: array:21 [▶]
-          #_values: array:21 [▶]
-          #_unsavedValues: Stripe\Util\Set {#2672 ▶}
-          #_transientValues: Stripe\Util\Set {#2670 ▶}
-          #_retrieveOptions: []
-          #_lastResponse: Stripe\ApiResponse {#2686 ▶}
-          id: "seti_1JWzMRHhsuEXdZnAed7aYSrc"
-          object: "setup_intent"
-          application: null
-          cancellation_reason: null
-          client_secret: "seti_1JWzMRHhsuEXdZnAed7aYSrc_secret_KBM4raFxBcxGXQTZtmk19WOI7ku7wwi"
-          created: 1631002135
-          customer: "cus_KBM4pZqBx6QlxB"
-          description: null
-          last_setup_error: null
-          latest_attempt: "setatt_1JX4TnHhsuEXdZnAHkgVOR3R"
-          livemode: false
-          mandate: null
-          metadata: Stripe\StripeObject {#2689 ▶}
-          next_action: null
-          on_behalf_of: null
-          payment_method: "pm_1JX4TnHhsuEXdZnAA20SKvwk"
-          payment_method_options: Stripe\StripeObject {#2690 ▶}
-          payment_method_types: array:1 [▶]
-          single_use_mandate: null
-          status: "succeeded"
-          usage: "off_session"
-        }
-        */
-
         return response()->json([
-            'intent_client_secret' => $intent->client_secret,
+            'payment_intent_id' => $paymentIntent->id,
+            'payment_intent_client_secret' => $paymentIntent->client_secret,
         ]);
     }
 }
