@@ -11,7 +11,6 @@ use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\CustomerRepository;
 use Railroad\Ecommerce\Requests\CustomerUpdateRequest;
-use Railroad\Ecommerce\Repositories\OrderRepository;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Exceptions\NotAllowedException;
@@ -37,11 +36,6 @@ class CustomerJsonController extends Controller
     private $jsonApiHydrator;
 
     /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
      * @var PermissionService
      */
     private $permissionService;
@@ -52,21 +46,18 @@ class CustomerJsonController extends Controller
      * @param CustomerRepository $customerRepository
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
-     * @param OrderRepository $orderRepository
      * @param PermissionService $permissionService
      */
     public function __construct(
         CustomerRepository $customerRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        OrderRepository $orderRepository,
         PermissionService $permissionService
     )
     {
         $this->customerRepository = $customerRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
-        $this->orderRepository = $orderRepository;
         $this->permissionService = $permissionService;
     }
 
@@ -84,17 +75,8 @@ class CustomerJsonController extends Controller
 
         $customersAndBuilder = $this->customerRepository->indexByRequest($request);
 
-        $customersOrders = $this->orderRepository->getCustomersOrders($customersAndBuilder->getResults());
-
-        $customersOrdersMap = []; // map orders by customer id
-
-        foreach ($customersOrders as $customersOrder) {
-            $customersOrdersMap[$customersOrder->getCustomer()->getId()] = $customersOrder;
-        }
-
         return ResponseService::customer(
                 $customersAndBuilder->getResults(),
-                $customersOrdersMap,
                 $customersAndBuilder->getQueryBuilder()
             )
             ->respond(200);

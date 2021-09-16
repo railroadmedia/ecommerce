@@ -646,7 +646,6 @@ class ResponseService extends FractalResponseService
 
     /**
      * @param $entityOrEntities
-     * @param array $customersOrders
      * @param QueryBuilder|null $queryBuilder
      * @param array $includes
      *
@@ -654,7 +653,6 @@ class ResponseService extends FractalResponseService
      */
     public static function customer(
         $entityOrEntities,
-        $customersOrders = [],
         QueryBuilder $queryBuilder = null,
         array $includes = []
     )
@@ -662,7 +660,7 @@ class ResponseService extends FractalResponseService
         return self::create(
             $entityOrEntities,
             'customer',
-            new CustomerTransformer($customersOrders),
+            new CustomerTransformer(),
             new JsonApiSerializer(),
             $queryBuilder
         )
