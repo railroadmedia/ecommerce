@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\SQLiteConnection;
 use Illuminate\Database\Migrations\Migration;
 
 class AddAppleReceiptIndex extends Migration
@@ -14,16 +15,18 @@ class AddAppleReceiptIndex extends Migration
      */
     public function up()
     {
-        Schema::connection(config('ecommerce.database_connection_name'))
-            ->table(
-                'ecommerce_apple_receipts',
-                function (Blueprint $table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->index([DB::raw('receipt(255)')], 'ecommerce_apple_receipts_receipt_index');
-                }
-            );
+        if (!(Schema::connection(config('ecommerce.database_connection_name'))->getConnection() instanceof SQLiteConnection)) {
+            Schema::connection(config('ecommerce.database_connection_name'))
+                ->table(
+                    'ecommerce_apple_receipts',
+                    function (Blueprint $table) {
+                        /**
+                         * @var $table \Illuminate\Database\Schema\Blueprint
+                         */
+                        $table->index([DB::raw('receipt(255)')], 'ecommerce_apple_receipts_receipt_index');
+                    }
+                );
+        }
     }
 
     /**
@@ -33,15 +36,17 @@ class AddAppleReceiptIndex extends Migration
      */
     public function down()
     {
-        Schema::connection(config('ecommerce.database_connection_name'))
-            ->table(
-                'ecommerce_apple_receipts',
-                function (Blueprint $table) {
-                    /**
-                     * @var $table \Illuminate\Database\Schema\Blueprint
-                     */
-                    $table->dropIndex('ecommerce_apple_receipts_receipt_index');
-                }
-            );
+        if (!(Schema::connection(config('ecommerce.database_connection_name'))->getConnection() instanceof SQLiteConnection)) {
+            Schema::connection(config('ecommerce.database_connection_name'))
+                ->table(
+                    'ecommerce_apple_receipts',
+                    function (Blueprint $table) {
+                        /**
+                         * @var $table \Illuminate\Database\Schema\Blueprint
+                         */
+                        $table->dropIndex('ecommerce_apple_receipts_receipt_index');
+                    }
+                );
+        }
     }
 }
