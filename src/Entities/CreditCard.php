@@ -42,9 +42,9 @@ class CreditCard
     protected $fingerprint;
 
     /**
-     * @ORM\Column(type="integer", name="last_four_digits")
+     * @ORM\Column(type="string", name="last_four_digits")
      *
-     * @var int
+     * @var string
      */
     protected $lastFourDigits;
 
@@ -120,17 +120,17 @@ class CreditCard
     }
 
     /**
-     * @return int|null
+     * @return string|null
      */
-    public function getLastFourDigits(): ?int
+    public function getLastFourDigits(): ?string
     {
         return $this->lastFourDigits;
     }
 
     /**
-     * @param int $lastFourDigits
+     * @param string $lastFourDigits
      */
-    public function setLastFourDigits(int $lastFourDigits)
+    public function setLastFourDigits(string $lastFourDigits)
     {
         $this->lastFourDigits = $lastFourDigits;
     }
