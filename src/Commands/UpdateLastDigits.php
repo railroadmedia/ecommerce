@@ -48,6 +48,8 @@ class UpdateLastDigits extends Command
      */
     public function handle()
     {
+        $this->info("Started UpdateLastDigits command");
+
         $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_credit_cards')
             ->where(DB::raw('LENGTH(last_four_digits)'), 1)
@@ -62,5 +64,7 @@ class UpdateLastDigits extends Command
             ->table('ecommerce_credit_cards')
             ->where(DB::raw('LENGTH(last_four_digits)'), 3)
             ->update(['last_four_digits' => DB::raw("CONCAT('0', last_four_digits)")]);
+
+        $this->info("Finished UpdateLastDigits command");
     }
 }

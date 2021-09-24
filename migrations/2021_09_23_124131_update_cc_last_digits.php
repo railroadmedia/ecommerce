@@ -16,7 +16,7 @@ class UpdateCcLastDigits extends Migration
     public function up()
     {
         Schema::table('ecommerce_credit_cards', function (Blueprint $table) {
-            $table->string('last_four_digits')->change();
+            $table->string('last_four_digits', 4)->change();
         });
     }
 
@@ -28,7 +28,7 @@ class UpdateCcLastDigits extends Migration
     public function down()
     {
         Schema::table('ecommerce_credit_cards', function (Blueprint $table) {
-            $table->string('last_four_digits', 4)->change();
+            $table->integer('last_four_digits')->change();
         });
     }
 }
