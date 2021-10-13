@@ -36,6 +36,7 @@ use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\RetentionReportingTool;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
+use Railroad\Ecommerce\Commands\UpdateLastDigits;
 use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
 use Railroad\Ecommerce\Commands\VerifyLocalPriceConversion;
 use Railroad\Ecommerce\Events\GiveContentAccess;
@@ -142,6 +143,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 MembershipsReportingTool::class,
                 SynchOrdersWithPaymentPlans::class,
                 VerifyLocalPriceConversion::class,
+                UpdateLastDigits::class,
             ]
         );
 
