@@ -114,7 +114,7 @@ class Stripe
      */
     public function createCard(Customer $customer, Token $token)
     {
-        return $customer->sources->create(['source' => $token]);
+        return $this->stripe->customer->createSource($customer->id, ['source' => $token->id]);
     }
 
     /**
@@ -124,7 +124,7 @@ class Stripe
      */
     public function retrieveCard(Customer $customer, $cardId)
     {
-        return $customer->sources->retrieve($cardId);
+        return $this->stripe->customer->retrieveSource($customer->id, $cardId);
     }
 
     /**

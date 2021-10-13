@@ -293,7 +293,7 @@ class StripePaymentGateway
         $zip = null
     )
     {
-
+        // deprecated, not used
         $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
 
         if (empty($config)) {
