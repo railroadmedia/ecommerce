@@ -1016,6 +1016,7 @@ class CartService
         $callToActionLabel = null
     ) {
         $serialization = [
+            'id' => $product->getId(),
             'sku' => $product->getSku(),
             'name' => $product->getName(),
             'quantity' => $quantity,
