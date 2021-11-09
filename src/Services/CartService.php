@@ -1019,6 +1019,7 @@ class CartService
             'id' => $product->getId(),
             'sku' => $product->getSku(),
             'name' => $product->getName(),
+            'type' => $product->getType(),
             'quantity' => $quantity,
             'thumbnail_url' => $product->getThumbnailUrl(),
             'sales_page_url' => $product->getSalesPageUrl(),
