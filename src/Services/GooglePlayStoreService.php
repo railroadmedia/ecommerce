@@ -697,7 +697,7 @@ class GooglePlayStoreService
         $shouldLogin = false;
         $purchasedToken = null;
         $receiptUser = null;
-
+        error_log(print_r($purchasedItems, true));
         foreach ($purchasedItems as $purchase) {
             //From mobile app we receive purchases for products that do not belong to our app
             if (!array_key_exists($purchase['product_id'], config('ecommerce.google_store_products_map'))) {
