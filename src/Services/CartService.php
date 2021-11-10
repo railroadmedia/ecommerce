@@ -2,7 +2,6 @@
 
 namespace Railroad\Ecommerce\Services;
 
-use App\Events\AddNewCartEvent;
 use Carbon\Carbon;
 use Doctrine\ORM\ORMException;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
