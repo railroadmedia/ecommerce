@@ -56,9 +56,6 @@ class SyncInAppPurchasedItems
      */
     public function terminate($request, $response)
     {
-        error_log('SyncInAppPurchasedItems request:::');
-        error_log(print_r($request->all(), true));
-
         $purchases = $request->get('purchases', []);
 
         //there are different style to sent in-app purchases on request for different mobile app builds
@@ -66,14 +63,16 @@ class SyncInAppPurchasedItems
         $googlePurchases = (!empty($purchases) && is_array($purchases) && array_key_exists('product_id', $purchases[0]??[])) ? $purchases : [];
 
         $platform = $request->get('platform');
+        error_log('SyncInAppPurchasedItems request  :::  email address:' .$request->get('email') . '    platform:'.$platform);
+
         if ($platform) {
             if (($platform == 'ios') && ($appleReceipt)) {
                 error_log('SyncInAppPurchasedItems - is iOS and the receipt :::');
-                error_log(print_r($appleReceipt, true));
+                error_log(var_export($appleReceipt, true));
                 $this->appleStoreKitService->restoreAndSyncPurchasedItems($appleReceipt);
             } elseif (($platform == 'android') && (!empty($googlePurchases))) {
                 error_log('SyncInAppPurchasedItems - is Android and the purchases :::');
-                error_log(print_r($googlePurchases, true));
+                error_log(var_export($googlePurchases, true));
                 $this->googlePlayStoreService->restoreAndSyncPurchasedItems($googlePurchases);
 
             }
@@ -81,13 +80,13 @@ class SyncInAppPurchasedItems
             //for old mobile app build where the platform was not sent on request
             if ($appleReceipt) {
                 error_log('SyncInAppPurchasedItems - is iOS and the receipt :::');
-                error_log(print_r($appleReceipt, true));
+                error_log(var_export($appleReceipt, true));
                 $this->appleStoreKitService->restoreAndSyncPurchasedItems($appleReceipt);
             }
 
             if (!empty($googlePurchases)) {
                 error_log('SyncInAppPurchasedItems - is Android and the purchases :::');
-                error_log(print_r($googlePurchases, true));
+                error_log(var_export($googlePurchases, true));
                 $this->googlePlayStoreService->restoreAndSyncPurchasedItems($googlePurchases);
             }
         }
