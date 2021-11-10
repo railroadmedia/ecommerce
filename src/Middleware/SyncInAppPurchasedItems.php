@@ -56,6 +56,9 @@ class SyncInAppPurchasedItems
      */
     public function terminate($request, $response)
     {
+        error_log('SyncInAppPurchasedItems request:::');
+        error_log(print_r($request->all(), true));
+
         $purchases = $request->get('purchases', []);
         if (!empty($purchases)) {
             $this->googlePlayStoreService->restoreAndSyncPurchasedItems($purchases);
