@@ -368,14 +368,14 @@ class AppleStoreKitService
             if (!empty($subscription)) {
                 $this->userProductService->updateSubscriptionProductsApp($subscription);
             } else {
-                error_log(
-                    'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
-                    print_r($receipt->getId(), true)
-                );
-                error_log(
-                    'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
-                    print_r($appleResponse, true)
-                );
+//                error_log(
+//                    'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
+//                    print_r($receipt->getId(), true)
+//                );
+//                error_log(
+//                    'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
+//                    print_r($appleResponse, true)
+//                );
             }
         }
     }
@@ -569,7 +569,7 @@ class AppleStoreKitService
             }
         }
 
-        error_log(var_export($latestPurchaseItem, true));
+//        error_log(var_export($latestPurchaseItem, true));
 
         if (empty($latestPurchaseItem)) {
             return null;
@@ -577,7 +577,7 @@ class AppleStoreKitService
 
         $originalTransactionId = $latestPurchaseItem->getOriginalTransactionId();
 
-        error_log('Restore Apple receipt with original transaction id: ' . $originalTransactionId);
+//        error_log('Restore Apple receipt with original transaction id: ' . $originalTransactionId);
 
         $appleReceipt = null;
 
@@ -633,12 +633,12 @@ class AppleStoreKitService
                 $appleReceipt->setTransactionId($originalTransactionId);
                 $this->entityManager->persist($appleReceipt);
             }
-            error_log(
-                'Exists apple receipts with ID:' .
-                $appleReceipt->getId() .
-                '    transaction id:' .
-                $appleReceipt->getTransactionId()
-            );
+//            error_log(
+//                'Exists apple receipts with ID:' .
+//                $appleReceipt->getId() .
+//                '    transaction id:' .
+//                $appleReceipt->getTransactionId()
+//            );
 
             if (!$appleReceipt->getEmail()) {
                 $shouldCreateAccount = true;
