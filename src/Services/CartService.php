@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
+use Railroad\Ecommerce\Events\AddToCartEvent;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotActiveException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductNotFoundException;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
@@ -156,6 +157,8 @@ class CartService
         if (!$product->getActive()) {
             throw new ProductNotActiveException($product);
         }
+
+        event(new AddToCartEvent($product, $quantity));
 
         $this->cart->setItem(new CartItem($sku, $quantity));
 
@@ -1016,8 +1019,10 @@ class CartService
         $callToActionLabel = null
     ) {
         $serialization = [
+            'id' => $product->getId(),
             'sku' => $product->getSku(),
             'name' => $product->getName(),
+            'type' => $product->getType(),
             'quantity' => $quantity,
             'thumbnail_url' => $product->getThumbnailUrl(),
             'sales_page_url' => $product->getSalesPageUrl(),
