@@ -37,25 +37,30 @@ class MobileOrderUserProductListener
             $paidUntil = $subscription->getPaidUntil()
                             ->copy();
 
-            $this->userProductService->assignUserProduct(
-                $user,
-                $product,
-                $paidUntil
-                    ->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1))
-            );
+            if($user && $product) {
+                $this->userProductService->assignUserProduct(
+                    $user,
+                    $product,
+                    $paidUntil->addDays(
+                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                        )
+                );
+            }
         }
 
         if ($event->getOrder()) {
             $order = $event->getOrder();
             $user = $order->getUser();
 
-            foreach ($order->getOrderItems() as $item) {
-                $this->userProductService->assignUserProduct(
-                    $user,
-                    $item->getProduct(),
-                    null,
-                    $item->getQuantity()
-                );
+            if($user) {
+                foreach ($order->getOrderItems() as $item) {
+                    $this->userProductService->assignUserProduct(
+                        $user,
+                        $item->getProduct(),
+                        null,
+                        $item->getQuantity()
+                    );
+                }
             }
         }
     }
