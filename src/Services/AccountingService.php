@@ -111,6 +111,27 @@ class AccountingService
 
                     'ecommerce_payment_taxes.product_taxes_paid as payment_product_taxes_paid',
                     'ecommerce_payment_taxes.shipping_taxes_paid as payment_shipping_taxes_paid',
+                ]
+            )
+            ->leftJoin('ecommerce_payment_taxes', 'ecommerce_payment_taxes.payment_id', '=', 'ecommerce_payments.id')
+            ->whereBetween('ecommerce_payments.created_at', [$smallDateTime, $bigDateTime])
+            ->where('ecommerce_payments.gateway_name', $brand)
+            ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
+//            ->where('ecommerce_payments.id', 347634) // testing only
+            ->get()
+            ->toArray();
+
+        $orderPayments = $connection->table('ecommerce_payments')
+            ->select(
+                [
+                    'ecommerce_payments.id as payment_id',
+                    'ecommerce_payments.total_paid as payment_total_paid',
+                    'ecommerce_payments.type as payment_type',
+                    'ecommerce_payments.external_provider as payment_external_provider',
+                    'ecommerce_payments.created_at as payment_created_at',
+
+                    'ecommerce_payment_taxes.product_taxes_paid as payment_product_taxes_paid',
+                    'ecommerce_payment_taxes.shipping_taxes_paid as payment_shipping_taxes_paid',
 
                     'ecommerce_orders.id as order_id',
                     'ecommerce_orders.total_due as order_total_due',
@@ -128,6 +149,42 @@ class AccountingService
                     'ecommerce_order_item_products.name as order_item_product_name',
                     'ecommerce_order_item_products.type as order_item_product_type',
                     'ecommerce_order_item_products.weight as order_item_product_weight',
+                ]
+            )
+            ->leftJoin('ecommerce_payment_taxes', 'ecommerce_payment_taxes.payment_id', '=', 'ecommerce_payments.id')
+            ->leftJoin('ecommerce_order_payments', 'ecommerce_order_payments.payment_id', '=', 'ecommerce_payments.id')
+            ->leftJoin('ecommerce_orders', 'ecommerce_orders.id', '=', 'ecommerce_order_payments.order_id')
+            ->leftJoin(
+                'ecommerce_order_items',
+                'ecommerce_order_items.order_id',
+                '=',
+                'ecommerce_orders.id'
+            ) // this adds more duplicate rows, must be reduced properly
+            ->leftJoin(
+                'ecommerce_products as ecommerce_order_item_products',
+                'ecommerce_order_item_products.id',
+                '=',
+                'ecommerce_order_items.product_id'
+            )
+            ->whereBetween('ecommerce_payments.created_at', [$smallDateTime, $bigDateTime])
+            ->where('ecommerce_payments.gateway_name', $brand)
+            ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
+//            ->where('ecommerce_payments.id', 347634) // testing only
+            ->get()
+
+            ->toArray();
+
+        $subPayments = $connection->table('ecommerce_payments')
+            ->select(
+                [
+                    'ecommerce_payments.id as payment_id',
+                    'ecommerce_payments.total_paid as payment_total_paid',
+                    'ecommerce_payments.type as payment_type',
+                    'ecommerce_payments.external_provider as payment_external_provider',
+                    'ecommerce_payments.created_at as payment_created_at',
+
+                    'ecommerce_payment_taxes.product_taxes_paid as payment_product_taxes_paid',
+                    'ecommerce_payment_taxes.shipping_taxes_paid as payment_shipping_taxes_paid',
 
                     'ecommerce_subscriptions.id as subscription_id',
                     'ecommerce_subscriptions.type as subscription_type',
@@ -155,20 +212,6 @@ class AccountingService
                 ]
             )
             ->leftJoin('ecommerce_payment_taxes', 'ecommerce_payment_taxes.payment_id', '=', 'ecommerce_payments.id')
-            ->leftJoin('ecommerce_order_payments', 'ecommerce_order_payments.payment_id', '=', 'ecommerce_payments.id')
-            ->leftJoin('ecommerce_orders', 'ecommerce_orders.id', '=', 'ecommerce_order_payments.order_id')
-            ->leftJoin(
-                'ecommerce_order_items',
-                'ecommerce_order_items.order_id',
-                '=',
-                'ecommerce_orders.id'
-            ) // this adds more duplicate rows, must be reduced properly
-            ->leftJoin(
-                'ecommerce_products as ecommerce_order_item_products',
-                'ecommerce_order_item_products.id',
-                '=',
-                'ecommerce_order_items.product_id'
-            )
             ->leftJoin(
                 'ecommerce_subscription_payments',
                 'ecommerce_subscription_payments.payment_id',
@@ -204,7 +247,10 @@ class AccountingService
             ->where('ecommerce_payments.gateway_name', $brand)
             ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
 //            ->where('ecommerce_payments.id', 347634) // testing only
-            ->get();
+            ->get()
+            ->toArray();
+
+        $payments = array_merge($payments, $orderPayments, $subPayments);
 
         $refunds = $connection->table('ecommerce_refunds')
             ->select(
@@ -319,7 +365,7 @@ class AccountingService
         // now lets group the data structure so we have 1 top level array element per payment and no duplicates
         $paymentsArrayGrouped = [];
 
-        foreach (array_merge($payments->toArray(), $refunds->toArray()) as $payment) {
+        foreach (array_merge($payments, $refunds->toArray()) as $payment) {
             // if its a refund we should ignore the payment itself in the main calculations
             $payment->refund_id = $payment->refund_id ?? null;
 
