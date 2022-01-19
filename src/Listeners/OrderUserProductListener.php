@@ -90,7 +90,8 @@ class OrderUserProductListener
                     }
                 }
 
-                if (!empty($expirationDate)) {
+                //for trials, we do not add the 'days_before_access_revoked_after_expiry' to expiration date
+                if (!empty($expirationDate) && ($order->getTotalPaid() != 0)) {
                     $expirationDate = $expirationDate->addDays(
                         config('ecommerce.days_before_access_revoked_after_expiry', 5)
                     );
