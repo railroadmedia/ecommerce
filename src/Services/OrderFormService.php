@@ -100,11 +100,17 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
+//die("orderformservice-1-mircea");
+
         try {
 
             // setup the cart
             $cart = $request->getCart();
             $this->cartService->setCart($cart);
+
+//            var_dump($cart->getItems());
+//            var_dump($cart);
+//die("orderformservice-2-mircea");
 
             $purchaser = $request->getPurchaser();
 

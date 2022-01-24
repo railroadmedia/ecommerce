@@ -777,6 +777,7 @@ class CartService
             'shipping_taxes' => round($shippingTaxDue, 2),
         ];
 
+        //todo: check here!!!!
         $discounts =
             $this->discountService->getApplicableDiscountsNames($this->cart, $totalItemCostDue, $shippingDue) ?? [];
 
