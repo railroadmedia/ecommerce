@@ -381,6 +381,10 @@ class CartService
                     $totalShippingCosts
                 );
 
+                if (($product->getPrice() * $cartItem->getQuantity()) - $discountAmount < 0) {
+                    $discountAmount = ($product->getPrice() * $cartItem->getQuantity());
+                }
+
                 $cartItemDue = !is_null($cartItem->getDueOverride()) ? $cartItem->getDueOverride() : max(
                     round(
                         $product->getPrice() * $cartItem->getQuantity() - $discountAmount,
