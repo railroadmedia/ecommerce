@@ -28,6 +28,7 @@ use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscr
 use Railroad\Ecommerce\Commands\FixSerializeErrorInAppPurchaseTables;
 use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
 use Railroad\Ecommerce\Commands\ListDueSubscriptions;
+use Railroad\Ecommerce\Commands\MatchOrderItemDiscountAmountToTotal;
 use Railroad\Ecommerce\Commands\MembershipsReportingTool;
 use Railroad\Ecommerce\Commands\MobileAppGoogleAppleHelper;
 use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
@@ -144,6 +145,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 SynchOrdersWithPaymentPlans::class,
                 VerifyLocalPriceConversion::class,
                 UpdateLastDigits::class,
+                MatchOrderItemDiscountAmountToTotal::class,
             ]
         );
 
