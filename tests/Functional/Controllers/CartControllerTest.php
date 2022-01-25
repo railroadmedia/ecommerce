@@ -73,18 +73,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -108,17 +109,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -142,17 +145,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -184,6 +189,10 @@ class CartControllerTest extends EcommerceTestCase
                     'price_after_discounts' => $product['price'] * $initialQuantity,
                     'requires_shipping' => false,
                     'is_digital' => !$product['is_physical'],
+                    'id' => $product['id'],
+                    'type' => $product['type'],
+                    'id' => $product['id'],
+                    'type' => $product['type'],
                 ]
             ],
             'recommendedProducts' => [
@@ -298,18 +307,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -333,17 +343,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -367,17 +379,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -412,6 +426,10 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $product['price'] * $quantity,
                         'requires_shipping' => false,
                         'is_digital' => !$product['is_physical'],
+                        'id' => $product['id'],
+                        'type' => $product['type'],
+                        'id' => $product['id'],
+                        'type' => $product['type'],
                     ]
                 ],
                 'recommendedProducts' => [
@@ -502,18 +520,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -537,17 +556,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -571,17 +592,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -629,7 +652,8 @@ class CartControllerTest extends EcommerceTestCase
                     'shipping_taxes' => 0,
                 ],
                 'errors' => [
-                    'No product with SKU ' . $randomSku . ' was found.',],
+                    'No product with SKU ' . $randomSku . ' was found.',
+                ],
                 'payment_plan_options' => [],
                 'bonuses' => [],
             ]
@@ -707,18 +731,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -742,17 +767,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -776,17 +803,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -821,6 +850,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productOne['price'] * $productOneQuantity,
                         'requires_shipping' => false,
                         'is_digital' => !$productOne['is_physical'],
+                        'id' => $productOne['id'],
+                        'type' => $productOne['type'],
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -837,6 +868,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
                         'requires_shipping' => false,
                         'is_digital' => !$productTwo['is_physical'],
+                        'id' => $productTwo['id'],
+                        'type' => $productTwo['type'],
                     ],
                 ],
                 'recommendedProducts' => [
@@ -940,18 +973,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -975,17 +1009,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1009,17 +1045,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1054,6 +1092,10 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $product['price'] * $quantity,
                         'requires_shipping' => false,
                         'is_digital' => !$product['is_physical'],
+                        'id' => $product['id'],
+                        'type' => $product['type'],
+                        'id' => $product['id'],
+                        'type' => $product['type'],
                     ]
                 ],
                 'recommendedProducts' => [
@@ -1181,18 +1223,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -1216,17 +1259,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1250,17 +1295,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1295,6 +1342,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productOne['price'],
                         'requires_shipping' => false,
                         'is_digital' => !$productOne['is_physical'],
+                        'id' => $productOne['id'],
+                        'type' => $productOne['type'],
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -1311,6 +1360,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
                         'requires_shipping' => false,
                         'is_digital' => !$productTwo['is_physical'],
+                        'id' => $productTwo['id'],
+                        'type' => $productTwo['type'],
                     ],
                 ],
                 'recommendedProducts' => [
@@ -1342,7 +1393,7 @@ class CartControllerTest extends EcommerceTestCase
                 ],
                 'errors' => [
                     'No product with SKU ' . $randomSku1 . ' was found.',
-                    'No product with SKU ' . $randomSku2 .  ' was found.',
+                    'No product with SKU ' . $randomSku2 . ' was found.',
                 ],
                 'payment_plan_options' => [],
                 'bonuses' => [],
@@ -1467,18 +1518,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
-
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -1502,17 +1554,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1536,17 +1590,19 @@ class CartControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1581,6 +1637,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
                         'requires_shipping' => false,
                         'is_digital' => !$productTwo['is_physical'],
+                        'id' => $productTwo['id'],
+                        'type' => $productTwo['type'],
                     ],
                     [
                         'sku' => $productThree['sku'],
@@ -1597,6 +1655,8 @@ class CartControllerTest extends EcommerceTestCase
                         'price_after_discounts' => $productThree['price'] * $productThreeQuantity,
                         'requires_shipping' => false,
                         'is_digital' => !$productThree['is_physical'],
+                        'id' => $productThree['id'],
+                        'type' => $productThree['type'],
                     ],
                 ],
                 'recommendedProducts' => [

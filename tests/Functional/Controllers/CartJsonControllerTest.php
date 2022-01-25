@@ -41,17 +41,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
 
         ];
 
@@ -76,17 +78,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -110,17 +114,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -197,20 +203,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $initialQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $initialQuantity,
-                'price_after_discounts'       => $product['price'] * $initialQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $initialQuantity,
+                'price_after_discounts' => $product['price'] * $initialQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -282,17 +290,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
 
         ];
 
@@ -318,17 +328,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -353,17 +365,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[3]['description'],
             'stock' => $recommendedProducts[3]['stock'],
             'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+                $recommendedProducts[3]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+                $recommendedProducts[3]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['price'] : null,
+                $recommendedProducts[3]['price'] : null,
             'price_before_discounts' => $recommendedProducts[3]['price'],
             'price_after_discounts' => $recommendedProducts[3]['price'],
             'requires_shipping' => $recommendedProducts[3]['is_physical'],
             'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[3]['id'],
+            'type' => $recommendedProducts[3]['type'],
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -438,20 +452,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $initialQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $initialQuantity,
-                'price_after_discounts'       => $product['price'] * $initialQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $initialQuantity,
+                'price_after_discounts' => $product['price'] * $initialQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -555,20 +571,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $initialQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $initialQuantity,
-                'price_after_discounts'       => $product['price'] * $initialQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $initialQuantity,
+                'price_after_discounts' => $product['price'] * $initialQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -630,17 +648,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[0]['description'],
             'stock' => $recommendedProducts[0]['stock'],
             'subscription_interval_type' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_type'] : null,
+                $recommendedProducts[0]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['subscription_interval_count'] : null,
+                $recommendedProducts[0]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[0]['price'] : null,
+                $recommendedProducts[0]['price'] : null,
             'price_before_discounts' => $recommendedProducts[0]['price'],
             'price_after_discounts' => $recommendedProducts[0]['price'],
             'requires_shipping' => $recommendedProducts[0]['is_physical'],
             'is_digital' => ($recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[0]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[0]['id'],
+            'type' => $recommendedProducts[0]['type'],
 
         ];
 
@@ -665,17 +685,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -700,17 +722,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[3]['description'],
             'stock' => $recommendedProducts[3]['stock'],
             'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+                $recommendedProducts[3]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+                $recommendedProducts[3]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['price'] : null,
+                $recommendedProducts[3]['price'] : null,
             'price_before_discounts' => $recommendedProducts[3]['price'],
             'price_after_discounts' => $recommendedProducts[3]['price'],
             'requires_shipping' => $recommendedProducts[3]['is_physical'],
             'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[3]['id'],
+            'type' => $recommendedProducts[3]['type'],
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -762,20 +786,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $initialQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $initialQuantity,
-                'price_after_discounts'       => $product['price'] * $initialQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $initialQuantity,
+                'price_after_discounts' => $product['price'] * $initialQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -850,17 +876,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[1]['description'],
             'stock' => $recommendedProducts[1]['stock'],
             'subscription_interval_type' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_type'] : null,
+                $recommendedProducts[1]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['subscription_interval_count'] : null,
+                $recommendedProducts[1]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[1]['price'] : null,
+                $recommendedProducts[1]['price'] : null,
             'price_before_discounts' => $recommendedProducts[1]['price'],
             'price_after_discounts' => $recommendedProducts[1]['price'],
             'requires_shipping' => $recommendedProducts[1]['is_physical'],
             'is_digital' => ($recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[1]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[1]['id'],
+            'type' => $recommendedProducts[1]['type'],
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -885,17 +913,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[2]['description'],
             'stock' => $recommendedProducts[2]['stock'],
             'subscription_interval_type' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_type'] : null,
+                $recommendedProducts[2]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['subscription_interval_count'] : null,
+                $recommendedProducts[2]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[2]['price'] : null,
+                $recommendedProducts[2]['price'] : null,
             'price_before_discounts' => $recommendedProducts[2]['price'],
             'price_after_discounts' => $recommendedProducts[2]['price'],
             'requires_shipping' => $recommendedProducts[2]['is_physical'],
             'is_digital' => ($recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[2]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[2]['id'],
+            'type' => $recommendedProducts[2]['type'],
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -920,17 +950,19 @@ class CartJsonControllerTest extends EcommerceTestCase
             'description' => $recommendedProducts[3]['description'],
             'stock' => $recommendedProducts[3]['stock'],
             'subscription_interval_type' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_type'] : null,
+                $recommendedProducts[3]['subscription_interval_type'] : null,
             'subscription_interval_count' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['subscription_interval_count'] : null,
+                $recommendedProducts[3]['subscription_interval_count'] : null,
             'subscription_renewal_price' => $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ?
-                                                $recommendedProducts[3]['price'] : null,
+                $recommendedProducts[3]['price'] : null,
             'price_before_discounts' => $recommendedProducts[3]['price'],
             'price_after_discounts' => $recommendedProducts[3]['price'],
             'requires_shipping' => $recommendedProducts[3]['is_physical'],
             'is_digital' => ($recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
+                $recommendedProducts[3]['type'] == Product::TYPE_DIGITAL_ONE_TIME),
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
+            'id' => $recommendedProducts[3]['id'],
+            'type' => $recommendedProducts[3]['type'],
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -1186,42 +1218,46 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $productOne['sku'],
-                'name'                        => $productOne['name'],
-                'quantity'                    => $productOneQuantity,
-                'thumbnail_url'               => $productOne['thumbnail_url'],
-                'sales_page_url'              => $productOne['sales_page_url'],
-                'description'                 => $productOne['description'],
-                'stock'                       => $productOne['stock'],
-                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'sku' => $productOne['sku'],
+                'name' => $productOne['name'],
+                'quantity' => $productOneQuantity,
+                'thumbnail_url' => $productOne['thumbnail_url'],
+                'sales_page_url' => $productOne['sales_page_url'],
+                'description' => $productOne['description'],
+                'stock' => $productOne['stock'],
+                'subscription_interval_type' => $productOne['subscription_interval_type'],
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'subscription_renewal_price' => null,
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productOne['price'],
-                'price_after_discounts'       => $productOne['price'],
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productOne['is_physical'],
+                'price_before_discounts' => $productOne['price'],
+                'price_after_discounts' => $productOne['price'],
+                'requires_shipping' => true,
+                'is_digital' => !$productOne['is_physical'],
+                'id' => $productOne['id'],
+                'type' => $productOne['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
 
         $this->assertEquals(
             [
-                'sku'                         => $productTwo['sku'],
-                'name'                        => $productTwo['name'],
-                'quantity'                    => $productTwoQuantity,
-                'thumbnail_url'               => $productTwo['thumbnail_url'],
-                'sales_page_url'              => $productTwo['sales_page_url'],
-                'description'                 => $productTwo['description'],
-                'stock'                       => $productTwo['stock'],
-                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'sku' => $productTwo['sku'],
+                'name' => $productTwo['name'],
+                'quantity' => $productTwoQuantity,
+                'thumbnail_url' => $productTwo['thumbnail_url'],
+                'sales_page_url' => $productTwo['sales_page_url'],
+                'description' => $productTwo['description'],
+                'stock' => $productTwo['stock'],
+                'subscription_interval_type' => $productTwo['subscription_interval_type'],
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'subscription_renewal_price' => null,
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productTwo['price'] * $productTwoQuantity,
-                'price_after_discounts'       => $productTwo['price'] * $productTwoQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productTwo['is_physical'],
+                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productTwo['is_physical'],
+                'id' => $productTwo['id'],
+                'type' => $productTwo['type'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -1390,42 +1426,46 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $productOne['sku'],
-                'name'                        => $productOne['name'],
-                'quantity'                    => $productOneQuantity,
-                'thumbnail_url'               => $productOne['thumbnail_url'],
-                'sales_page_url'              => $productOne['sales_page_url'],
-                'description'                 => $productOne['description'],
-                'stock'                       => $productOne['stock'],
-                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'sku' => $productOne['sku'],
+                'name' => $productOne['name'],
+                'quantity' => $productOneQuantity,
+                'thumbnail_url' => $productOne['thumbnail_url'],
+                'sales_page_url' => $productOne['sales_page_url'],
+                'description' => $productOne['description'],
+                'stock' => $productOne['stock'],
+                'subscription_interval_type' => $productOne['subscription_interval_type'],
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'subscription_renewal_price' => null,
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productOne['price'] * $productOneQuantity,
-                'price_after_discounts'       => $productOne['price'] * $productOneQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productOne['is_physical'],
+                'price_before_discounts' => $productOne['price'] * $productOneQuantity,
+                'price_after_discounts' => $productOne['price'] * $productOneQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productOne['is_physical'],
+                'id' => $productOne['id'],
+                'type' => $productOne['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
 
         $this->assertEquals(
             [
-                'sku'                         => $productTwo['sku'],
-                'name'                        => $productTwo['name'],
-                'quantity'                    => $productTwoQuantity,
-                'thumbnail_url'               => $productTwo['thumbnail_url'],
-                'sales_page_url'              => $productTwo['sales_page_url'],
-                'description'                 => $productTwo['description'],
-                'stock'                       => $productTwo['stock'],
-                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'sku' => $productTwo['sku'],
+                'name' => $productTwo['name'],
+                'quantity' => $productTwoQuantity,
+                'thumbnail_url' => $productTwo['thumbnail_url'],
+                'sales_page_url' => $productTwo['sales_page_url'],
+                'description' => $productTwo['description'],
+                'stock' => $productTwo['stock'],
+                'subscription_interval_type' => $productTwo['subscription_interval_type'],
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'subscription_renewal_price' => null,
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productTwo['price'] * $productTwoQuantity,
-                'price_after_discounts'       => $productTwo['price'] * $productTwoQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productTwo['is_physical'],
+                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productTwo['is_physical'],
+                'id' => $productTwo['id'],
+                'type' => $productTwo['type'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -1441,7 +1481,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(
             [
                 'No product with SKU ' . $randomSku1 . ' was found.',
-                'No product with SKU ' . $randomSku2 .  ' was found.',
+                'No product with SKU ' . $randomSku2 . ' was found.',
             ],
             $decodedResponse['meta']['cart']['errors']
         );
@@ -1553,20 +1593,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $productTwo['sku'],
-                'name'                        => $productTwo['name'],
-                'quantity'                    => $productTwoQuantity,
-                'thumbnail_url'               => $productTwo['thumbnail_url'],
-                'sales_page_url'              => $productTwo['sales_page_url'],
-                'description'                 => $productTwo['description'],
-                'stock'                       => $productTwo['stock'],
-                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'sku' => $productTwo['sku'],
+                'name' => $productTwo['name'],
+                'quantity' => $productTwoQuantity,
+                'thumbnail_url' => $productTwo['thumbnail_url'],
+                'sales_page_url' => $productTwo['sales_page_url'],
+                'description' => $productTwo['description'],
+                'stock' => $productTwo['stock'],
+                'subscription_interval_type' => $productTwo['subscription_interval_type'],
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productTwo['price'] * $productTwoQuantity,
-                'price_after_discounts'       => $productTwo['price'] * $productTwoQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productTwo['is_physical'],
+                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productTwo['is_physical'],
+                'id' => $productTwo['id'],
+                'type' => $productTwo['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1672,20 +1714,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $productQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $productQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $productQuantity,
-                'price_after_discounts'       => $product['price'] * $productQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $productQuantity,
+                'price_after_discounts' => $product['price'] * $productQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1866,20 +1910,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $newProductQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $newProductQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $newProductQuantity,
-                'price_after_discounts'       => $product['price'] * $newProductQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $newProductQuantity,
+                'price_after_discounts' => $product['price'] * $newProductQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1985,20 +2031,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $initialProductQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialProductQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $initialProductQuantity,
-                'price_after_discounts'       => $product['price'] * $initialProductQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $initialProductQuantity,
+                'price_after_discounts' => $product['price'] * $initialProductQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2106,20 +2154,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => $productQuantity,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $productQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $product['price'] * $productQuantity,
-                'price_after_discounts'       => $product['price'] * $productQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'] * $productQuantity,
+                'price_after_discounts' => $product['price'] * $productQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2488,7 +2538,7 @@ class CartJsonControllerTest extends EcommerceTestCase
 
         $this->permissionServiceMock->method('can')
             ->willReturn(true);
-        
+
         $this->session->flush();
 
         $product = $this->fakeProduct([
@@ -2672,20 +2722,22 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $product['sku'],
-                'name'                        => $product['name'],
-                'quantity'                    => 1,
-                'thumbnail_url'               => $product['thumbnail_url'],
-                'sales_page_url'              => $product['sales_page_url'],
-                'description'                 => $product['description'],
-                'stock'                       => $product['stock'],
-                'subscription_interval_type'  => $product['subscription_interval_type'],
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => 1,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
                 'subscription_interval_count' => $product['subscription_interval_count'],
                 'subscription_renewal_price' => $product['price'],
-                'price_before_discounts'      => $product['price'],
-                'price_after_discounts'       => $product['price'],
-                'requires_shipping'           => false,
-                'is_digital'                  => !$product['is_physical'],
+                'price_before_discounts' => $product['price'],
+                'price_after_discounts' => $product['price'],
+                'requires_shipping' => false,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2824,40 +2876,44 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $productOne['sku'],
-                'name'                        => $productOne['name'],
-                'quantity'                    => 1,
-                'thumbnail_url'               => $productOne['thumbnail_url'],
-                'sales_page_url'              => $productOne['sales_page_url'],
-                'description'                 => $productOne['description'],
-                'stock'                       => $productOne['stock'],
-                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'sku' => $productOne['sku'],
+                'name' => $productOne['name'],
+                'quantity' => 1,
+                'thumbnail_url' => $productOne['thumbnail_url'],
+                'sales_page_url' => $productOne['sales_page_url'],
+                'description' => $productOne['description'],
+                'stock' => $productOne['stock'],
+                'subscription_interval_type' => $productOne['subscription_interval_type'],
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'subscription_renewal_price' => $productOne['price'],
-                'price_before_discounts'      => $productOne['price'],
-                'price_after_discounts'       => $productOne['price'],
-                'requires_shipping'           => false,
-                'is_digital'                  => !$productOne['is_physical'],
+                'price_before_discounts' => $productOne['price'],
+                'price_after_discounts' => $productOne['price'],
+                'requires_shipping' => false,
+                'is_digital' => !$productOne['is_physical'],
+                'id' => $productOne['id'],
+                'type' => $productOne['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
 
         $this->assertEquals(
             [
-                'sku'                         => $productTwo['sku'],
-                'name'                        => $productTwo['name'],
-                'quantity'                    => $productTwoQuantity,
-                'thumbnail_url'               => $productTwo['thumbnail_url'],
-                'sales_page_url'              => $productTwo['sales_page_url'],
-                'description'                 => $productTwo['description'],
-                'stock'                       => $productTwo['stock'],
-                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'sku' => $productTwo['sku'],
+                'name' => $productTwo['name'],
+                'quantity' => $productTwoQuantity,
+                'thumbnail_url' => $productTwo['thumbnail_url'],
+                'sales_page_url' => $productTwo['sales_page_url'],
+                'description' => $productTwo['description'],
+                'stock' => $productTwo['stock'],
+                'subscription_interval_type' => $productTwo['subscription_interval_type'],
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productTwo['price'] * $productTwoQuantity,
-                'price_after_discounts'       => $productTwo['price'] * $productTwoQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productTwo['is_physical'],
+                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productTwo['is_physical'],
+                'id' => $productTwo['id'],
+                'type' => $productTwo['type'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -2984,40 +3040,44 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart item data
         $this->assertEquals(
             [
-                'sku'                         => $productOne['sku'],
-                'name'                        => $productOne['name'],
-                'quantity'                    => $productOneQuantity,
-                'thumbnail_url'               => $productOne['thumbnail_url'],
-                'sales_page_url'              => $productOne['sales_page_url'],
-                'description'                 => $productOne['description'],
-                'stock'                       => $productOne['stock'],
-                'subscription_interval_type'  => $productOne['subscription_interval_type'],
+                'sku' => $productOne['sku'],
+                'name' => $productOne['name'],
+                'quantity' => $productOneQuantity,
+                'thumbnail_url' => $productOne['thumbnail_url'],
+                'sales_page_url' => $productOne['sales_page_url'],
+                'description' => $productOne['description'],
+                'stock' => $productOne['stock'],
+                'subscription_interval_type' => $productOne['subscription_interval_type'],
                 'subscription_interval_count' => $productOne['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productOne['price'] * $productOneQuantity,
-                'price_after_discounts'       => 0,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productOne['is_physical'],
+                'price_before_discounts' => $productOne['price'] * $productOneQuantity,
+                'price_after_discounts' => 0,
+                'requires_shipping' => true,
+                'is_digital' => !$productOne['is_physical'],
+                'id' => $productOne['id'],
+                'type' => $productOne['type'],
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
 
         $this->assertEquals(
             [
-                'sku'                         => $productTwo['sku'],
-                'name'                        => $productTwo['name'],
-                'quantity'                    => $productTwoQuantity,
-                'thumbnail_url'               => $productTwo['thumbnail_url'],
-                'sales_page_url'              => $productTwo['sales_page_url'],
-                'description'                 => $productTwo['description'],
-                'stock'                       => $productTwo['stock'],
-                'subscription_interval_type'  => $productTwo['subscription_interval_type'],
+                'sku' => $productTwo['sku'],
+                'name' => $productTwo['name'],
+                'quantity' => $productTwoQuantity,
+                'thumbnail_url' => $productTwo['thumbnail_url'],
+                'sales_page_url' => $productTwo['sales_page_url'],
+                'description' => $productTwo['description'],
+                'stock' => $productTwo['stock'],
+                'subscription_interval_type' => $productTwo['subscription_interval_type'],
                 'subscription_interval_count' => $productTwo['subscription_interval_count'],
                 'subscription_renewal_price' => null,
-                'price_before_discounts'      => $productTwo['price'] * $productTwoQuantity,
-                'price_after_discounts'       => $productTwo['price'] * $productTwoQuantity,
-                'requires_shipping'           => true,
-                'is_digital'                  => !$productTwo['is_physical'],
+                'price_before_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'price_after_discounts' => $productTwo['price'] * $productTwoQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$productTwo['is_physical'],
+                'id' => $productTwo['id'],
+                'type' => $productTwo['type'],
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
