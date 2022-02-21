@@ -18,11 +18,11 @@ class UpdateEcommerceProduct extends Migration
             $table->string('digital_access_time_type')->after('auto_decrement_stock')->nullable();
             $table->string('digital_access_time_interval_type')->after('auto_decrement_stock')->nullable();
             $table->string('digital_access_type')->after('auto_decrement_stock')->nullable();
-            $table->longText('digital_access_permission_names')->after('auto_decrement_stock')->nullable();
             $table->integer('public_stock_count')->after('stock')->nullable();
+            $table->text('digital_access_permission_names')->after('auto_decrement_stock')->nullable();
         });
     }
-    
+
     /**
      * Reverse the migrations.
      *

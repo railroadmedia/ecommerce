@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
@@ -172,7 +173,7 @@ class Product
 
 
     /**
-     * @ORM\Column(type="integer", nullable=true, name="public_stoc_count")
+     * @ORM\Column(type="integer", nullable=true, name="public_stock_count")
      *
      * @var int
      */
@@ -180,9 +181,9 @@ class Product
 
 
     /**
-     * @ORM\Column(type="string", nullable=true, name="digital_access_time_interval_length")
+     * @ORM\Column(type="integer", nullable=true, name="digital_access_time_interval_length")
      *
-     * @var string
+     * @var int
      */
     protected $digitalAccessTimeIntervalLength;
 
@@ -208,7 +209,7 @@ class Product
     protected $digitalAccessType;
 
     /**
-     * @ORM\Column(type="json", nullable=true, name="digital_access_permission_names")
+     * @ORM\Column(type="text", nullable=true, name="digital_access_permission_names")
      *
      * @var array
      */
@@ -513,81 +514,82 @@ class Product
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getPublicStockCount(): int
+    public function getPublicStockCount(): ?int
     {
         return $this->publicStockCount;
+
     }
 
     /**
-     * @param int $publicStockCount
+     * @param int|null $publicStockCount
      */
-    public function setPublicStockCount(int $publicStockCount): void
+    public function setPublicStockCount(?int $publicStockCount): void
     {
         $this->publicStockCount = $publicStockCount;
     }
 
     /**
-     * @return string
+     * @return int|null
      */
-    public function getDigitalAccessTimeIntervalLength(): string
+    public function getDigitalAccessTimeIntervalLength(): ?int
     {
-        return $this->digitalAccessTimeIntervalLength;
+        return ($this->digitalAccessTimeIntervalLength == null) ? 0 : $this->digitalAccessTimeIntervalLength;
     }
 
     /**
-     * @param string $digitalAccessTimeIntervalLength
+     * @param int|null $digitalAccessTimeIntervalLength
      */
-    public function setDigitalAccessTimeIntervalLength(string $digitalAccessTimeIntervalLength): void
+    public function setDigitalAccessTimeIntervalLength(?int $digitalAccessTimeIntervalLength): void
     {
         $this->digitalAccessTimeIntervalLength = $digitalAccessTimeIntervalLength;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDigitalAccessTimeType(): string
+    public function getDigitalAccessTimeType(): ?string
     {
         return $this->digitalAccessTimeType;
     }
 
     /**
-     * @param string $digitalAccessTimeType
+     * @param string|null $digitalAccessTimeType
      */
-    public function setDigitalAccessTimeType(string $digitalAccessTimeType): void
+    public function setDigitalAccessTimeType(?string $digitalAccessTimeType): void
     {
         $this->digitalAccessTimeType = $digitalAccessTimeType;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDigitalAccessTimeIntervalType(): string
+    public function getDigitalAccessTimeIntervalType(): ?string
     {
         return $this->digitalAccessTimeIntervalType;
     }
 
     /**
-     * @param string $digitalAccessTimeIntervalType
+     * @param string|null $digitalAccessTimeIntervalType
      */
-    public function setDigitalAccessTimeIntervalType(string $digitalAccessTimeIntervalType): void
+    public function setDigitalAccessTimeIntervalType(?string $digitalAccessTimeIntervalType): void
     {
         $this->digitalAccessTimeIntervalType = $digitalAccessTimeIntervalType;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getDigitalAccessType(): string
+    public function getDigitalAccessType(): ?string
     {
         return $this->digitalAccessType;
     }
 
     /**
-     * @param string $digitalAccessType
+     * @param string|null $digitalAccessType
      */
-    public function setDigitalAccessType(string $digitalAccessType): void
+    public function setDigitalAccessType(?string $digitalAccessType): void
     {
         $this->digitalAccessType = $digitalAccessType;
     }
@@ -597,7 +599,11 @@ class Product
      */
     public function getDigitalAccessPermissionNames(): array
     {
-        return $this->digitalAccessPermissionNames;
+        if ($this->digitalAccessPermissionNames == null) {
+            return [];
+        }
+
+        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode($this->digitalAccessPermissionNames);
     }
 
     /**
@@ -605,8 +611,7 @@ class Product
      */
     public function setDigitalAccessPermissionNames(array $digitalAccessPermissionNames): void
     {
-        $this->digitalAccessPermissionNames = $digitalAccessPermissionNames;
+        $this->digitalAccessPermissionNames = json_encode($digitalAccessPermissionNames);
     }
-
 
 }
