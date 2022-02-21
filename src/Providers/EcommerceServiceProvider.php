@@ -32,6 +32,7 @@ use Railroad\Ecommerce\Commands\MatchOrderItemDiscountAmountToTotal;
 use Railroad\Ecommerce\Commands\MembershipsReportingTool;
 use Railroad\Ecommerce\Commands\MobileAppGoogleAppleHelper;
 use Railroad\Ecommerce\Commands\PopulatePaymentTaxesTable;
+use Railroad\Ecommerce\Commands\PopulatePermissionNamesColumnInEcommerceProducts;
 use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\RetentionReportingTool;
@@ -146,6 +147,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 VerifyLocalPriceConversion::class,
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
+                PopulatePermissionNamesColumnInEcommerceProducts::class
             ]
         );
 
