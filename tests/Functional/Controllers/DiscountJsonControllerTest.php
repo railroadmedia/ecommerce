@@ -313,7 +313,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                         'product' => [
                             'data' => [
                                 'type' => 'product',
-                                'id' => $product['id']
+                                'id' => $product['id'],
                             ]
                         ],
                         'discountCriterias' => [
@@ -333,11 +333,14 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     'attributes' => array_merge(
                         array_diff_key(
                             $product,
-                            ['id' => true]
+                            [
+                                'id' => true,
+                            ]
                         ),
                         [
                             'active' => (bool) $product['active'],
-                            'is_physical' => (bool) $product['is_physical']
+                            'is_physical' => (bool) $product['is_physical'],
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     )
                 ];
@@ -422,6 +425,9 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             ],
             $parsedResults['data']
         );
+
+        $product['digital_access_permission_names'] = json_decode($product['digital_access_permission_names']);
+
 
         $this->assertEquals(
             [[
