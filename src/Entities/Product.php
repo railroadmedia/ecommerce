@@ -171,6 +171,50 @@ class Product
      */
     protected $autoDecrementStock = false;
 
+
+    /**
+     * @ORM\Column(type="integer", nullable=true, name="public_stock_count")
+     *
+     * @var int
+     */
+    protected $publicStockCount;
+
+
+    /**
+     * @ORM\Column(type="integer", nullable=true, name="digital_access_time_interval_length")
+     *
+     * @var int
+     */
+    protected $digitalAccessTimeIntervalLength;
+
+    /**
+     * @ORM\Column(type="string", nullable=true, name="digital_access_time_type")
+     *
+     * @var string
+     */
+    protected $digitalAccessTimeType;
+
+    /**
+     * @ORM\Column(type="string", nullable=true, name="digital_access_time_interval_type")
+     *
+     * @var string
+     */
+    protected $digitalAccessTimeIntervalType;
+
+    /**
+     * @ORM\Column(type="string", nullable=true, name="digital_access_type")
+     *
+     * @var string
+     */
+    protected $digitalAccessType;
+
+    /**
+     * @ORM\Column(type="text", nullable=true, name="digital_access_permission_names")
+     *
+     * @var array
+     */
+    protected $digitalAccessPermissionNames;
+
     /**
      * @return int|null
      */
@@ -220,6 +264,14 @@ class Product
     }
 
     /**
+     * @param string $sku
+     */
+    public function setSku(string $sku)
+    {
+        $this->sku = $sku;
+    }
+
+    /**
      * @return string|null
      */
     public function getFulfillmentSku(): ?string
@@ -249,14 +301,6 @@ class Product
     public function setInventoryControlSku(?string $inventoryControlSku): void
     {
         $this->inventoryControlSku = $inventoryControlSku;
-    }
-
-    /**
-     * @param string $sku
-     */
-    public function setSku(string $sku)
-    {
-        $this->sku = $sku;
     }
 
     /**
@@ -468,4 +512,106 @@ class Product
     {
         $this->autoDecrementStock = $autoDecrementStock;
     }
+
+    /**
+     * @return int|null
+     */
+    public function getPublicStockCount(): ?int
+    {
+        return $this->publicStockCount;
+
+    }
+
+    /**
+     * @param int|null $publicStockCount
+     */
+    public function setPublicStockCount(?int $publicStockCount): void
+    {
+        $this->publicStockCount = $publicStockCount;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getDigitalAccessTimeIntervalLength(): ?int
+    {
+        return ($this->digitalAccessTimeIntervalLength == null) ? 0 : $this->digitalAccessTimeIntervalLength;
+    }
+
+    /**
+     * @param int|null $digitalAccessTimeIntervalLength
+     */
+    public function setDigitalAccessTimeIntervalLength(?int $digitalAccessTimeIntervalLength): void
+    {
+        $this->digitalAccessTimeIntervalLength = $digitalAccessTimeIntervalLength;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDigitalAccessTimeType(): ?string
+    {
+        return $this->digitalAccessTimeType;
+    }
+
+    /**
+     * @param string|null $digitalAccessTimeType
+     */
+    public function setDigitalAccessTimeType(?string $digitalAccessTimeType): void
+    {
+        $this->digitalAccessTimeType = $digitalAccessTimeType;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDigitalAccessTimeIntervalType(): ?string
+    {
+        return $this->digitalAccessTimeIntervalType;
+    }
+
+    /**
+     * @param string|null $digitalAccessTimeIntervalType
+     */
+    public function setDigitalAccessTimeIntervalType(?string $digitalAccessTimeIntervalType): void
+    {
+        $this->digitalAccessTimeIntervalType = $digitalAccessTimeIntervalType;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDigitalAccessType(): ?string
+    {
+        return $this->digitalAccessType;
+    }
+
+    /**
+     * @param string|null $digitalAccessType
+     */
+    public function setDigitalAccessType(?string $digitalAccessType): void
+    {
+        $this->digitalAccessType = $digitalAccessType;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDigitalAccessPermissionNames(): array
+    {
+        if ($this->digitalAccessPermissionNames == null) {
+            return [];
+        }
+
+        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode($this->digitalAccessPermissionNames);
+    }
+
+    /**
+     * @param array $digitalAccessPermissionNames
+     */
+    public function setDigitalAccessPermissionNames(array $digitalAccessPermissionNames): void
+    {
+        $this->digitalAccessPermissionNames = json_encode($digitalAccessPermissionNames);
+    }
+
 }

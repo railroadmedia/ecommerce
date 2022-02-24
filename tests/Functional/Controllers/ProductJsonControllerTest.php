@@ -44,13 +44,16 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     'attributes' => array_diff_key(
                         $product,
                         [
-                            'id' => true
+                            'id' => true,
                         ]
                     ),
                 ],
             ],
             $results->decodeResponseJson()
         );
+
+
+        $product['digital_access_permission_names'] = json_encode($product['digital_access_permission_names']);
 
         // assert the product was saved in the db
         $this->assertDatabaseHas(
@@ -96,6 +99,9 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ],
             $results->decodeResponseJson()
         );
+
+        $subscription['digital_access_permission_names'] = json_encode($subscription['digital_access_permission_names']);
+
 
         // assert subscription data exist in db
         $this->assertDatabaseHas(
@@ -326,7 +332,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         array_diff_key($product, ['id' => 1]),
                         [
                             'description' => $newDescription,
-                            'updated_at' => Carbon::now()->toDateTimeString()
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     ),
                 ],
@@ -341,7 +348,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 $product,
                 [
                     'description' => $newDescription,
-                    'updated_at' => Carbon::now()->toDateTimeString()
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ]
             )
         );
@@ -465,7 +472,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                                 ),
                                 [ // fix php type juggling
                                     'is_physical' => (bool) $product['is_physical'],
-                                    'updated_at' => null
+                                    'updated_at' => null,
+                                    'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                                 ]
                             )
                         ];
@@ -571,7 +579,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                                 ),
                                 [ // fix php type juggling
                                     'is_physical' => (bool) $product['is_physical'],
-                                    'updated_at' => null
+                                    'updated_at' => null,
+                                    'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                                 ]
                             )
                         ];
@@ -634,7 +643,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         array_diff_key($product, ['id' => 1]),
                         [
                             'description' => $newDescription,
-                            'updated_at' => Carbon::now()->toDateTimeString()
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     ),
                 ],
@@ -735,7 +745,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     'attributes' => array_diff_key(
                         $product,
                         [
-                            'id' => true
+                            'id' => true,
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     ),
                 ],
@@ -763,7 +774,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     'attributes' => array_diff_key(
                         $product,
                         [
-                            'id' => true
+                            'id' => true,
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     ),
                 ],
@@ -822,7 +834,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                             ),
                             [ // fix php type juggling
                                 'is_physical' => (bool) $product['is_physical'],
-                                'updated_at' => null
+                                'updated_at' => null,
+                                'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                             ]
                         )
                     ];
@@ -870,7 +883,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                             array_diff_key($productFirstBrand, ['id' => 1]),
                             [
                                 'is_physical' => (bool) $productFirstBrand['is_physical'],
-                                'updated_at' => null
+                                'updated_at' => null,
+                                'digital_access_permission_names' => json_decode($productFirstBrand['digital_access_permission_names'])
                             ]
                         ),
                     ]
@@ -918,7 +932,8 @@ class ProductJsonControllerTest extends EcommerceTestCase
                         array_diff_key($product, ['id' => 1]),
                         [
                             'category' => $newCategory,
-                            'updated_at' => Carbon::now()->toDateTimeString()
+                            'updated_at' => Carbon::now()->toDateTimeString(),
+                            'digital_access_permission_names' => json_decode($product['digital_access_permission_names'])
                         ]
                     ),
                 ],

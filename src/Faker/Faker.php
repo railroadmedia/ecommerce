@@ -71,6 +71,13 @@ class Faker extends Generator
                 'note' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
+                'public_stock_count' => $this->numberBetween(1, 1000),
+                'digital_access_time_interval_length' => $this->numberBetween(0, 12),
+                'digital_access_time_type' => $this->text,
+                'digital_access_time_interval_type' => $this->text,
+                'digital_access_type' => $this->text,
+                'digital_access_permission_names' => array($this->text),
+
             ],
             $override
         );

@@ -529,6 +529,8 @@ class EcommerceTestCase extends BaseTestCase
     {
         $product = $this->faker->product($productStub);
 
+        $product['digital_access_permission_names'] = json_encode($product['digital_access_permission_names']);
+
         $productId =
             $this->databaseManager->table(self::TABLES['products'])
                 ->insertGetId($product);
