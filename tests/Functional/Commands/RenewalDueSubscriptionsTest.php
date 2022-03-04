@@ -7,8 +7,8 @@ use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Services\CurrencyService;
@@ -571,6 +571,317 @@ class RenewalDueSubscriptionsTest extends EcommerceTestCase
             ]
         );
     }
+
+    public function test_command_subscription_cancelled_after_max_renewal_attempts()
+    {
+        $userId = $this->createAndLogInNewUser();
+        $due = $this->faker->numberBetween(0, 1000);
+
+        $currency = $this->getCurrency();
+
+        $currencyService = $this->app->make(CurrencyService::class);
+        $taxService = $this->app->make(TaxService::class);
+
+        $expectedConversionRate = $currencyService->getRate($currency);
+
+        $this->stripeExternalHelperMock->method('retrieveCustomer')
+            ->willReturn(new Customer());
+        $this->stripeExternalHelperMock->method('retrieveCard')
+            ->willReturn(new Card());
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willThrowException(new PaymentFailedException('No funds.'));
+
+        $expectedPaymentTotalDues = [];
+
+        $creditCard = $this->fakeCreditCard();
+
+        $address = $this->fakeAddress(
+            [
+                'type' => Address::BILLING_ADDRESS_TYPE,
+                'country' => 'Canada',
+                'region' => $this->faker->word,
+                'zip' => $this->faker->postcode
+            ]
+        );
+
+        $paymentMethod = $this->fakePaymentMethod(
+            [
+                'credit_card_id' => $creditCard['id'],
+                'currency' => $currency,
+                'billing_address_id' => $address['id']
+            ]
+        );
+
+        $product = $this->fakeProduct(
+            [
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION
+            ]
+        );
+
+        $order = $this->fakeOrder();
+
+        $orderItem = $this->fakeOrderItem(
+            [
+                'order_id' => $order['id'],
+                'product_id' => $product['id'],
+                'quantity' => 1
+            ]
+        );
+
+        $billingAddressEntity = new Address();
+
+        $billingAddressEntity->setCountry($address['country']);
+        $billingAddressEntity->setRegion($address['region']);
+        $billingAddressEntity->setZip($address['zip']);
+
+        $subscriptionPrice = $this->faker->numberBetween(50, 100);
+
+        $vat = $taxService->getTaxesDueForProductCost(
+            $subscriptionPrice,
+            $billingAddressEntity->toStructure()
+        );
+
+        $subscription = $this->fakeSubscription(
+            [
+                'user_id' => $userId,
+                'type' => Subscription::TYPE_SUBSCRIPTION,
+                'start_date' => Carbon::now()
+                    ->subYear(2),
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'product_id' => $product['id'],
+                'currency' => $currency,
+                'order_id' => $order['id'],
+                'brand' => config('ecommerce.brand'),
+                'interval_type' => config('ecommerce.interval_type_monthly'),
+                'interval_count' => 1,
+                'total_cycles_paid' => 1,
+                'total_cycles_due' => $this->faker->numberBetween(2, 5),
+                'payment_method_id' => $paymentMethod['id'],
+                'total_price' => round($subscriptionPrice + $vat, 2),
+                'tax' => $vat,
+            ]
+        );
+
+        $userProduct = $this->fakeUserProduct(
+            [
+                'user_id' => $userId,
+                'product_id' => $product['id'],
+                'quantity' => 1,
+                'expiration_date' => Carbon::now()
+                    ->addDays(3)
+                    ->toDateTimeString()
+            ]
+        );
+
+        $paymentAmount = $currencyService->convertFromBase(
+            $subscription['total_price'],
+            $currency
+        );
+
+        $this->expectsEvents([SubscriptionRenewFailed::class]);
+
+//        'subscriptions_renew_cycles' => [
+//            1 => 8,
+//            2 => 24 * 3,
+//            3 => 24 * 7,
+//            4 => 24 * 14,
+//            5 => 24 * 30,
+//        ],
+
+        $testOriginalStartTime = Carbon::now();
+
+        $this->artisan('renewalDueSubscriptions');
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'paid_until' => Carbon::now()
+                    ->subDay(1),
+                'is_active' => 0,
+                'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 1,
+                'updated_at' => Carbon::now()
+                    ->toDateTimeString(),
+            ]
+        );
+
+        Carbon::setTestNow(Carbon::now()->addHours(8));
+        $testTime2 = Carbon::now();
+
+        $this->artisan('renewalDueSubscriptions');
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 0,
+                'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 2,
+                'canceled_on' => null,
+            ]
+        );
+
+        Carbon::setTestNow(Carbon::now()->addHours(25 * 3));
+        $testTime3 = Carbon::now();
+
+        $this->artisan('renewalDueSubscriptions');
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 0,
+                'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 3,
+                'canceled_on' => null,
+            ]
+        );
+
+        Carbon::setTestNow(Carbon::now()->addHours(25 * 7));
+        $testTime4 = Carbon::now();
+
+        $this->artisan('renewalDueSubscriptions');
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 0,
+                'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 4,
+                'canceled_on' => null,
+            ]
+        );
+
+        Carbon::setTestNow(Carbon::now()->addHours(25 * 30));
+        $testTime5 = Carbon::now();
+
+        $this->artisan('renewalDueSubscriptions');
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'id' => $subscription['id'],
+                'is_active' => 0,
+                'total_cycles_paid' => $subscription['total_cycles_paid'],
+                'renewal_attempt' => 5,
+                'canceled_on' => Carbon::now(),
+                'cancellation_reason' => 'All renewal attempts failed.',
+            ]
+        );
+
+        // assert user products assignation
+        $this->assertDatabaseHas(
+            'ecommerce_user_products',
+            [
+                'user_id' => $subscription['user_id'],
+                'product_id' => $subscription['product_id'],
+                'quantity' => 1,
+                'expiration_date' => $testOriginalStartTime
+                    ->copy()
+                    ->addDays(3)
+                    ->toDateTimeString(),
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => round($paymentAmount, 2),
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => null,
+                'external_provider' => 'stripe',
+                'status' => 'failed',
+                'message' => 'Payment failed: No funds.',
+                'currency' => $currency,
+                'created_at' => $testOriginalStartTime
+                    ->toDateTimeString(),
+                'attempt_number' => 0,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => round($paymentAmount, 2),
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => null,
+                'external_provider' => 'stripe',
+                'status' => 'failed',
+                'message' => 'Payment failed: No funds.',
+                'currency' => $currency,
+                'created_at' => $testTime2
+                    ->toDateTimeString(),
+                'attempt_number' => 1,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => round($paymentAmount, 2),
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => null,
+                'external_provider' => 'stripe',
+                'status' => 'failed',
+                'message' => 'Payment failed: No funds.',
+                'currency' => $currency,
+                'created_at' => $testTime3
+                    ->toDateTimeString(),
+                'attempt_number' => 2,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => round($paymentAmount, 2),
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => null,
+                'external_provider' => 'stripe',
+                'status' => 'failed',
+                'message' => 'Payment failed: No funds.',
+                'currency' => $currency,
+                'created_at' => $testTime4
+                    ->toDateTimeString(),
+                'attempt_number' => 3,
+            ]
+        );
+
+        $this->assertDatabaseHas(
+            'ecommerce_payments',
+            [
+                'total_due' => round($paymentAmount, 2),
+                'total_paid' => 0,
+                'total_refunded' => 0,
+                'conversion_rate' => $expectedConversionRate,
+                'type' => config('ecommerce.renewal_payment_type'),
+                'external_id' => null,
+                'external_provider' => 'stripe',
+                'status' => 'failed',
+                'message' => 'Payment failed: No funds.',
+                'currency' => $currency,
+                'created_at' => $testTime5
+                    ->toDateTimeString(),
+                'attempt_number' => 4,
+            ]
+        );
+    }
+
 
     public function test_command_no_addresses()
     {
