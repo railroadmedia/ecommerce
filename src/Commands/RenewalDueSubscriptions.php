@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -114,6 +115,22 @@ class RenewalDueSubscriptions extends Command
                 }
 
                 event(new CommandSubscriptionRenewFailed($dueSubscription, $oldSubscriptionState, $payment));
+
+                // if its the last attempt configured and it fails, automatically cancel the subscription
+                if (!empty(config('ecommerce.subscriptions_renew_cycles')) &&
+                    is_array(config('ecommerce.subscriptions_renew_cycles')) &&
+                    $dueSubscription->getRenewalAttempt() == count(config('ecommerce.subscriptions_renew_cycles'))) {
+
+                    $dueSubscription->setCanceledOn(Carbon::now());
+                    $dueSubscription->setIsActive(false);
+                    $dueSubscription->setCancellationReason('All renewal attempts failed.');
+
+                    $this->entityManager->flush();
+
+                    $this->info(
+                        'Cancelling subscription due to max attempts tried ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
+                    );
+                }
 
                 $this->info(
                     'Failed to renew subscription ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
