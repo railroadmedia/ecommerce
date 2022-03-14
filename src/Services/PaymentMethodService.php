@@ -107,6 +107,7 @@ class PaymentMethodService
             $userPaymentMethods = $this->createUserPaymentMethod(
                 $identifiable,
                 $paymentMethod,
+                config('ecommerce.brand'),
                 $setUserDefaultPaymentMethod
             );
 
@@ -275,10 +276,11 @@ class PaymentMethodService
     public function createUserPaymentMethod(
         User $user,
         PaymentMethod $paymentMethod,
+        $brand,
         ?bool $setUserDefaultPaymentMethod = true
     ): UserPaymentMethods
     {
-        $existingPrimaryMethod = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user);
+        $existingPrimaryMethod = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user, $brand);
 
         if ($setUserDefaultPaymentMethod && $existingPrimaryMethod) {
             $existingPrimaryMethod->setIsPrimary(false);
