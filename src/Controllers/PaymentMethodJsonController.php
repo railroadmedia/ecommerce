@@ -223,7 +223,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId(), $request);
+        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId(), $request, $request->get('gateway', config('ecommerce.brand')));
 
         return ResponseService::paymentMethod(
             $paymentMethods
@@ -296,6 +296,7 @@ class PaymentMethodJsonController extends Controller
 
                     $this->entityManager->persist($billingAddress);
                 }
+
 
                 $paymentMethod = $this->paymentMethodService->createCreditCardPaymentMethod(
                     $purchaser,
@@ -429,7 +430,7 @@ class PaymentMethodJsonController extends Controller
             );
         }
 
-        $old = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user);
+        $old = $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($user, $request->get('gateway', config('ecommerce.brand')));
 
         if ($old) {
             $old->setIsPrimary(false);
@@ -488,7 +489,7 @@ class PaymentMethodJsonController extends Controller
 
         if ($request->get('set_default') &&
             $primary =
-                $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($userPaymentMethod->getUser())) {
+                $this->userPaymentMethodsRepository->getUserPrimaryPaymentMethod($userPaymentMethod->getUser(), $request->get('gateway', config('ecommerce.brand')))) {
             /**
              * @var $primary UserPaymentMethods
              */
