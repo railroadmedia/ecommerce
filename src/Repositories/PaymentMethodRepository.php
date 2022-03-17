@@ -171,7 +171,6 @@ class PaymentMethodRepository extends RepositoryBase
         $brand = null
     ) {
         $alias = 'pm';
-
         $qb = $this->createQueryBuilder($alias);
 
         $qb->select(['upm', 'pm', 'cc', 'ppba'])

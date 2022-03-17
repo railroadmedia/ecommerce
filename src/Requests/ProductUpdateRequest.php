@@ -45,6 +45,13 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.stock' => 'stock',
             'data.attributes.auto_decrement_stock' => 'auto decrement stock',
             'data.attributes.note' => 'note',
+            'data.attributes.public_stock_count' => 'public stock count',
+            'data.attributes.digital_access_permission_names' => 'digital access permission names',
+            'data.attributes.digital_access_time_interval_length' => 'digital access time interval length',
+            'data.attributes.digital_access_time_type' => 'digital access time type',
+            'data.attributes.digital_access_time_interval_type' => 'digital access time interval type',
+            'data.attributes.digital_access_type' => 'digital access type',
+
         ];
     }
 
@@ -83,6 +90,11 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' .
                 Product::TYPE_DIGITAL_SUBSCRIPTION,
             'data.attributes.note' => 'nullable|string',
+            'data.attributes.public_stock_count' => 'nullable|numeric',
+            'data.attributes.digital_access_time_interval_length' => 'nullable|numeric',
+            'data.attributes.digital_access_time_type' => 'nullable|max:255',
+            'data.attributes.digital_access_time_interval_type' => 'nullable|max:255',
+            'data.attributes.digital_access_type' => 'nullable|max:255',
         ];
     }
 
@@ -113,6 +125,13 @@ class ProductUpdateRequest extends FormRequest
                 'data.attributes.stock',
                 'data.attributes.auto_decrement_stock',
                 'data.attributes.note',
+                'data.attributes.digital_access_permission_names',
+                'data.attributes.public_stock_count',
+                'data.attributes.digital_access_permission_names',
+                'data.attributes.digital_access_time_interval_length',
+                'data.attributes.digital_access_time_type',
+                'data.attributes.digital_access_time_interval_type',
+                'data.attributes.digital_access_type',
             ]
         );
     }

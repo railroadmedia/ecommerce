@@ -41,29 +41,35 @@ class UserPaymentMethodsRepository extends EntityRepository
      *
      * @throws NonUniqueResultException
      */
-    public function getUserPrimaryPaymentMethod(User $user): ?UserPaymentMethods
+    public function getUserPrimaryPaymentMethod(User $user, $brand): ?UserPaymentMethods
     {
-        /** @var $qb QueryBuilder */
-        $qb =
-            $this->getEntityManager()
-                ->createQueryBuilder();
+        $alias = 'upm';
+        $qb = $this->createQueryBuilder($alias);
 
-        $qb->select('p')
-            ->from($this->getClassName(), 'p')
+        $qb->select(['pm', 'cc', 'upm'])
+            ->join('upm.paymentMethod', 'pm')
+            ->join('pm.creditCard', 'cc')
             ->where(
                 $qb->expr()
-                    ->in('p.user', ':user')
+                    ->in('upm.user', ':user')
             )
             ->andWhere(
                 $qb->expr()
-                    ->in('p.isPrimary', ':true')
-            );
+                    ->in('upm.isPrimary', ':true')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->in('cc.paymentGatewayName', ':brand')
+            )
+        ;
 
         /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('user', $user)
-            ->setParameter('true', true);
+            ->setParameter('true', true)
+            ->setParameter('brand', $brand)
+        ;
 
         return $q->getOneOrNullResult();
     }
