@@ -79,15 +79,17 @@ class MembershipActionRepository extends RepositoryBase
         return new ResultsQueryBuilderComposite($results, $qb);
     }
 
-
     /**
      * @param string $userId
      * @param string|null $brand // looks at all brands if null
-     * @return MembershipAction|null
+     * @return MembershipAction[]|null
+     *
+     * todo: Why doesn't this work with two params? Doing so returns a QueryException "Too many parameters:
+     *  the query defines 1 parameters and you bound 2"
      */
-    public function getUsersLatestMembershipAction($userId, $brand = null)
+    public function getForUser($userId, $brand = null)
     {
-        return $this->getAllUsersMembershipActions($userId, $brand)[0] ?? null;
+        return $this->getAllUsersMembershipActions($userId, $brand) ?? null;
     }
 
     /**
@@ -124,48 +126,6 @@ class MembershipActionRepository extends RepositoryBase
         $q = $qb->getQuery();
 
         $q->setParameter('userId', $userId);
-
-        if (!empty($brand)) {
-            $q->setParameter('brand', $brand);
-        }
-
-        return $q->getResult();
-    }
-
-    /**
-     * @param integer $subscriptionId
-     * @param string|null $brand // gets for all brands if null
-     * @param string $orderByAttribute
-     * @param string $orderByDirection
-     *
-     * @return MembershipAction[]
-     */
-    public function getAllSubscriptionsMembershipActions(
-        $subscriptionId,
-        $brand = null,
-        $orderByAttribute = 'createdAt',
-        $orderByDirection = 'desc'
-    )
-    {
-        $qb = $this->createQueryBuilder('m');
-
-        $qb->select(['m'])
-            ->where(
-                $qb->expr()
-                    ->eq('m.subscription', ':subscriptionId')
-            )
-            ->orderBy($orderByAttribute, $orderByDirection);
-
-        if (!empty($brand)) {
-            $qb->where(
-                $qb->expr()
-                    ->eq('m.brand', ':brand')
-            );
-        }
-
-        $q = $qb->getQuery();
-
-        $q->setParameter('subscriptionId', $subscriptionId);
 
         if (!empty($brand)) {
             $q->setParameter('brand', $brand);
