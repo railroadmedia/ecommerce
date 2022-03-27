@@ -196,4 +196,29 @@ class UserProduct
 
         return false;
     }
+
+    /**
+     * @return bool
+     */
+    public function isExpired()
+    {
+        if ((!empty($this->getExpirationDate()) && $this->getExpirationDate() < Carbon::now()) ||
+            !empty($this->getDeletedAt())) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function neverExpires()
+    {
+        if (empty($this->getExpirationDate()) && empty($this->getDeletedAt())) {
+            return true;
+        }
+
+        return false;
+    }
 }

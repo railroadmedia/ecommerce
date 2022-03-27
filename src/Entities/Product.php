@@ -36,6 +36,12 @@ class Product
     const TYPE_DIGITAL_ONE_TIME = 'digital one time';
     const TYPE_PHYSICAL_ONE_TIME = 'physical one time';
 
+    // this is new terminology for 'member' access
+    const DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS = 'all_content_access';
+
+    // this is new terminology for 'pack' access
+    const DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS = 'specific_content_access';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -614,4 +620,19 @@ class Product
         $this->digitalAccessPermissionNames = json_encode($digitalAccessPermissionNames);
     }
 
+    /**
+     * @return bool
+     */
+    public function isAllContentAccessProduct()
+    {
+        return $this->getDigitalAccessType() === self::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSpecificContentAccessProduct()
+    {
+        return $this->getDigitalAccessType() === self::DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS;
+    }
 }
