@@ -134,7 +134,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
-        $gateway = 'recordeo';
+        $gateway = config('ecommerce.brand');
 
         $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $this->faker->word;
@@ -293,14 +293,13 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'is_primary' => true
         ]);
         $this->permissionServiceMock->method('can')->willReturn(true);
-
         $cardExpirationDate = $this->faker->creditCardExpirationDate;
 
         $currency = $this->faker->currencyCode;
 
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
 
-        $gateway = 'recordeo';
+        $gateway = config('ecommerce.brand');
 
         $fakerCard = new Card($this->faker->word);
         $fakerCard->fingerprint = $this->faker->word;
@@ -571,8 +570,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $expirationDate = $this->faker->creditCardExpirationDate;
 
-        $gateway = 'recordeo';
-
         $creditCard = $this->fakeCreditCard();
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')
@@ -583,7 +580,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $creditCard = $this->fakeCreditCard();
 
         $payload = [
-            'gateway' => 'recordeo',
+            'gateway' => config('ecommerce.brand'),
             'year' => $expirationDate->format('Y'),
             'month' => $expirationDate->format('m'),
             'country' => $this->faker->word,
@@ -650,7 +647,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'PATCH',
             '/payment-method/' . $paymentMethodId,
             [
-                'gateway' => 'recordeo',
+                'gateway' => config('ecommerce.brand'),
                 'year' => $expirationDate->format('Y'),
                 'month' => $expirationDate->format('m'),
                 'country' => $this->faker->word,
@@ -1029,9 +1026,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $newDate = Carbon::now()->addYear(1)->startOfMonth();
 
-        $gateway = $this->faker->randomElement(
-            array_keys(config('ecommerce.payment_gateways')['stripe'])
-        );
+        $gateway = config('ecommerce.brand');
 
         $this->stripeExternalHelperMock->method('retrieveCustomer')
             ->willReturn(new Customer());
@@ -1066,7 +1061,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'customer' => $this->faker->word,
             'address_country' => $payload['country'],
             'address_region' => $payload['region'] ?? '',
-            'brand' => $this->faker->creditCardType
+            'brand' => config('ecommerce.brand')
         ];
 
         $this->stripeExternalHelperMock->method('updateCard')
@@ -1304,7 +1299,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
-            'brand' => 'recordeo',
+            'brand' => config('ecommerce.brand'),
             'user_id' => $userId,
             'region' => '',
             'country' => '',
@@ -1312,11 +1307,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $creditCardOne = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => config('ecommerce.brand'),
         ]);
 
         $creditCardTwo = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => config('ecommerce.brand'),
         ]);
 
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
@@ -2011,9 +2006,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
+        $configBrand = config('ecommerce.brand');
+
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
-            'brand' => 'recordeo',
+            'brand' => $configBrand,
             'user_id' => $userId,
             'region' => '',
             'country' => '',
@@ -2021,15 +2018,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         ]);
 
         $creditCardOne = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => $configBrand,
         ]);
 
         $creditCardTwo = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => $configBrand,
         ]);
 
         $paypalAgreement = $this->fakePaypalBillingAgreement([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => $configBrand,
         ]);
 
         $methodType = PaymentMethod::TYPE_CREDIT_CARD;
@@ -2162,10 +2159,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('can')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
+        $configBrand = config('ecommerce.brand');
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
-            'brand' => 'recordeo',
+            'brand' => $configBrand,
             'user_id' => $userId,
             'region' => '',
             'country' => '',
@@ -2176,7 +2174,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 5; $i++) {
             $creditCard = $this->fakeCreditCard([
-                'payment_gateway_name' => 'recordeo',
+                'payment_gateway_name' => $configBrand,
             ]);
 
             $paymentMethod = $this->fakePaymentMethod([
@@ -2230,7 +2228,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         }
 
         $otherCreditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => $configBrand,
         ]);
 
         // soft-deleted payment method, not included in response
@@ -2260,10 +2258,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
     {
         $this->permissionServiceMock->method('can')->willReturn(true);
         $userId = $this->createAndLogInNewUser();
+        $configBrand = config('ecommerce.brand');
 
         $address = $this->fakeAddress([
             'type' => Address::BILLING_ADDRESS_TYPE,
-            'brand' => 'recordeo',
+            'brand' => $configBrand,
             'user_id' => $userId,
             'region' => '',
             'country' => '',
@@ -2274,7 +2273,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         for ($i = 0; $i < 5; $i++) {
             $creditCard = $this->fakeCreditCard([
-                'payment_gateway_name' => 'recordeo',
+                'payment_gateway_name' => $configBrand,
             ]);
 
             $paymentMethod = $this->fakePaymentMethod([
@@ -2328,7 +2327,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         }
 
         $otherCreditCard = $this->fakeCreditCard([
-            'payment_gateway_name' => 'recordeo',
+            'payment_gateway_name' => $configBrand,
         ]);
 
         // soft-deleted payment method included in response

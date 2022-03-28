@@ -227,7 +227,7 @@ class Faker extends Generator
                 'external_id' => 'card_1CT9rUE2yPYKc9YRHSwdADbH',
                 'external_customer_id' => 'cus_CsviON4xYQxcwC',
                 'expiration_date' => $this->creditCardExpirationDateString,
-                'payment_gateway_name' => $this->randomElement(['drumeo', 'recordeo']),
+                'payment_gateway_name' => config('ecommerce.brand'),
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],

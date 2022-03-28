@@ -243,6 +243,7 @@ class PaymentMethodJsonController extends Controller
      */
     public function store(PaymentMethodCreateRequest $request)
     {
+
         $userId = auth()->id();
 
         if ($this->permissionService->can(auth()->id(), 'create.payment.method')) {

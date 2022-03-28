@@ -710,7 +710,7 @@ class CartServiceTest extends EcommerceTestCase
             round($expectedInitialPayment + $taxablePerPayment + $taxPerPayment + $financePerPayment, 2)
         );
     }
-
+    
     public function test_get_due_for_payment_plan_payments()
     {
         $product = $this->fakeProduct(
