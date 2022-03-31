@@ -223,7 +223,7 @@ class PaymentMethodJsonController extends Controller
             )
         );
 
-        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId(), $request, $request->get('gateway', config('ecommerce.brand')));
+        $paymentMethods = $this->paymentMethodRepository->getAllUsersPaymentMethods($user->getId(), $request, $request->get('gateway'));
 
         return ResponseService::paymentMethod(
             $paymentMethods
