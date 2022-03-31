@@ -77,6 +77,7 @@ class MembershipAction
     protected $brand;
 
     public const ACTION_PAUSE_FOR_AMOUNT_OF_DAYS = 'paused for amount of days';
+    public const ACTION_RESUME_PAUSED_MEMBERSHIP = 'resume paused membership';
     public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS = 'extended for amount of days';
     public const ACTION_EXTEND_FOR_AMOUNT_OF_DAYS_GRATIS_FOR_RETENTION =
         'extended for amount of days gratis for retention offer';
