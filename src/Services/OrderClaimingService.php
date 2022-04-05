@@ -208,7 +208,6 @@ class OrderClaimingService
 
             // create product subscriptions
             if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
-
                 $subscription = $this->createSubscription(
                     $purchaser,
                     $paymentMethod,
@@ -295,7 +294,6 @@ class OrderClaimingService
     ): Subscription
     {
         $type = Subscription::TYPE_SUBSCRIPTION;
-
         $nextBillDate = null;
         $product = null;
 
@@ -316,7 +314,6 @@ class OrderClaimingService
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         }
         else {
-
             $product = $orderItem->getProduct();
 
             if (!empty($product->getSubscriptionIntervalType())) {
@@ -347,11 +344,9 @@ class OrderClaimingService
                 $subscriptionPricePerPayment = $cartItem->getDueOverride();
                 $productPriceOverride = true;
             }
-
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
 
                 $discount = $orderItemDiscount->getDiscount();
-
                 if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                     $totalCyclesPaid = 0;
                     $nextBillDate =
@@ -366,6 +361,9 @@ class OrderClaimingService
                     $subscriptionPricePerPayment =
                         round($orderItem->getProduct()
                             ->getPrice() - $discount->getAmount(), 2);
+                }
+                elseif ($discount->getType() == DiscountService::SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE) {
+                    $nextBillDate = Carbon::now()->addMonths($discount->getAux());
                 }
             }
 

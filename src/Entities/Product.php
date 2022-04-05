@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
@@ -10,6 +12,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ProductRepository")
  * @ORM\Table(
+ *     name="ecommerce_products",
  *     name="ecommerce_products",
  *     indexes={
  *         @ORM\Index(name="ecommerce_products_brand_index", columns={"brand"}),
@@ -214,6 +217,31 @@ class Product
      * @var array
      */
     protected $digitalAccessPermissionNames;
+
+
+
+
+
+    /**
+     * @ORM\OneToMany(targetEntity="Discount", mappedBy="product")
+     */
+    protected $discounts;
+
+    public function __construct()
+    {
+        $this->discounts = new ArrayCollection();
+    }
+
+
+    /**
+     * @return Collection|Discount[]|null
+     */
+    public function getDiscounts(): ?Collection
+    {
+        return $this->discounts;
+    }
+
+
 
     /**
      * @return int|null

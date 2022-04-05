@@ -786,6 +786,7 @@ class CartService
 
         $items = [];
         $productsBySku = $this->productRepository->bySkus($this->cart->listSkus());
+
         $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
 
         foreach ($this->cart->getItems() as $cartItem) {
@@ -794,7 +795,6 @@ class CartService
             if (empty($product)) {
                 continue;
             }
-
             $items[] = $this->getCartItemData($product, $cartItem->getQuantity(), $totalItemCostDue, $shippingDue);
         }
 
@@ -811,7 +811,6 @@ class CartService
                 if (empty($product)) {
                     continue;
                 }
-
                 $recommendedProducts[] = $this->getCartItemData(
                     $product,
                     1,
@@ -1047,8 +1046,11 @@ class CartService
                     ),
                     2
                 ) : null,
-            'price_before_discounts' => round($product->getPrice() * $quantity, 2),
-            'price_after_discounts' => max(
+            'price_before_discounts' =>
+                round($product->getPrice() * $quantity, 2)
+            ,
+            'price_after_discounts' =>
+                max(
                 round(
                     ($product->getPrice() * $quantity) -
                     $this->discountService->getItemDiscountedAmount(
@@ -1060,7 +1062,8 @@ class CartService
                     2
                 ),
                 0
-            ),
+            )
+            ,
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
                 $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
@@ -1082,6 +1085,24 @@ class CartService
             $serialization['cta'] = $callToActionLabel;
         }
 
+        /* in case product has a discount of type SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE,
+        add nr of months in discount_aux attribute to show th discounted amount in the order */
+        if ($product->getDiscounts()) {
+            $result = $this->discountService->checkIfProductHasSubscriptionNewAmountNrOfMonthsDiscountType(
+                $product->getDiscounts());
+            $serialization['discount_nr_of_months'] = $result['check'];
+            $serialization['discount_aux'] = $result['aux'];
+
+            if ($serialization['subscription_interval_type']  == "month") {
+                $serialization['price_before_discounts'] = $result['check'] && $result['aux'] ?
+                    $serialization['price_before_discounts'] * $result['aux'] :
+                    $serialization['price_before_discounts'];
+            } elseif ($serialization['subscription_interval_type']  == "year") {
+                $serialization['price_before_discounts'] = $result['check'] && $result['aux'] ?
+                    $serialization['price_before_discounts']/12 * $result['aux'] :
+                    $serialization['price_before_discounts'];
+            }
+        }
         return $serialization;
     }
 }
