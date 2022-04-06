@@ -313,7 +313,6 @@ class Discount
         DiscountCriteria $discountCriteria
     ) {
         if ($this->discountCriterias->contains($discountCriteria)) {
-
             $this->discountCriterias->removeElement($discountCriteria);
 
             // set the owning side to null (unless already changed)

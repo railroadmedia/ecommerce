@@ -56,8 +56,7 @@ class ProductRepository extends RepositoryBase
                 $qb->expr()
                     ->in($alias . '.active', ':activity')
             )
-            ->setParameter('activity', $activity)
-        ;
+            ->setParameter('activity', $activity);
 
         $results =
             $qb->getQuery()
@@ -156,7 +155,6 @@ class ProductRepository extends RepositoryBase
         $this->cache[$key] = $q->getResult();
 
         return $this->cache[$key];
-
     }
 
     /**

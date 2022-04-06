@@ -82,8 +82,7 @@ class OrderClaimingService
         PermissionService $permissionService,
         TaxService $taxService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
@@ -142,7 +141,6 @@ class OrderClaimingService
         if ($currentUser &&
             $this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
             $currentUser->getId() != $purchaser->getId()) {
-
             $order->setPlacedByUser($currentUser);
         }
 
@@ -189,7 +187,6 @@ class OrderClaimingService
         $subscriptions = [];
 
         foreach ($orderItems as $orderItem) {
-
             $order->addOrderItem($orderItem);
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
@@ -241,7 +238,6 @@ class OrderClaimingService
 
         // create the payment plan subscription if required
         if ($cart->getPaymentPlanNumberOfPayments() > 1 && !empty($payment)) {
-
             $subscription = $this->createSubscription(
                 $purchaser,
                 $paymentMethod,
@@ -291,8 +287,7 @@ class OrderClaimingService
         ?OrderItem $orderItem,
         ?Cart $cart,
         int $totalCyclesDue = null
-    ): Subscription
-    {
+    ): Subscription {
         $type = Subscription::TYPE_SUBSCRIPTION;
         $nextBillDate = null;
         $product = null;
@@ -302,7 +297,6 @@ class OrderClaimingService
         $totalCyclesPaid = 1;
 
         if (is_null($orderItem)) {
-
             $nextBillDate =
                 Carbon::now()
                     ->addMonths(1);
@@ -312,8 +306,7 @@ class OrderClaimingService
             $subscriptionPricePerPayment = $this->cartService->getPaymentPlanRecurringPrice($totalCyclesDue);
 
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
-        }
-        else {
+        } else {
             $product = $orderItem->getProduct();
 
             if (!empty($product->getSubscriptionIntervalType())) {
@@ -321,15 +314,11 @@ class OrderClaimingService
                     $nextBillDate =
                         Carbon::now()
                             ->addMonths($product->getSubscriptionIntervalCount());
-
-                }
-                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
+                } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addYears($product->getSubscriptionIntervalCount());
-
-                }
-                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+                } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addDays($product->getSubscriptionIntervalCount());
@@ -345,24 +334,23 @@ class OrderClaimingService
                 $productPriceOverride = true;
             }
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
-
                 $discount = $orderItemDiscount->getDiscount();
                 if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                     $totalCyclesPaid = 0;
                     $nextBillDate =
                         Carbon::now()
                             ->addDays($discount->getAmount());
-
-                }
-                elseif (
+                } elseif (
                     $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
                     && !$productPriceOverride
                 ) {
                     $subscriptionPricePerPayment =
-                        round($orderItem->getProduct()
-                            ->getPrice() - $discount->getAmount(), 2);
-                }
-                elseif ($discount->getType() == DiscountService::SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE) {
+                        round(
+                            $orderItem->getProduct()
+                                ->getPrice() - $discount->getAmount(),
+                            2
+                        );
+                } elseif ($discount->getType() == DiscountService::SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE) {
                     $nextBillDate = Carbon::now()->addMonths($discount->getAux());
                 }
             }
@@ -392,7 +380,7 @@ class OrderClaimingService
 
         if ($purchaser->getType() == Purchaser::USER_TYPE) {
             $subscription->setUser($purchaser->getUserObject());
-        }elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
+        } elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
             $subscription->setCustomer($purchaser->getCustomerEntity());
         }
 
@@ -448,8 +436,7 @@ class OrderClaimingService
         Cart $cart,
         array $orderItems,
         array $subscriptions
-    ): ?PaymentTaxes
-    {
+    ): ?PaymentTaxes {
         $paymentTaxes = new PaymentTaxes();
 
         $paymentTaxes->setPayment($payment);
@@ -467,12 +454,11 @@ class OrderClaimingService
         } else {
             foreach ($orderItems as $orderItem) {
                 if ($orderItem->getProduct()->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
-
                     // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
                     // the resulting product due needs to match subscription
 
                     $orderItemSubscription = $subscriptions[$orderItem->getProduct()->getSku()];
-                    $totalItemCostDue +=  $orderItemSubscription->getTotalPrice() - $orderItemSubscription->getTax();
+                    $totalItemCostDue += $orderItemSubscription->getTotalPrice() - $orderItemSubscription->getTax();
                 } else {
                     $totalItemCostDue += $orderItem->getFinalPrice();
                 }

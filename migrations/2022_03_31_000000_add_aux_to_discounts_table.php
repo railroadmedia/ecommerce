@@ -17,7 +17,7 @@ class AddAuxToDiscountsTable extends Migration
             /* used for the discount type, subscription new amount number of months, to keep the number of months off;
              ca be used to store other values for other discount types in case it is needed */
             $table->integer('aux')->after('visible')->nullable();
-            }
+        }
         );
     }
 

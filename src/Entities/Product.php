@@ -219,9 +219,6 @@ class Product
     protected $digitalAccessPermissionNames;
 
 
-
-
-
     /**
      * @ORM\OneToMany(targetEntity="Discount", mappedBy="product")
      */
@@ -240,7 +237,6 @@ class Product
     {
         return $this->discounts;
     }
-
 
 
     /**
@@ -547,7 +543,6 @@ class Product
     public function getPublicStockCount(): ?int
     {
         return $this->publicStockCount;
-
     }
 
     /**
@@ -631,7 +626,9 @@ class Product
             return [];
         }
 
-        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode($this->digitalAccessPermissionNames);
+        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode(
+            $this->digitalAccessPermissionNames
+        );
     }
 
     /**
