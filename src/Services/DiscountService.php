@@ -9,7 +9,9 @@ use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\CartItem;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
+use Railroad\Ecommerce\Repositories\OrderItemRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
+use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
 class DiscountService
@@ -18,6 +20,7 @@ class DiscountService
     const PRODUCT_PERCENT_OFF_TYPE = 'product percent off';
     const SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE = 'subscription free trial days';
     const SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE = 'subscription recurring price amount off';
+    const SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE = 'subscription amount off pack owner';
     const ORDER_TOTAL_AMOUNT_OFF_TYPE = 'order total amount off';
     const ORDER_TOTAL_PERCENT_OFF_TYPE = 'order total percent off';
     const ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE = 'order total shipping amount off';
@@ -40,21 +43,36 @@ class DiscountService
     private $productRepository;
 
     /**
+     * @var UserProductService
+     */
+    private $userProductService;
+
+    /**
+     * @var OrderItemRepository
+     */
+    private $orderItemRepository;
+
+    /**
      * PaymentMethodService constructor.
      *
      * @param DiscountCriteriaService $discountCriteriaService
      * @param DiscountRepository $discountRepository
      * @param ProductRepository $productRepository
+     * @param UserProductService $userProductService
+     * @param OrderItemRepository $orderItemRepository
      */
     public function __construct(
         DiscountCriteriaService $discountCriteriaService,
         DiscountRepository $discountRepository,
-        ProductRepository $productRepository
-    )
-    {
+        ProductRepository $productRepository,
+        UserProductService $userProductService,
+        OrderItemRepository $orderItemRepository
+    ) {
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountRepository = $discountRepository;
         $this->productRepository = $productRepository;
+        $this->userProductService = $userProductService;
+        $this->orderItemRepository = $orderItemRepository;
     }
 
     /**
@@ -76,12 +94,11 @@ class DiscountService
         foreach ($applicableShippingDiscounts as $applicableShippingDiscount) {
             if ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE) {
                 $totalShippingDiscount = round($totalShippingDiscount + $applicableShippingDiscount->getAmount(), 2);
-            }
-            elseif ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
+            } elseif ($applicableShippingDiscount->getType(
+                ) == DiscountService::ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE) {
                 $amountDiscounted = $applicableShippingDiscount->getAmount() * $totalDueInShipping / 100;
                 $totalShippingDiscount = round($totalShippingDiscount + $amountDiscounted, 2);
-            }
-            elseif ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
+            } elseif ($applicableShippingDiscount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                 $totalShippingDiscount = round($totalDueInShipping - $applicableShippingDiscount->getAmount(), 2);
                 break;
             }
@@ -110,16 +127,15 @@ class DiscountService
         foreach ($applicableDiscounts as $applicableDiscount) {
             if ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_AMOUNT_OFF_TYPE) {
                 $orderDiscounts += $applicableDiscount->getAmount();
-            }
-            elseif ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
+            } elseif ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                 $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
                 $orderDiscounts += $amountDiscounted;
-            }
-            elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE
+            } elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE
                 || $applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE
-                || $applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
+                || $applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE
+                || $applicableDiscount->getType() == DiscountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE
+            ) {
                 $products = $this->productRepository->bySkus($cart->listSkus());
-
                 foreach ($products as $product) {
                     /** @var Product $product */
                     /** @var CartItem $productCartItem */
@@ -142,19 +158,22 @@ class DiscountService
                         $discountAmount = 0;
                         if ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                             $discountAmount = $applicableDiscount->getAmount() * $productCartItem->getQuantity();
-                        }
-                        elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        } elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                             $discountAmount =
                                 $productCartItem->getQuantity() *
                                 $product->getPrice() *
                                 $applicableDiscount->getAmount() /
                                 100;
-                        } elseif ($applicableDiscount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
+                        } elseif ($applicableDiscount->getType(
+                            ) == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
                             // subscription discount SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE starts charging the customer after the trial days, so subscription price is subtracted from order total
                             $discountAmount = $product->getPrice();
+                        } elseif ($applicableDiscount->getType(
+                            ) == DiscountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE) {
+                            $discountAmount = $this->getProductAmountPaidByUser($applicableDiscount);
                         }
 
-                        $sku  = $product->getSku();
+                        $sku = $product->getSku();
 
                         if (!isset($cartItemsDiscounts[$sku])) {
                             $cartItemsDiscounts[$sku] = 0;
@@ -178,7 +197,7 @@ class DiscountService
             $totalItemDiscounts = $totalDueInItems;
         }
 
-        return round((float) $totalItemDiscounts, 2);
+        return round((float)$totalItemDiscounts, 2);
     }
 
     /**
@@ -218,7 +237,6 @@ class DiscountService
         }
 
         foreach ($applicableDiscounts as $discount) {
-
             if (!$discount->getVisible()) {
                 if ($discount->getType() == DiscountService::ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE) {
                     $shippingDiscountNames = [];
@@ -230,7 +248,6 @@ class DiscountService
 
             if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
                 $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
-
                 if (!empty($discount->getProductCategory()) &&
                     !isset($cartProductCategoryMap[$discount->getProductCategory()])) {
                     // if discount has set a category but no product in cart has it
@@ -263,16 +280,14 @@ class DiscountService
                             ]
                         ];
                         $shippingOverwrite = true;
-                    }
-                    elseif (!$shippingOverwrite) {
+                    } elseif (!$shippingOverwrite) {
                         $shippingDiscountNames[] = [
                             'id' => $discount->getId(),
                             'name' => $discount->getName()
                         ];
                     }
                 }
-            }
-            else {
+            } else {
                 $discountNames[] = [
                     'id' => $discount->getId(),
                     'name' => $discount->getName()
@@ -323,7 +338,6 @@ class DiscountService
             $totalDueInItems,
             $totalDueInShipping
         );
-
         // we don't want the shipping discount
         foreach ($discountsToApply as $discountToApplyIndex => $discountToApply) {
             if (in_array(
@@ -377,24 +391,19 @@ class DiscountService
         Product $product,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): float
-    {
+    ): float {
         $activeDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveCartItemDiscounts(),
             $cart,
             $totalDueInItems,
             $totalDueInShipping
         );
-
         /** @var CartItem $productCartItem */
         $productCartItem = $cart->getItemBySku($product->getSku());
 
         $discountedAmount = 0;
-
         if (!empty($product) && $product->getActive() && !empty($productCartItem)) {
-
             foreach ($activeDiscounts as $discount) {
-
                 /** @var Product $discountProduct */
                 $discountProduct = $discount->getProduct();
 
@@ -403,11 +412,12 @@ class DiscountService
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
                         $discountedAmount = round($discountedAmount + $discountAmount, 2);
-
-                    }
-                    elseif ($discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                    } elseif ($discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                         $discountAmount =
                             $productCartItem->getQuantity() * $product->getPrice() * $discount->getAmount() / 100;
+                        $discountedAmount = round($discountedAmount + $discountAmount, 2);
+                    } elseif ($discount->getType() == DiscountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE) {
+                        $discountAmount = $this->getProductAmountPaidByUser($discount);
                         $discountedAmount = round($discountedAmount + $discountAmount, 2);
                     }
                 }
@@ -433,8 +443,7 @@ class DiscountService
         Product $product,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): float
-    {
+    ): float {
         $activeDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveCartItemDiscounts(),
             $cart,
@@ -448,21 +457,16 @@ class DiscountService
         $discountedAmount = 0;
 
         if (!empty($product) && $product->getActive()) {
-
             foreach ($activeDiscounts as $discount) {
-
                 /** @var Product $discountProduct */
                 $discountProduct = $discount->getProduct();
 
                 if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
                     ($discount->getProductCategory() && $product->getCategory() == $discount->getProductCategory())) {
-
                     if ($discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE) {
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
                         $discountedAmount = round($discountedAmount + $discountAmount, 2);
-
                     }
-
                 }
             }
         }
@@ -484,8 +488,7 @@ class DiscountService
         Cart $cart,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): array
-    {
+    ): array {
         $applicableDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveDiscounts(),
             $cart,
@@ -529,8 +532,7 @@ class DiscountService
         string $itemSku,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): array
-    {
+    ): array {
         $activeDiscounts = $this->getApplicableDiscounts(
             $this->discountRepository->getActiveCartItemDiscounts(),
             $cart,
@@ -543,19 +545,16 @@ class DiscountService
         $itemDiscounts = [];
 
         if (!empty($product) && $product->getActive()) {
-
             foreach ($activeDiscounts as $discount) {
-
                 $discountProduct = $discount->getProduct();
 
                 if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
                     $product->getCategory() == $discount->getProductCategory()) {
-
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE ||
                         $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE ||
                         $discount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE ||
-                        $discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
-
+                        $discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE ||
+                        $discount->getType() == DiscountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE) {
                         $itemDiscounts[] = $discount;
                     }
                 }
@@ -582,8 +581,7 @@ class DiscountService
         Cart $cart,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): array
-    {
+    ): array {
         $discountsToApply = [];
         $productsBySku = [];
         $products = $this->productRepository->bySkus($cart->listSkus());
@@ -591,11 +589,9 @@ class DiscountService
         foreach ($products as $product) {
             $productsBySku[$product->getSku()] = $product;
         }
-
         foreach ($activeDiscounts as $activeDiscount) {
             /** @var $activeDiscount Discount */
             $criteriaMet = true;
-
             foreach ($activeDiscount->getDiscountCriterias() as $discountCriteria) {
                 /** @var $discountCriteria DiscountCriteria */
                 $discountCriteriaMet = $this->discountCriteriaService->discountCriteriaMetForOrder(
@@ -604,7 +600,6 @@ class DiscountService
                     $totalDueInItems,
                     $totalDueInShipping
                 );
-
                 if (!$discountCriteriaMet) {
                     $criteriaMet = false;
                     break;
@@ -616,32 +611,25 @@ class DiscountService
             $hasDiscountProductInCart = false;
 
             if (!empty($activeDiscount->getProduct()) || !empty($activeDiscount->getProductCategory())) {
-
                 foreach ($cart->getItems() as $cartItem) {
-
                     if (!empty($activeDiscount->getProduct()) &&
                         $activeDiscount->getProduct()
                             ->getSku() == $cartItem->getSku()) {
-
                         $hasDiscountProductInCart = true;
                     }
 
                     if (!empty($activeDiscount->getProductCategory()) &&
                         $activeDiscount->getProductCategory() == $productsBySku[$cartItem->getSku()]->getCategory()) {
-
                         $hasDiscountProductInCart = true;
                     }
                 }
-            }
-            else {
+            } else {
                 $hasDiscountProductInCart = true;
             }
-
             if (!$hasDiscountProductInCart) {
                 $criteriaMet = false;
                 continue;
             }
-
             if ($criteriaMet || empty(
                 $activeDiscount->getDiscountCriterias()
                     ->count()
@@ -649,7 +637,39 @@ class DiscountService
                 $discountsToApply[$activeDiscount->getId()] = $activeDiscount;
             }
         }
-
         return $discountsToApply;
+    }
+
+    /**
+     * Check the price paid by a user for a certain product if the product is
+     * mapped to a discount criteria of type PRODUCT_OWN_TYPE
+     *
+     * @param Discount $discount
+     *
+     * @return float
+     */
+    public function getProductAmountPaidByUser(Discount $discount): float
+    {
+        $user = auth()->user();
+        $discountAmount = 0;
+        if ($user) {
+            $userProducts = $this->userProductService->getAllUsersProducts($user->getId());
+            foreach ($userProducts as $userProduct) {
+                foreach ($discount->getDiscountCriterias() as $discountCriteria) {
+                    if ($discountCriteria->getType() == $this->discountCriteriaService::PRODUCT_OWN_TYPE &&
+                        in_array($userProduct->getProduct(), $discountCriteria->getProducts()->toArray())) {
+                        $queryResult = $this->orderItemRepository->getFinalPriceByProductAndUser(
+                            $userProduct->getProduct()->getId(),
+                            $user->getId()
+                        );
+                        /* There should be only one order item found; if more or no rows found, discount is not applied*/
+                        if (count($queryResult) == 1) {
+                            $discountAmount = $discountAmount + $queryResult[0]["finalPrice"];
+                        }
+                    }
+                }
+            }
+        }
+        return $discountAmount;
     }
 }

@@ -54,4 +54,37 @@ class OrderItemRepository extends RepositoryBase
 
         return $qb->getQuery()->getResult();
     }
+
+
+    /**
+     * Check and return the price paid by a user for a certain product. An array is returned instead of a singleScalarResult.
+     * In case of no result or more than one rows returned, the discount will not be applied
+     *
+     * @param int $productId
+     * @param int $userId
+     *
+     * @return array
+     */
+    public function getFinalPriceByProductAndUser(int $productId, int $userId): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+        $qb->select(['oi.finalPrice'])
+            ->from(OrderItem::class, 'oi')
+            ->join('oi.order', 'o')
+            ->where(
+                $qb->expr()
+                    ->eq('oi.product', ':productId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('o.user', ':userId')
+            )
+            ->setParameter('productId', $productId)
+            ->setParameter('userId', $userId);
+
+        return $qb->getQuery()->getResult();
+    }
 }
