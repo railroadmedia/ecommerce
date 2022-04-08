@@ -95,6 +95,13 @@ class Discount
     protected $visible;
 
     /**
+     * @ORM\Column(type="integer", nullable=true)
+     *
+     * @var int
+     */
+    protected $aux;
+
+    /**
      * @ORM\Column(type="datetime", name="expiration_date", nullable=true)
      *
      * @var DateTime
@@ -232,6 +239,22 @@ class Discount
     }
 
     /**
+     * @return int|null
+     */
+    public function getAux(): ?int
+    {
+        return $this->aux;
+    }
+
+    /**
+     * @param int $aux
+     */
+    public function setAux(?int $aux): void
+    {
+        $this->aux = $aux;
+    }
+
+    /**
      * @return DateTimeInterface|null
      */
     public function getExpirationDate(): ?DateTimeInterface
@@ -290,7 +313,6 @@ class Discount
         DiscountCriteria $discountCriteria
     ) {
         if ($this->discountCriterias->contains($discountCriteria)) {
-
             $this->discountCriterias->removeElement($discountCriteria);
 
             // set the owning side to null (unless already changed)

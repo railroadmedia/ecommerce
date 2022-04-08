@@ -23,53 +23,44 @@ use Throwable;
 
 class CartService
 {
-    /**
-     * @var DiscountService
-     */
-    private $discountService;
-
-    /**
-     * @var ProductRepository
-     */
-    private $productRepository;
-
-    /**
-     * @var TaxService
-     */
-    private $taxService;
-
-    /**
-     * @var Cart
-     */
-    private $cart;
-
-    /**
-     * @var ShippingService
-     */
-    private $shippingService;
-
-    /**
-     * @var LocationService
-     */
-    private $locationService;
-
-    /**
-     * @var UserProductService
-     */
-    private $userProductService;
-
-    /**
-     * @var UserProviderInterface
-     */
-    private $userProvider;
-
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
     const PAYMENT_PLAN_LOCKED_SESSION_KEY = 'order-form-payment-plan-locked';
     const PROMO_CODE_KEY = 'promo-code';
-
     const DEFAULT_RECOMMENDED_PRODUCTS_COUNT = 3;
+    /**
+     * @var DiscountService
+     */
+    private $discountService;
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+    /**
+     * @var TaxService
+     */
+    private $taxService;
+    /**
+     * @var Cart
+     */
+    private $cart;
+    /**
+     * @var ShippingService
+     */
+    private $shippingService;
+    /**
+     * @var LocationService
+     */
+    private $locationService;
+    /**
+     * @var UserProductService
+     */
+    private $userProductService;
+    /**
+     * @var UserProviderInterface
+     */
+    private $userProvider;
 
     /**
      * CartService constructor.
@@ -90,8 +81,7 @@ class CartService
         LocationService $locationService,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->discountService = $discountService;
         $this->productRepository = $productRepository;
         $this->taxService = $taxService;
@@ -122,15 +112,13 @@ class CartService
         int $quantity,
         bool $lock = false,
         string $promoCode = ''
-    ): Product
-    {
+    ): Product {
         $this->refreshCart();
 
         // cart locking
         if ($lock) {
             $this->cart->setLocked(true);
         } elseif ($this->cart->getLocked()) {
-
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
             $this->cart->toSession();
@@ -278,7 +266,6 @@ class CartService
 
         if (!$this->isPaymentPlanEligible() ||
             !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
-
             throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
         }
 
@@ -595,8 +582,7 @@ class CartService
     public function getDueForPaymentPlanPayments(
         $taxRate,
         $numberOfPaymentsOverride = null
-    )
-    {
+    ) {
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
@@ -786,6 +772,7 @@ class CartService
 
         $items = [];
         $productsBySku = $this->productRepository->bySkus($this->cart->listSkus());
+
         $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
 
         foreach ($this->cart->getItems() as $cartItem) {
@@ -794,7 +781,6 @@ class CartService
             if (empty($product)) {
                 continue;
             }
-
             $items[] = $this->getCartItemData($product, $cartItem->getQuantity(), $totalItemCostDue, $shippingDue);
         }
 
@@ -811,7 +797,6 @@ class CartService
                 if (empty($product)) {
                     continue;
                 }
-
                 $recommendedProducts[] = $this->getCartItemData(
                     $product,
                     1,
@@ -829,7 +814,6 @@ class CartService
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
         if ($this->isPaymentPlanEligible()) {
-
             if ($numberOfPayments > 1) {
                 $totals['financing_cost_per_payment'] = round($financeCost / $numberOfPayments, 2);
 
@@ -948,7 +932,6 @@ class CartService
         $result = [];
 
         foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
-
             $sku = $recommendedProductData['sku'];
 
             if (!$count) {
@@ -984,13 +967,13 @@ class CartService
 
             $result[$sku] = [
                 'name_override' => isset($recommendedProductData['name_override']) ?
-                                    $recommendedProductData['name_override'] : null,
+                    $recommendedProductData['name_override'] : null,
                 'sales_page_url_override' => isset($recommendedProductData['sales_page_url_override']) ?
-                                    $recommendedProductData['sales_page_url_override'] : null,
+                    $recommendedProductData['sales_page_url_override'] : null,
                 'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
-                                    $recommendedProductData['add_directly_to_cart'] : true,
+                    $recommendedProductData['add_directly_to_cart'] : true,
                 'cta' => isset($recommendedProductData['cta']) ?
-                                    $recommendedProductData['cta'] : null,
+                    $recommendedProductData['cta'] : null,
             ];
 
             $count--;
@@ -1047,20 +1030,24 @@ class CartService
                     ),
                     2
                 ) : null,
-            'price_before_discounts' => round($product->getPrice() * $quantity, 2),
-            'price_after_discounts' => max(
-                round(
-                    ($product->getPrice() * $quantity) -
-                    $this->discountService->getItemDiscountedAmount(
-                        $this->cart,
-                        $product,
-                        $totalItemCostDue,
-                        $shippingDue
+            'price_before_discounts' =>
+                round($product->getPrice() * $quantity, 2)
+            ,
+            'price_after_discounts' =>
+                max(
+                    round(
+                        ($product->getPrice() * $quantity) -
+                        $this->discountService->getItemDiscountedAmount(
+                            $this->cart,
+                            $product,
+                            $totalItemCostDue,
+                            $shippingDue
+                        ),
+                        2
                     ),
-                    2
-                ),
-                0
-            ),
+                    0
+                )
+            ,
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
                 $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
@@ -1082,6 +1069,25 @@ class CartService
             $serialization['cta'] = $callToActionLabel;
         }
 
+        /* in case product has a discount of type SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE,
+        add nr of months in discount_aux attribute to show th discounted amount in the order */
+        if ($product->getDiscounts()) {
+            $result = $this->discountService->checkIfProductHasSubscriptionNewAmountNrOfMonthsDiscountType(
+                $product->getDiscounts()
+            );
+            $serialization['discount_nr_of_months'] = $result['check'];
+            $serialization['discount_aux'] = $result['aux'];
+
+            if ($serialization['subscription_interval_type'] == "month") {
+                $serialization['price_before_discounts'] = $result['check'] && $result['aux'] ?
+                    $serialization['price_before_discounts'] * $result['aux'] :
+                    $serialization['price_before_discounts'];
+            } elseif ($serialization['subscription_interval_type'] == "year") {
+                $serialization['price_before_discounts'] = $result['check'] && $result['aux'] ?
+                    $serialization['price_before_discounts'] / 12 * $result['aux'] :
+                    $serialization['price_before_discounts'];
+            }
+        }
         return $serialization;
     }
 }

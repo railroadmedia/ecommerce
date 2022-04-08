@@ -140,8 +140,9 @@ class ProductRepository extends RepositoryBase
         $qb = $this->entityManager->createQueryBuilder();
 
         $q =
-            $qb->select('p')
+            $qb->select(['p, d'])
                 ->from(Product::class, 'p')
+                ->leftJoin('p.discounts', 'd')
                 ->where(
                     $qb->expr()
                         ->in('p.sku', ':skus')

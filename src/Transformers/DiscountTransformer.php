@@ -36,6 +36,7 @@ class DiscountTransformer extends TransformerAbstract
             'product_category' => $discount->getProductCategory(),
             'active' => $discount->getActive(),
             'visible' => $discount->getVisible(),
+            'aux' => $discount->getAux(),
             'note' => $discount->getNote(),
             'expiration_date' => $discount->getExpirationDate() ?
                 $discount->getExpirationDate()
