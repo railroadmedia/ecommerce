@@ -119,6 +119,7 @@ class RenewalDueSubscriptions extends Command
                 // if its the last attempt configured and it fails, automatically cancel the subscription
                 if (!empty(config('ecommerce.subscriptions_renew_cycles')) &&
                     is_array(config('ecommerce.subscriptions_renew_cycles')) &&
+                    $dueSubscription->getType() !== Subscription::TYPE_PAYMENT_PLAN &&
                     $dueSubscription->getRenewalAttempt() == count(config('ecommerce.subscriptions_renew_cycles'))) {
 
                     $dueSubscription->setCanceledOn(Carbon::now());
