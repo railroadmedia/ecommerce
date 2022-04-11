@@ -117,10 +117,12 @@ class RenewalDueSubscriptions extends Command
                 event(new CommandSubscriptionRenewFailed($dueSubscription, $oldSubscriptionState, $payment));
 
                 // if its the last attempt configured and it fails, automatically cancel the subscription
+                // The renewal attempted number is the count of the NEXT try. So if its '3', this means 2 payment
+                // attempts have already been tried and the 3rd is scheduled.
                 if (!empty(config('ecommerce.subscriptions_renew_cycles')) &&
                     is_array(config('ecommerce.subscriptions_renew_cycles')) &&
                     $dueSubscription->getType() !== Subscription::TYPE_PAYMENT_PLAN &&
-                    $dueSubscription->getRenewalAttempt() == count(config('ecommerce.subscriptions_renew_cycles'))) {
+                    $dueSubscription->getRenewalAttempt() > count(config('ecommerce.subscriptions_renew_cycles'))) {
 
                     $dueSubscription->setCanceledOn(Carbon::now());
                     $dueSubscription->setIsActive(false);
