@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
@@ -11,6 +12,7 @@ use Railroad\Ecommerce\Repositories\DiscountCriteriaRepository;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCriteriaCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountCriteriaUpdateRequest;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
@@ -44,6 +46,11 @@ class DiscountCriteriaJsonController extends Controller
     private $permissionService;
 
     /**
+     * @var DiscountService
+     */
+    private $discountService;
+
+    /**
      * DiscountCriteriaJsonController constructor.
      *
      * @param DiscountCriteriaRepository $discountCriteriaRepository
@@ -51,20 +58,22 @@ class DiscountCriteriaJsonController extends Controller
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
+     * @param DiscountService $discountService
      */
     public function __construct(
         DiscountCriteriaRepository $discountCriteriaRepository,
         DiscountRepository $discountRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
-    )
-    {
+        PermissionService $permissionService,
+        DiscountService $discountService
+    ) {
         $this->discountCriteriaRepository = $discountCriteriaRepository;
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
+        $this->discountService = $discountService;
     }
 
     /**
@@ -97,6 +106,15 @@ class DiscountCriteriaJsonController extends Controller
 
         $discountCriteria->setDiscount($discount);
 
+        $packAmountDiscountType = $this->discountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE;
+        if ($discountCriteria->getDiscount()->getType() == $packAmountDiscountType &&
+            (($discountCriteria->getMin() != 1) || ($discountCriteria->getMax() != 1))) {
+            $errors[] = "For discount type <" . $packAmountDiscountType . ">, MIN and MAX attributes must be equal to 1!";
+            throw new HttpResponseException(
+                response()->json(['errors' => $errors], 422)
+            );
+        }
+
         $this->entityManager->flush();
 
         return ResponseService::discountCriteria($discountCriteria)
@@ -128,6 +146,15 @@ class DiscountCriteriaJsonController extends Controller
             $discountCriteria,
             $request->onlyAllowed()
         );
+
+        $packAmountDiscountType = $this->discountService::SUBSCRIPTION_AMOUNT_OFF_PACK_OWNER_TYPE;
+        if ($discountCriteria->getDiscount()->getType() == $packAmountDiscountType &&
+            (($discountCriteria->getMin() != 1) || ($discountCriteria->getMax() != 1))) {
+            $errors[] = "For discount type <" . $packAmountDiscountType . ">, MIN and MAX attributes must be equal to 1!";
+            throw new HttpResponseException(
+                response()->json(['errors' => $errors], 422)
+            );
+        }
 
         $this->entityManager->flush();
 

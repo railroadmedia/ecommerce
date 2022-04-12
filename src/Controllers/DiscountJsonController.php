@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Controllers;
 
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -11,6 +12,7 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\DiscountRepository;
 use Railroad\Ecommerce\Requests\DiscountCreateRequest;
 use Railroad\Ecommerce\Requests\DiscountUpdateRequest;
+use Railroad\Ecommerce\Services\DiscountService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
 use Railroad\Ecommerce\Services\ResponseService;
 use Railroad\Permissions\Services\PermissionService;
@@ -39,24 +41,32 @@ class DiscountJsonController extends Controller
     private $permissionService;
 
     /**
+     * @var DiscountService
+     */
+    private $discountService;
+
+    /**
      * DiscountJsonController constructor.
      *
      * @param DiscountRepository $discountRepository
      * @param EcommerceEntityManager $entityManager
      * @param JsonApiHydrator $jsonApiHydrator
      * @param PermissionService $permissionService
+     * @param DiscountService $discountService
      */
     public function __construct(
         DiscountRepository $discountRepository,
         EcommerceEntityManager $entityManager,
         JsonApiHydrator $jsonApiHydrator,
-        PermissionService $permissionService
-    )
-    {
+        PermissionService $permissionService,
+        DiscountService $discountService
+
+    ) {
         $this->discountRepository = $discountRepository;
         $this->entityManager = $entityManager;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->permissionService = $permissionService;
+        $this->discountService = $discountService;
     }
 
     /**
@@ -117,6 +127,14 @@ class DiscountJsonController extends Controller
 
         $this->jsonApiHydrator->hydrate($discount, $request->onlyAllowed());
 
+        $newAmountNrOfMonthsDiscountType = $this->discountService::SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE;
+        if ($discount->getType() == $newAmountNrOfMonthsDiscountType && !$discount->getAux()) {
+            $errors[] = "For discount type <" . $newAmountNrOfMonthsDiscountType . ">, AUX attribute must not be NULL!";
+            throw new HttpResponseException(
+                response()->json(['errors' => $errors], 422)
+            );
+        }
+
         $this->entityManager->persist($discount);
         $this->entityManager->flush();
 
@@ -144,6 +162,14 @@ class DiscountJsonController extends Controller
         );
 
         $this->jsonApiHydrator->hydrate($discount, $request->onlyAllowed());
+
+        $newAmountNrOfMonthsDiscountType = $this->discountService::SUBSCRIPTION_NEW_AMOUNT_NR_OF_MONTHS_TYPE;
+        if ($discount->getType() == $newAmountNrOfMonthsDiscountType && !$discount->getAux()) {
+            $errors[] = "For discount type <" . $newAmountNrOfMonthsDiscountType . ">, AUX attribute must not be NULL!";
+            throw new HttpResponseException(
+                response()->json(['errors' => $errors], 422)
+            );
+        }
 
         $this->entityManager->flush();
 
