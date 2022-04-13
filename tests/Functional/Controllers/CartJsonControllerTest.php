@@ -54,6 +54,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
 
         ];
 
@@ -91,6 +93,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -127,6 +131,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -219,6 +225,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -303,6 +311,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
 
         ];
 
@@ -341,6 +351,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -378,6 +390,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[3]['id'],
             'type' => $recommendedProducts[3]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -468,6 +482,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -587,6 +603,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -661,6 +679,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
 
         ];
 
@@ -698,6 +718,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -735,6 +757,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[3]['id'],
             'type' => $recommendedProducts[3]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -802,6 +826,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -889,6 +915,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -926,6 +954,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -963,6 +993,8 @@ class CartJsonControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[3]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[3]['id'],
             'type' => $recommendedProducts[3]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[3]['name_override'])) {
@@ -1235,6 +1267,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productOne['is_physical'],
                 'id' => $productOne['id'],
                 'type' => $productOne['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1258,6 +1292,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productTwo['is_physical'],
                 'id' => $productTwo['id'],
                 'type' => $productTwo['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -1443,6 +1479,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productOne['is_physical'],
                 'id' => $productOne['id'],
                 'type' => $productOne['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1466,6 +1504,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productTwo['is_physical'],
                 'id' => $productTwo['id'],
                 'type' => $productTwo['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -1609,6 +1649,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productTwo['is_physical'],
                 'id' => $productTwo['id'],
                 'type' => $productTwo['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1730,6 +1772,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -1926,6 +1970,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2047,6 +2093,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2170,6 +2218,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2738,6 +2788,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2892,6 +2944,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productOne['is_physical'],
                 'id' => $productOne['id'],
                 'type' => $productOne['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -2914,6 +2968,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productTwo['is_physical'],
                 'id' => $productTwo['id'],
                 'type' => $productTwo['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );
@@ -3056,6 +3112,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productOne['is_physical'],
                 'id' => $productOne['id'],
                 'type' => $productOne['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );
@@ -3078,6 +3136,8 @@ class CartJsonControllerTest extends EcommerceTestCase
                 'is_digital' => !$productTwo['is_physical'],
                 'id' => $productTwo['id'],
                 'type' => $productTwo['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][1]
         );

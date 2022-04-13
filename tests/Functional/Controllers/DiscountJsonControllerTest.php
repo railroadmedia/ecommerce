@@ -289,7 +289,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
             $discount = $this->fakeDiscount([
                 'product_id' => $product['id'],
                 'product_category' => null,
-                'updated_at' => null
+                'updated_at' => null,
+                'aux' => null
             ]);
 
             $discountCriteria = $this->fakeDiscountCriteria([
@@ -392,7 +393,8 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         $discount = $this->fakeDiscount([
             'product_id' => $product['id'],
             'product_category' => null,
-            'updated_at' => null
+            'updated_at' => null,
+            'aux' => null
         ]);
 
         $results = $this->call('GET', '/discount/' . $discount['id']);

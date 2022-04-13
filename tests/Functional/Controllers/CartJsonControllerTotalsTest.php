@@ -173,6 +173,8 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'is_digital' => !$product['is_physical'],
                 'id' => $product['id'],
                 'type' => $product['type'],
+                'discount_nr_of_months' => false,
+                'discount_aux' => null
             ],
             $decodedResponse['meta']['cart']['items'][0]
         );

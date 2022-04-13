@@ -26,6 +26,7 @@ class CartControllerTest extends EcommerceTestCase
 
     public function test_add_to_cart()
     {
+        //nu au aux si discount_aux
         $recommendedProducts = $this->addRecommendedProducts();
 
         $this->session->flush();
@@ -53,7 +54,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_count' => null,
             'weight' => 0,
             'stock' => $this->faker->numberBetween(5, 100),
-            'price' => 92.22,
+            'price' => 92.22
         ]);
 
         $initialQuantity = 2;
@@ -86,6 +87,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -122,6 +125,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -158,6 +163,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -193,6 +200,8 @@ class CartControllerTest extends EcommerceTestCase
                     'type' => $product['type'],
                     'id' => $product['id'],
                     'type' => $product['type'],
+                    'discount_nr_of_months' => false,
+                    'discount_aux' => null
                 ]
             ],
             'recommendedProducts' => [
@@ -320,6 +329,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -356,6 +367,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -392,6 +405,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -430,6 +445,8 @@ class CartControllerTest extends EcommerceTestCase
                         'type' => $product['type'],
                         'id' => $product['id'],
                         'type' => $product['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ]
                 ],
                 'recommendedProducts' => [
@@ -533,6 +550,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -569,6 +588,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -605,6 +626,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -744,6 +767,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -780,6 +805,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -816,6 +843,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -852,6 +881,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productOne['is_physical'],
                         'id' => $productOne['id'],
                         'type' => $productOne['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -870,6 +901,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productTwo['is_physical'],
                         'id' => $productTwo['id'],
                         'type' => $productTwo['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                 ],
                 'recommendedProducts' => [
@@ -986,6 +1019,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -1022,6 +1057,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1058,6 +1095,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1096,6 +1135,8 @@ class CartControllerTest extends EcommerceTestCase
                         'type' => $product['type'],
                         'id' => $product['id'],
                         'type' => $product['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ]
                 ],
                 'recommendedProducts' => [
@@ -1236,6 +1277,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -1272,6 +1315,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1308,6 +1353,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1344,6 +1391,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productOne['is_physical'],
                         'id' => $productOne['id'],
                         'type' => $productOne['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                     [
                         'sku' => $productTwo['sku'],
@@ -1362,6 +1411,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productTwo['is_physical'],
                         'id' => $productTwo['id'],
                         'type' => $productTwo['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                 ],
                 'recommendedProducts' => [
@@ -1531,6 +1582,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[0]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[0]['id'],
             'type' => $recommendedProducts[0]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[0]['name_override'])) {
@@ -1567,6 +1620,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[1]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[1]['id'],
             'type' => $recommendedProducts[1]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[1]['name_override'])) {
@@ -1603,6 +1658,8 @@ class CartControllerTest extends EcommerceTestCase
             'add_directly_to_cart' => $recommendedProducts[2]['add_directly_to_cart'] ?? true,
             'id' => $recommendedProducts[2]['id'],
             'type' => $recommendedProducts[2]['type'],
+            'discount_nr_of_months' => false,
+            'discount_aux' => null
         ];
 
         if (isset($recommendedProducts[2]['name_override'])) {
@@ -1639,6 +1696,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productTwo['is_physical'],
                         'id' => $productTwo['id'],
                         'type' => $productTwo['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                     [
                         'sku' => $productThree['sku'],
@@ -1657,6 +1716,8 @@ class CartControllerTest extends EcommerceTestCase
                         'is_digital' => !$productThree['is_physical'],
                         'id' => $productThree['id'],
                         'type' => $productThree['type'],
+                        'discount_nr_of_months' => false,
+                        'discount_aux' => null
                     ],
                 ],
                 'recommendedProducts' => [
