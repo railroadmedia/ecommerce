@@ -572,12 +572,14 @@ class AppleStoreKitService
 //        error_log(var_export($latestPurchaseItem, true));
 
         if (empty($latestPurchaseItem)) {
+            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  appleResponse'.var_export($appleResponse, true));
+            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  allPurchasedItems'.var_export($allPurchasedItems, true));
             return null;
         }
 
         $originalTransactionId = $latestPurchaseItem->getOriginalTransactionId();
 
-//        error_log('Restore Apple receipt with original transaction id: ' . $originalTransactionId);
+        error_log('restoreAndSyncApple receiptWithOriginalTransactionId: ' . $originalTransactionId);
 
         $appleReceipt = null;
 
@@ -598,6 +600,8 @@ class AppleStoreKitService
         if (!empty($appleReceipts)) {
             $appleReceipt = array_first($appleReceipts);
         }
+
+        error_log('restoreAndSyncPurchasedItems  appleReceiptFromDB'.var_export($appleReceipt, true));
 
         if (!$appleReceipt) {
 
@@ -625,6 +629,7 @@ class AppleStoreKitService
             }
 
             if (!$existsPurchases) {
+                error_log('restoreAndSyncPurchasedItems  notExistsPurchasesAndNotExistsReceipt existFromMethod'.var_export($allPurchasedItems, true));
                 return null;
             }
 
@@ -1007,6 +1012,7 @@ class AppleStoreKitService
     public function checkSignup($receipt)
     {
         if (!$receipt) {
+            error_log('checkSignupMissingReceipt  shouldSignup');
             return self::SHOULD_SIGNUP;
         }
 
@@ -1028,6 +1034,8 @@ class AppleStoreKitService
             }
 
             if (is_null($latestPurchaseItem)) {
+                error_log('checkSignupMissingLatestPurchaseItem  shouldSignup appleResponse '.var_export($appleResponse, true));
+                error_log('checkSignupMissingLatestPurchaseItem  shouldSignup allPurchasedItems'.var_export($allPurchasedItems, true));
                 return self::SHOULD_SIGNUP;
             }
 
@@ -1062,7 +1070,7 @@ class AppleStoreKitService
             }
 
         } catch (Throwable $exception) {
-
+            error_log('checkSignupThrowException '.var_export($exception->getMessage(), true));
             throw $exception;
         }
     }

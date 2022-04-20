@@ -190,6 +190,7 @@ class AppleStoreKitController extends Controller
         $receipt = $request->get('receipt', []);
 
         if (empty($receipt)) {
+            error_log('NoReceiptOnTheRequest'.var_export($request->input(), true));
             return response()->json(
                 [
                     'message' => 'No receipt on the request',
