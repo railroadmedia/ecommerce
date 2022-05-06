@@ -44,8 +44,7 @@ class AppleStoreKitController extends Controller
         AppleStoreKitService $appleStoreKitService,
         JsonApiHydrator $jsonApiHydrator,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->appleStoreKitService = $appleStoreKitService;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->userProvider = $userProvider;
@@ -75,16 +74,16 @@ class AppleStoreKitController extends Controller
             $receipt->setEmail($currentUser->getEmail());
         }
 
-        $receipt->setPassword($request->input('data.attributes.password',''));
-        $receipt->setPurchaseType($request->input('data.attribute.purchase_type', AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE));
+        $receipt->setPassword($request->input('data.attributes.password', ''));
+        $receipt->setPurchaseType(
+            $request->input('data.attribute.purchase_type', AppleReceipt::APPLE_SUBSCRIPTION_PURCHASE)
+        );
 
-        if($request->has('data.attributes.currency'))
-        {
+        if ($request->has('data.attributes.currency')) {
             $receipt->setLocalCurrency($request->input('data.attributes.currency'));
         }
 
-        if($request->has('data.attributes.price'))
-        {
+        if ($request->has('data.attributes.price')) {
             $receipt->setLocalPrice($request->input('data.attributes.price'));
         }
 
@@ -110,10 +109,11 @@ class AppleStoreKitController extends Controller
         );
         error_log(var_export($request->get('notification_type'), true));
 
-        if(!$request->has('unified_receipt') && !$request->has('latest_receipt')){
+        if (!$request->has('unified_receipt') && !$request->has('latest_receipt')) {
             error_log(
                 'AppleStoreKitController processNotification -------- Missing unified_receipt and latest_receipt in Apple request'
             );
+
             return response()->json();
         }
 
@@ -123,7 +123,7 @@ class AppleStoreKitController extends Controller
 
         $receipt = new AppleReceipt();
 
-        $receipt->setReceipt($request->get('unified_receipt')['latest_receipt']??$request->get('latest_receipt',''));
+        $receipt->setReceipt($request->get('unified_receipt')['latest_receipt'] ?? $request->get('latest_receipt', ''));
         $receipt->setRequestType(AppleReceipt::APPLE_NOTIFICATION_REQUEST_TYPE);
         $receipt->setNotificationType($notificationType);
         $receipt->setNotificationRequestData(base64_encode(serialize($request->all())));
@@ -150,29 +150,25 @@ class AppleStoreKitController extends Controller
         $action = $this->appleStoreKitService->checkSignup($request->get('receipt'));
 
         switch ($action) {
-
             case AppleStoreKitService::SHOULD_RENEW:
-                return response()->json(
-                    [
-                        'shouldRenew' => true,
-                        'message' => 'You can not create multiple '.ucfirst(config('ecommerce.brand')).' accounts under the same apple account. You already have an expired/cancelled membership. Please renew your membership.',
-                    ]
-                );
+                return response()->json([
+                                            'shouldRenew' => true,
+                                            'message' => 'You can not create multiple '.
+                                                ucfirst(config('ecommerce.brand')).
+                                                ' accounts under the same apple account. You already have an expired/cancelled membership. Please renew your membership.',
+                                        ]);
             case AppleStoreKitService::SHOULD_LOGIN:
-                return response()->json(
-                    [
-                        'shouldLogin' => true,
-                        'message' => 'You have an active '.ucfirst(config('ecommerce.brand')).' account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
-                    ]
-                );
+                return response()->json([
+                                            'shouldLogin' => true,
+                                            'message' => 'You have an active '.
+                                                ucfirst(config('ecommerce.brand')).
+                                                ' account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
+                                        ]);
             default:
-                return response()->json(
-                    [
-                        'shouldSignup' => true,
-                    ]
-                );
+                return response()->json([
+                                            'shouldSignup' => true,
+                                        ]);
         }
-
     }
 
     /**
@@ -191,6 +187,7 @@ class AppleStoreKitController extends Controller
 
         if (empty($receipt)) {
             error_log('NoReceiptOnTheRequest'.var_export($request->input(), true));
+
             return response()->json(
                 [
                     'message' => 'No receipt on the request',
@@ -202,6 +199,8 @@ class AppleStoreKitController extends Controller
         $results = $this->appleStoreKitService->restoreAndSyncPurchasedItems($receipt);
 
         if (!$results) {
+            error_log('restorePurchaseNoValidPurchasedItemsInAppleResponse '.var_export($request->input(), true));
+
             return response()->json(
                 [
                     'success' => true,
@@ -211,38 +210,39 @@ class AppleStoreKitController extends Controller
             );
         }
         if ($results['shouldLogin'] == true) {
-
+            error_log('restorePurchaseShouldLoginWithEmail '.var_export($results['receiptUser']->getEmail(), true));
             auth()->logout();
 
-            return response()->json(
-                [
-                    'shouldLogin' => true,
-                    'email' => $results['receiptUser']->getEmail(),
-                ]
-            );
+            return response()->json([
+                                        'shouldLogin' => true,
+                                        'email' => $results['receiptUser']->getEmail(),
+                                    ]);
         } elseif ($results['shouldCreateAccount'] == true) {
-
-            return response()->json(
-                [
-                    'shouldCreateAccount' => true,
-                ]
-            );
+            error_log('restorePurchaseShouldCreateAccount '.var_export($receipt, true));
+            return response()->json([
+                                        'shouldCreateAccount' => true,
+                                    ]);
         } elseif ($results['receiptUser']) {
-
             $user = $results['receiptUser'] ?? auth()->user();
             $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
-            return response()->json(
-                [
-                    'success' => true,
-                    'token' => $userAuthToken,
-                    'tokenType' => 'bearer',
-                    'userId' => $user->getId(),
-                ]
-            );
+            error_log('restorePurchaseUserExists '.var_export($user, true));
+
+            return response()->json([
+                                        'success' => true,
+                                        'token' => $userAuthToken,
+                                        'tokenType' => 'bearer',
+                                        'userId' => $user->getId(),
+                                    ]);
         }
 
-        return response()->json(['success' => true]);
+        error_log('IMPORTANT restoreWithoutCreateAccountOrLogin  receipt '.var_export($receipt, true));
+        error_log('IMPORTANT restoreWithoutCreateAccountOrLogin  responseFromBERestore '.var_export($results, true));
+
+        return response()->json([
+                                    'success' => true,
+                                    'message' => 'No valid purchased items in Apple response',
+                                ]);
     }
 
 }

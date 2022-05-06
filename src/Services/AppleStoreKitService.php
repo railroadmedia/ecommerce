@@ -572,8 +572,8 @@ class AppleStoreKitService
 //        error_log(var_export($latestPurchaseItem, true));
 
         if (empty($latestPurchaseItem)) {
-            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  appleResponse'.var_export($appleResponse, true));
-            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  allPurchasedItems'.var_export($allPurchasedItems, true));
+            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  appleResponse '.var_export($appleResponse, true));
+            error_log('restoreAndSyncPurchasedItemsMissingLatestPurchaseItemOnReceipt  allPurchasedItems '.var_export($allPurchasedItems, true));
             return null;
         }
 
@@ -597,17 +597,16 @@ class AppleStoreKitService
                 ->orderBy('ap.id', 'desc')
                 ->getQuery()
                 ->getResult();
+
         if (!empty($appleReceipts)) {
             $appleReceipt = array_first($appleReceipts);
         }
 
-        error_log('restoreAndSyncPurchasedItems  appleReceiptFromDB'.var_export($appleReceipt, true));
+        error_log('restoreAndSyncPurchasedItems  appleReceiptFromDB '.var_export($appleReceipt, true));
 
         if (!$appleReceipt) {
 
             foreach ($allPurchasedItems as $purchaseItem) {
-
-                $existsPurchases = true;
 
                 //check if purchases product is membership
                 if (array_key_exists(
@@ -615,7 +614,9 @@ class AppleStoreKitService
                     config('ecommerce.apple_store_products_map', [])
                 )) {
                     $shouldCreateAccount = true;
+                    $existsPurchases = true;
                 } elseif ($this->userProvider->getCurrentUserId()) {
+                    $existsPurchases = true;
                     $user = $this->userProvider->getCurrentUser();
 
                     $appleReceipt = new AppleReceipt();
@@ -625,11 +626,13 @@ class AppleStoreKitService
                     $appleReceipt->setRequestType(AppleReceipt::MOBILE_APP_REQUEST_TYPE);
 
                     $receiptUser = $this->processReceipt($appleReceipt);
+                }else{
+                    error_log('restoreAndSyncPurchasedItems  notExistsReceiptInDbAndCurrentUserAndProductFromReceiptNotMembership productId '.var_export($purchaseItem->getProductId(), true));
                 }
             }
 
             if (!$existsPurchases) {
-                error_log('restoreAndSyncPurchasedItems  notExistsPurchasesAndNotExistsReceipt existFromMethod'.var_export($allPurchasedItems, true));
+                error_log('restoreAndSyncPurchasedItems  notExistsPurchasesAndNotExistsReceipt allPurchasedItemsFromReceipt '.var_export($allPurchasedItems, true));
                 return null;
             }
 
