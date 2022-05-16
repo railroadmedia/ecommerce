@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Tests;
 use Carbon\Carbon;
 use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Doctrine\ORM\EntityManager;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Illuminate\Auth\AuthManager;
@@ -34,6 +35,7 @@ use Railroad\Location\Services\CountryListService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
+use Tests\TestCase;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
@@ -72,6 +74,13 @@ class EcommerceTestCase extends BaseTestCase
         'retentionStats' => 'ecommerce_retention_stats',
         'membershipActions' => 'ecommerce_membership_actions',
     ];
+
+    /**
+     * All of the fired events.
+     *
+     * @var array
+     */
+    protected $firedEvents = [];
 
     /**
      * @var \Railroad\Ecommerce\Faker\Faker
@@ -459,14 +468,18 @@ class EcommerceTestCase extends BaseTestCase
                     ]
                 );
 
-        Auth::shouldReceive('check')
+        Auth::partialMock()
+            ->shouldReceive('check')
             ->andReturn(true);
 
-        Auth::shouldReceive('id')
+        Auth::partialMock()
+            ->shouldReceive('id')
             ->andReturn($userId);
 
         $userMockResults = ['id' => $userId, 'email' => $email];
-        Auth::shouldReceive('user')
+
+        Auth::partialMock()
+            ->shouldReceive('user')
             ->andReturn($userMockResults);
 
         return $userId;
@@ -1274,5 +1287,43 @@ class EcommerceTestCase extends BaseTestCase
         }
 
         return $products;
+    }
+
+    /**
+     * We don't want to use mockery so this is a reimplementation of the mockery version.
+     *
+     * @param  array|string $events
+     * @return $this
+     *
+     * @throws \Exception
+     */
+    public function expectsEvents($events)
+    {
+        $events = is_array($events) ? $events : func_get_args();
+        $mock = $this->getMockBuilder(Dispatcher::class)
+            ->setMethods(['fire', 'dispatch'])
+            ->getMockForAbstractClass();
+        $mock->method('fire')->willReturnCallback(
+            function ($called) {
+                $this->firedEvents[] = $called;
+            }
+        );
+        $mock->method('dispatch')->willReturnCallback(
+            function ($called) {
+                $this->firedEvents[] = $called;
+            }
+        );
+        $this->app->instance('events', $mock);
+        $this->beforeApplicationDestroyed(
+            function () use ($events) {
+                $fired = $this->getFiredEvents($events);
+                if ($eventsNotFired = array_diff($events, $fired)) {
+                    throw new Exception(
+                        'These expected events were not fired: [' . implode(', ', $eventsNotFired) . ']'
+                    );
+                }
+            }
+        );
+        return $this;
     }
 }

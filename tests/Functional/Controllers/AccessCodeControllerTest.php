@@ -148,6 +148,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_with_expiration_with_context_event()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
         $context = $this->faker->word;
 
@@ -205,6 +207,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_without_expiration()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -257,6 +261,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_extend_active_subscription()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -336,6 +342,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_expired_subscription()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -494,6 +502,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
      */
     public function test_user_with_access_from_code_redeems_another_code()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $digitalOneTimeDummySku1 = 'digital-one-time-dummy-sku-1';
         $digitalSubscriptionDummySku1 = 'digital-subscription-dummy-sku-1';
 

@@ -170,6 +170,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'address_id' => $address['id'],
         ];
 
+        Event::fake([UserDefaultPaymentMethodEvent::class, PaymentMethodCreated::class]);
+
         $results = $this->call(
             'PUT',
             '/payment-method',
@@ -332,6 +334,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'user_id' => $customer['id'],
             'address_id' => $address['id'],
         ];
+
+        Event::fake([UserDefaultPaymentMethodEvent::class, PaymentMethodCreated::class]);
 
         $results = $this->call(
             'PUT',
@@ -1073,6 +1077,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'is_primary' => false
         ]);
 
+        Event::fake([UserDefaultPaymentMethodEvent::class]);
+
         $response = $this->call(
             'PATCH',
             '/payment-method/' . $paymentMethodTwo['id'],
@@ -1318,6 +1324,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'is_primary' => false
         ]);
 
+        Event::fake([UserDefaultPaymentMethodEvent::class]);
+
         $response = $this->call(
             'PATCH',
             '/payment-method/set-default',
@@ -1481,7 +1489,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // assert the redirect token is present in the response redirect url
-        $this->assertContains($redirectToken, $response->json('url'));
+        $this->assertStringContainsString($redirectToken, $response->json('url'));
     }
 
     public function test_paypal_agreement()
@@ -1494,6 +1502,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($agreementId);
+
+        Event::fake([PaypalPaymentMethodEvent::class, PaymentMethodCreated::class]);
 
         $response = $this->call(
             'GET',

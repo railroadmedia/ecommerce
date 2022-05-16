@@ -8,6 +8,7 @@ use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Session\Store;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
 use Railroad\Ecommerce\Entities\DiscountCriteria;
@@ -840,18 +841,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             2
         );
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertArraySubset(
             [
@@ -2590,7 +2592,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $decodedResponse = $response->json();
 
         // assert the redirect link contains the token
-        $this->assertContains(
+        $this->assertStringContainsString(
             'token=' . $paypalToken,
             $decodedResponse['meta']['redirect']
         );
@@ -5122,18 +5124,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $expectedProductTaxes = round($expectedTaxRateProduct * $expectedTotalFromItems, 2);
         $expectedShippingTaxes = 0;
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -7642,18 +7645,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -8133,18 +8137,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -8670,17 +8675,17 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'currency' => $currency
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -9097,18 +9102,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'account_creation_password' => $accountCreationPassword,
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $requestData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         // assert response has newly created user information
         $response->assertJsonStructure(
@@ -11531,18 +11537,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'brand' => $brand
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $orderData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -11725,20 +11732,21 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'user_id' => $randomUser['id'],
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
-        $results = $this->call(
+        $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $orderData
         );
 
-        $this->assertEquals(200, $results->getStatusCode());
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
+
+        $this->assertEquals(200, $response->getStatusCode());
 
         $this->assertDatabaseHas(
             'ecommerce_orders',
@@ -11899,18 +11907,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'stripe_api_secret' => $this->faker->word
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $response = $this->call(
             'PUT',
             '/json/order-form/submit',
             $orderData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -12105,18 +12114,19 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'user_id' => $randomUser['id'],
         ];
 
-        $this->expectsEvents(
-            [
-                OrderEvent::class,
-                PaymentMethodCreated::class,
-            ]
-        );
+        Event::fake([
+            OrderEvent::class,
+            PaymentMethodCreated::class,
+        ]);
 
         $results = $this->call(
             'PUT',
             '/json/order-form/submit',
             $orderData
         );
+
+        Event::assertDispatched(OrderEvent::class);
+        Event::assertDispatched(PaymentMethodCreated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
