@@ -37,11 +37,6 @@ class RepositoryBase
     protected $arrayCache;
 
     /**
-     * @var RedisCache
-     */
-    protected $redisCache;
-
-    /**
      * @param EcommerceEntityManager $entityManager
      * @param ClassMetadata $entityClassMetaData
      */
@@ -52,7 +47,6 @@ class RepositoryBase
         $this->entityName = $entityClassMetaData->name;
 
         $this->arrayCache = app()->make('EcommerceArrayCache');
-        $this->redisCache = app()->make('EcommerceRedisCache');
     }
 
     /**

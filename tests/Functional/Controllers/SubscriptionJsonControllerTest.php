@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -33,7 +32,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -1835,19 +1834,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $paymentPlan['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $paymentPlan['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_credit_card()
@@ -1989,19 +1975,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedSubscriptionTaxes,
                 'shipping_taxes_paid' => 0,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscription['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -2277,19 +2250,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $expectedSubscriptionTaxes,
                 'shipping_taxes_paid' => 0,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscription['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

@@ -9,7 +9,7 @@ use Railroad\Location\Services\CountryListService;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }

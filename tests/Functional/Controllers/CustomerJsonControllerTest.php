@@ -9,7 +9,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CustomerJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }

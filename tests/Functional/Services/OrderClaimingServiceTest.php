@@ -36,7 +36,7 @@ class OrderClaimingServiceTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

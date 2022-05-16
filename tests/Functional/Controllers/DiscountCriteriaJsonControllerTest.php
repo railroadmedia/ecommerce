@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }

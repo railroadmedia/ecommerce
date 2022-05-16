@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class MembershipActionJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }

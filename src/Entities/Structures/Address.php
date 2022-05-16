@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities\Structures;
 
-use Doctrine\Common\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Address as AddressEntity;
 use Serializable;
@@ -49,6 +49,8 @@ class Address implements AddressInterface, Serializable
      */
     protected $city;
 
+    protected $inflector;
+
     const PROPS_MAP = [
         'country' => true,
         'region' => true,
@@ -65,9 +67,10 @@ class Address implements AddressInterface, Serializable
         ?string $region = null
     )
     {
-
         $this->country = $country;
         $this->region = $region;
+
+        $this->inflector = app('DoctrineInflector');
     }
 
     /**
@@ -206,8 +209,8 @@ class Address implements AddressInterface, Serializable
     public function merge(Address $address)
     {
         foreach (self::PROPS_MAP as $key => $nil) {
-            $setterName = Inflector::camelize('set' . ucwords($key));
-            $getterName = Inflector::camelize('get' . ucwords($key));
+            $setterName = $this->inflector->camelize('set' . ucwords($key));
+            $getterName = $this->inflector->camelize('get' . ucwords($key));
 
             $currentValue = call_user_func([$this, $getterName]);
             $newValue = call_user_func([$address, $getterName]);
@@ -244,11 +247,13 @@ class Address implements AddressInterface, Serializable
      */
     public static function createFromArray($array)
     {
+        $inflector = app('DoctrineInflector');
+
         $address = new static;
 
         foreach (self::PROPS_MAP as $key => $nil) {
             if (isset($array[$key])) {
-                $setterName = Inflector::camelize('set' . ucwords($key));
+                $setterName = $inflector->camelize('set' . ucwords($key));
 
                 call_user_func([$address, $setterName], $array[$key]);
             }

@@ -24,7 +24,7 @@ class CartServiceTest extends EcommerceTestCase
      */
     public $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

@@ -12,7 +12,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class PopulatePaymentTaxesTableTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }

@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\PaymentMethod;
@@ -13,7 +12,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class OrderJsonControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -159,19 +158,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
                     'note' => $newNote,
                 ]
             )
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_UPDATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
         );
     }
 
@@ -372,19 +358,6 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 'quantity' => $productTwoNewQuantity,
                 'initial_price' => $productTwo['price'],
                 'final_price' => $productTwo['price'] * $productTwoNewQuantity,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $brand,
-                'resource_name' => Order::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_UPDATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

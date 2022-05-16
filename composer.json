@@ -11,7 +11,7 @@
     "railroad/location": "^3.0.0",
     "railroad/permissions": "^2.0",
     "railroad/remotestorage": "^2.0",
-    "railroad/doctrine": "1.0.*",
+    "railroad/doctrine": "2.0.*",
     "railroad/doctrine-array-hydrator": "1.0.*",
     "ext-redis": "*",
     "ext-json": "*",

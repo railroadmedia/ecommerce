@@ -28,7 +28,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
      */
     protected $sessionGuardMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -163,8 +163,6 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
@@ -172,6 +170,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'user_password' => $this->faker->word,
             'context' => $context,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -219,14 +219,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -284,14 +284,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -363,14 +363,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -535,16 +535,15 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         // call code-redeem first time
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCodeOne['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 

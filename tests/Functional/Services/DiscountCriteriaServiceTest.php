@@ -20,7 +20,7 @@ class DiscountCriteriaServiceTest extends EcommerceTestCase
      */
     protected $session;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

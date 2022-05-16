@@ -10,7 +10,6 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\MockObject\MockObject;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -37,7 +36,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
      */
     protected $sessionGuardMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
@@ -33,7 +32,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -169,19 +168,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -606,19 +592,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => $shippingTax,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
-            ]
-        );
     }
 
     public function test_admin_store_payment_without_payment_method_subscription()
@@ -721,19 +694,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $adminEmail,
-                'actor_id' => $adminId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -845,19 +805,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 2, // user had an initial payment
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $adminEmail,
-                'actor_id' => $adminId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -1258,32 +1205,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'subscription_id' => $subscription['id'],
                 'payment_id' => $decodedResponse['data']['id']
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }

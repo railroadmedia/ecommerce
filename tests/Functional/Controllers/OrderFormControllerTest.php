@@ -28,7 +28,7 @@ class OrderFormControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->cartService = $this->app->make(CartService::class);

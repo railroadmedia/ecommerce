@@ -10,7 +10,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class PaypalWebhookControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
