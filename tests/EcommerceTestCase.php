@@ -331,7 +331,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('location.countries', CountryListService::all());
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
-        $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
+        $app['config']->set('remotestorage.filesystems.default', 'local');
 
         $app['config']->set('ecommerce.development_mode', $defaultConfig['development_mode'] ?? true);
         $app['config']->set('usora.development_mode', $defaultConfig['development_mode'] ?? true);

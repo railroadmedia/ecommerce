@@ -86,7 +86,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'data.attributes.max',
-                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'detail' => 'The max must be greater than or equal to ' . $minValue . '.',
                     'title' => 'Validation failed.'
                 ],
             ],
@@ -248,7 +248,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'data.attributes.max',
-                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'detail' => 'The max must be greater than or equal to ' . $minValue . '.',
                     'title' => 'Validation failed.'
                 ],
             ],

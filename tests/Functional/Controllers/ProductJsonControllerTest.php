@@ -267,7 +267,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $errors = [
             [
                 'source' => 'data.attributes.weight',
-                'detail' => 'The weight field is required when is physical is 1.',
+                'detail' => 'The weight field is required when is physical is true.',
                 'title' => 'Validation failed.'
             ]
         ];

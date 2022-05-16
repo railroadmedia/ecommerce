@@ -96,7 +96,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -302,7 +302,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -402,7 +402,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -495,7 +495,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );

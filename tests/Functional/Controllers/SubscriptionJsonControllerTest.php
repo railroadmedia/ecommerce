@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
@@ -52,9 +53,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $subscription = $this->fakeSubscription();
 
-        $this->expectsEvents([SubscriptionDeleted::class]);
+        Event::fake([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $subscription['id']);
+
+        Event::assertDispatched(SubscriptionDeleted::class);
 
         $this->assertEquals(204, $results->getStatusCode());
 
@@ -75,9 +78,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $randomId = $this->faker->randomNumber();
 
-        $this->doesntExpectEvents([SubscriptionDeleted::class]);
+        Event::fake([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $randomId);
+
+        Event::assertNotDispatched(SubscriptionDeleted::class);
 
         // assert response status code
         $this->assertEquals(404, $results->getStatusCode());
@@ -597,7 +602,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionCreated::class]);
+        Event::fake([SubscriptionCreated::class]);
 
         $results = $this->call(
             'PUT',
@@ -635,6 +640,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionCreated::class);
 
         // assert the response status code
         $this->assertEquals(200, $results->getStatusCode());
@@ -770,7 +777,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $newPrice = $this->faker->numberBetween();
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -782,6 +789,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -914,7 +924,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -926,6 +936,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1055,7 +1068,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -1067,6 +1080,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1214,7 +1230,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         // events not fired
-        $this->doesntExpectEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $note = $this->faker->word;
 
@@ -1228,6 +1244,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertNotDispatched(SubscriptionUpdated::class);
+        Event::assertNotDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1425,7 +1444,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -1439,6 +1458,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -2047,7 +2069,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents(
+        Event::fake(
             [
                 SubscriptionRenewed::class,
                 SubscriptionUpdated::class,
@@ -2059,6 +2081,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        Event::assertDispatched(SubscriptionRenewed::class);
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionRenewed::class);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
@@ -2339,13 +2365,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
-        $this->expectsEvents([SubscriptionRenewFailed::class]);
-        $this->doesntExpectEvents([SubscriptionRenewed::class]);
+        Event::fake([SubscriptionRenewFailed::class, SubscriptionRenewed::class]);
 
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        Event::assertDispatched(SubscriptionRenewFailed::class);
+        Event::assertNotDispatched(SubscriptionRenewed::class);
 
         // assert response status code
         $this->assertEquals(402, $results->getStatusCode());
