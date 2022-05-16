@@ -1055,7 +1055,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $customer = $this->fakeCustomer();
 
-        $address = $this->faker->address();
+        $address = $this->faker->address(['country' => 'Canada']);
 
         $results = $this->call(
             'PUT',
