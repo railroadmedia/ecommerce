@@ -3,12 +3,15 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Location\Services\CountryListService;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -50,7 +53,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // soft deleted address will not be returned in response
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             [
@@ -137,7 +140,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // soft deleted address will be returned in response
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             [
@@ -309,7 +312,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -339,7 +342,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.',
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -380,7 +383,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.',
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -420,7 +423,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized, users can only create addresses for themselves.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -475,7 +478,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         //assert that the address exists in the database
@@ -510,7 +513,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, address not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -575,7 +578,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         //assert that the address was updated in the database
@@ -651,7 +654,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized, only the owning user can update this address.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
 
         // assert that the address was not modified in the database
@@ -681,7 +684,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized, only the owning user can update this address.'
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
 
         // assert that the address was not deleted from the database
@@ -728,7 +731,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'Delete failed, orders found with selected address.'
             ],
-            $results->decodeResponseJson('error')
+            $results->json('error')
         );
     }
 
@@ -791,7 +794,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.',
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         //assert that the address with invalid country was not created
@@ -844,7 +847,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         //assert that the address was not modified in the database
@@ -914,7 +917,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         //assert that the address exists in the database
@@ -989,7 +992,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         //assert that the address was updated in the database
@@ -1093,7 +1096,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the address exists in the database
@@ -1165,7 +1168,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert address row was updated in the database
@@ -1227,7 +1230,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized. You must pass the correct customer id.'
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
 
         //assert database content
@@ -1284,7 +1287,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized. You must pass the correct customer id.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
 
         // assert database

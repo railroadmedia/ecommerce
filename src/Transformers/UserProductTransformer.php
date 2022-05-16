@@ -10,7 +10,7 @@ use Railroad\Ecommerce\Entities\UserProduct;
 
 class UserProductTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param UserProduct $userProduct

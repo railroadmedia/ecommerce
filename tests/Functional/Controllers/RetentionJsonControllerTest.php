@@ -149,7 +149,7 @@ class RetentionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             ['data' => $expectedStats],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

@@ -44,7 +44,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -95,7 +95,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Create discount criteria failed, discount not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -171,7 +171,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the discount criteria exists in the database
@@ -223,7 +223,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update discount criteria failed, discount criteria not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -312,7 +312,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the discount criteria data has been updated in the database
@@ -436,7 +436,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the discount criteria data has been updated in the database
@@ -487,7 +487,7 @@ class DiscountCriteriaJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete discount criteria failed, discount criteria not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 

@@ -175,7 +175,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The account creation email field is required when billing email is not present.',
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -312,7 +312,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The account creation email field is required when billing email is not present.',
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -449,7 +449,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -511,7 +511,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -565,7 +565,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -674,7 +674,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -884,7 +884,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -1005,7 +1005,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -1271,7 +1271,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -1392,7 +1392,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -1596,7 +1596,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -1662,7 +1662,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -1928,7 +1928,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -2024,7 +2024,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -2299,7 +2299,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -2395,7 +2395,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -2587,7 +2587,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert the redirect link contains the token
         $this->assertContains(
@@ -2784,7 +2784,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -2884,7 +2884,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -3229,7 +3229,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -3329,7 +3329,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ],
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -3680,7 +3680,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -3780,7 +3780,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ],
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -4134,10 +4134,10 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
-        $this->assertIncludes([], $response->decodeResponseJson()['included']);
+        $this->assertIncludes([], $response->json()['included']);
 
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -4454,7 +4454,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -4554,7 +4554,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -4843,7 +4843,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -4959,7 +4959,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -5376,7 +5376,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -5467,7 +5467,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertDatabaseHas(
@@ -5704,7 +5704,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -5795,7 +5795,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertDatabaseHas(
@@ -7657,7 +7657,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -7815,7 +7815,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $customerId = null;
@@ -8148,7 +8148,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -8306,7 +8306,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $customerId = null;
@@ -8684,7 +8684,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -8839,7 +8839,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $customerId = null;
@@ -9126,7 +9126,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $userId = $decodedResponse['data']['relationships']['user']['data']['id'];
 
@@ -9224,7 +9224,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertEquals(200, $response->getStatusCode());
@@ -9622,7 +9622,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -9688,7 +9688,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertDatabaseHas(
@@ -9941,7 +9941,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -10007,7 +10007,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertDatabaseHas(
@@ -10307,7 +10307,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertIncludes(
@@ -10373,7 +10373,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
 
         $this->assertDatabaseHas(
@@ -10898,7 +10898,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [

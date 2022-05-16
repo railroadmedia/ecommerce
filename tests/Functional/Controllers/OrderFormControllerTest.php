@@ -488,6 +488,7 @@ class OrderFormControllerTest extends EcommerceTestCase
         );
 
         // assert response code
+        dd($response->getContent());
         $this->assertEquals(302, $response->getStatusCode());
 
         // assert session results

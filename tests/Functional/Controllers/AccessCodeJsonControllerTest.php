@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
@@ -10,6 +11,8 @@ use Railroad\Ecommerce\Tests\Fixtures\UserProvider;
 
 class AccessCodeJsonControllerTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -70,7 +73,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $results->status());
 
-        $results = $results->decodeResponseJson();
+        $results = $results->json();
 
         $aIndex = 0;
 
@@ -210,7 +213,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -233,7 +236,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'source' => 'claim_for_user_id',
                 'detail' => 'The claim for user id field is required.',
             ]
-        ], $response->decodeResponseJson('errors'));
+        ], $response->json('errors'));
     }
 
     public function test_claim_for_user_id_not_found()
@@ -287,7 +290,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Claim failed, user not found with id: ' . $userId,
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -346,7 +349,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert the user product data was saved in the db
@@ -418,7 +421,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                     )
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         //assert the response status code
@@ -450,7 +453,7 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'source' => 'access_code_id',
                 'detail' => 'The access code id field is required.',
             ]
-        ], $response->decodeResponseJson('errors'));
+        ], $response->json('errors'));
     }
 
     public function test_release_validation_unclaimed()
@@ -483,6 +486,6 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
                 'source' => 'access_code_id',
                 'detail' => 'The selected access code id is invalid.',
             ]
-        ], $response->decodeResponseJson('errors'));
+        ], $response->json('errors'));
     }
 }

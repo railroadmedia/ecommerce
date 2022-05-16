@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
@@ -25,6 +26,7 @@ use ReceiptValidator\iTunes\SandboxResponse;
 class AppleStoreKitControllerTest extends EcommerceTestCase
 {
     use WithoutMiddleware;
+    use ArraySubsetAsserts;
 
     /**
      * @var MockObject|AuthManager
@@ -86,7 +88,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                     'detail' => 'The password field is required.',
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -151,7 +153,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -273,7 +275,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -406,7 +408,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
                     'detail' => $exceptionMessage,
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         $this->assertDatabaseHas(
@@ -1394,7 +1396,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -1513,7 +1515,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -1617,7 +1619,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -2040,9 +2042,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-       $this->assertTrue(array_key_exists('shouldLogin', $response->decodeResponseJson()));
+       $this->assertTrue(array_key_exists('shouldLogin', $response->json()));
 
-       $this->assertTrue($response->decodeResponseJson()['shouldLogin']);
+       $this->assertTrue($response->json()['shouldLogin']);
     }
 
     public function test_signup_when_exists_expired_subscription()
@@ -2124,9 +2126,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(array_key_exists('shouldRenew', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('shouldRenew', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldRenew']);
+        $this->assertTrue($response->json()['shouldRenew']);
     }
 
     public function test_signup_when_not_exists_subscription()
@@ -2168,9 +2170,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(array_key_exists('shouldSignup', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('shouldSignup', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldSignup']);
+        $this->assertTrue($response->json()['shouldSignup']);
     }
 
     public function test_restore_when_not_exists_data_in_db()
@@ -2212,9 +2214,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(array_key_exists('shouldCreateAccount', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('shouldCreateAccount', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldCreateAccount']);
+        $this->assertTrue($response->json()['shouldCreateAccount']);
     }
 
     public function test_restore_when_exists_receipt_in_db()
@@ -2293,9 +2295,9 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertTrue(array_key_exists('token', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('token', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['success']);
+        $this->assertTrue($response->json()['success']);
 
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
@@ -2377,7 +2379,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));

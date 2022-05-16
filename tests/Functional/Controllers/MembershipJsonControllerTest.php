@@ -67,7 +67,7 @@ class MembershipJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $expected,
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

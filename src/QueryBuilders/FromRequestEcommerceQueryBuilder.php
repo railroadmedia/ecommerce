@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\QueryBuilders;
 use Carbon\Carbon;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Railroad\Permissions\Services\PermissionService;
 
 class FromRequestEcommerceQueryBuilder extends QueryBuilder
@@ -50,7 +51,7 @@ class FromRequestEcommerceQueryBuilder extends QueryBuilder
         if (strpos($orderByColumn, '_') !== false || strpos($orderByColumn, '-') !== false) {
             // transform order by column name from snake-case to camel-case
             // example: 'created_at' sent by UI is transformed into 'createdAt' for doctrine
-            $orderByColumn = camel_case($orderByColumn);
+            $orderByColumn = Str::camel($orderByColumn);
         }
 
         $orderByColumn = $entityAlias . '.' . $orderByColumn;

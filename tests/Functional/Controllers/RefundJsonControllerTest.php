@@ -49,7 +49,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The payment field is required.',
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -209,7 +209,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -391,7 +391,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -608,7 +608,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -820,7 +820,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db

@@ -137,7 +137,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -268,7 +268,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -408,7 +408,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -559,7 +559,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -666,7 +666,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -777,7 +777,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -858,7 +858,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -919,7 +919,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -977,7 +977,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The selected order is invalid.'
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -1035,7 +1035,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The selected subscription is invalid.'
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -1129,7 +1129,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -1271,7 +1271,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db
@@ -1365,7 +1365,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db
@@ -1465,7 +1465,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -1595,7 +1595,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // response payment has subscription renewal_attempt value 1, stored in attempt_number field
         $this->assertArraySubset(
@@ -1740,7 +1740,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -1876,7 +1876,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -2037,7 +2037,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expected['data'],
@@ -2194,7 +2194,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expected['data'],
@@ -2304,7 +2304,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             $expected,
@@ -2345,7 +2345,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, payment not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 

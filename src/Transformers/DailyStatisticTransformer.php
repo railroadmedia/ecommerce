@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Entities\Structures\DailyStatistic;
 
 class DailyStatisticTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param DailyStatistic $dailyStatistic

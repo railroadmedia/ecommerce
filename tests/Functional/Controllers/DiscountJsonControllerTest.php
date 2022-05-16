@@ -51,7 +51,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                 'detail' => 'The visible field is required.',
                 'title' => 'Validation failed.'
             ]
-        ], $results->decodeResponseJson()['errors']);
+        ], $results->json()['errors']);
     }
 
     public function test_store()
@@ -114,7 +114,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the discount exists in the database
@@ -138,7 +138,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, discount not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -221,7 +221,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert database updates
@@ -268,7 +268,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     'title' => 'Not found.'
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -377,7 +377,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        $parsedResults = $results->decodeResponseJson();
+        $parsedResults = $results->json();
 
         $this->assertEquals($discounts, $parsedResults['data']);
         $this->assertEquals($included, $parsedResults['included']);
@@ -400,7 +400,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        $parsedResults = $results->decodeResponseJson();
+        $parsedResults = $results->json();
 
         $this->assertEquals(
             [
@@ -461,7 +461,7 @@ class DiscountJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Pull failed, discount not found with id: ' . $randomDiscountId
                 ]
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 }

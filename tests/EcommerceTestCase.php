@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Support\Facades\Event;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
@@ -37,6 +38,8 @@ use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
 {
+    use ArraySubsetAsserts;
+
     const TABLES = [
         'users' => 'users',
         'products' => 'ecommerce_products',

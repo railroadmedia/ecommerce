@@ -12,7 +12,7 @@
     "railroad/permissions": "^2.0",
     "railroad/remotestorage": "^2.0",
     "railroad/doctrine": "2.0.*",
-    "railroad/doctrine-array-hydrator": "1.0.*",
+    "railroad/doctrine-array-hydrator": "2.0.*",
     "ext-redis": "*",
     "ext-json": "*",
     "ext-openssl": "*",

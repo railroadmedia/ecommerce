@@ -90,7 +90,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, subscription not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -207,7 +207,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -370,7 +370,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -481,7 +481,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -561,7 +561,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     "detail" => "The user id field is required.",
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -689,7 +689,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the subscription exists in the database
@@ -731,7 +731,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, subscription not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -842,7 +842,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -987,7 +987,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1127,7 +1127,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1288,7 +1288,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1381,7 +1381,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -1500,7 +1500,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1632,7 +1632,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'title' => 'Subscription renew failed.',
                 'detail' => 'Subscription made by mobile application may not be renewed by web application',
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // Assert a message was not sent to the given users...
@@ -2356,7 +2356,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'title' => 'Subscription renew failed.',
                 'detail' => 'Payment failed: ' . $exceptionMessage,
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         // assert user product was set
@@ -2497,7 +2497,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -2517,7 +2517,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -2675,7 +2675,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -2833,7 +2833,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3128,7 +3128,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3423,7 +3423,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3598,7 +3598,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $failedSubscriptions = $response->decodeResponseJson()['data'];
+        $failedSubscriptions = $response->json()['data'];
 
         // assert subscription one is returned
         $this->assertArraySubset(

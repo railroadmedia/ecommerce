@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
 
 class ProductStatisticTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param ProductStatistic $productStatistic

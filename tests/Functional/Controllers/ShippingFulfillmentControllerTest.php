@@ -224,7 +224,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     ],
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -315,7 +315,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -414,7 +414,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -508,7 +508,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Order - Number" at row: 3 column: 1. Please review.',
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

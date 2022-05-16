@@ -52,7 +52,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, order not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -144,7 +144,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $this->assertDatabaseHas(
@@ -196,7 +196,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The total due must be at least 0.'
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -558,7 +558,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $expected['data'],
-            $response->decodeResponseJson()['data']
+            $response->json()['data']
         );
 
         $this->assertIncludes(
@@ -575,7 +575,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
                 ],
 
             ],
-            $response->decodeResponseJson()['included']
+            $response->json()['included']
         );
     }
 
@@ -698,7 +698,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -815,7 +815,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -944,7 +944,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -1071,7 +1071,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -1237,7 +1237,7 @@ class OrderJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,

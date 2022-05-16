@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Entities\CreditCard;
 
 class CreditCardTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param CreditCard $creditCard

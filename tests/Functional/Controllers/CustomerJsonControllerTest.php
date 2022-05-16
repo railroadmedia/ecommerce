@@ -3,12 +3,15 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CustomerJsonControllerTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -116,7 +119,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals($expected['data'], $decodedResponse['data']);
     }
@@ -140,7 +143,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                     ),
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -162,7 +165,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -188,7 +191,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -232,7 +235,7 @@ class CustomerJsonControllerTest extends EcommerceTestCase
                     )
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

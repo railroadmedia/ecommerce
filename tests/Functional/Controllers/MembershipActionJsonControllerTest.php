@@ -41,7 +41,7 @@ class MembershipActionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // soft deleted address will not be returned in response
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             [

@@ -11,7 +11,7 @@ use Railroad\Ecommerce\Entities\Order;
 
 class AddressTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param Address $address

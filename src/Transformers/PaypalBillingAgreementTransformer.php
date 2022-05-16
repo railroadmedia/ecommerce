@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Entities\PaypalBillingAgreement;
 
 class PaypalBillingAgreementTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param PaypalBillingAgreement $paypalBillingAgreement
