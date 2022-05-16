@@ -4632,7 +4632,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             'customer_id' => null,
             'first_name' => $this->faker->firstName,
             'last_name' => $this->faker->lastName,
-            'street_line_1' => $this->faker->address,
+            'street_line_1' => $this->faker->streetAddress,
             'street_line_2' => null,
             'city' => $this->faker->city,
             'zip' => $this->faker->postcode,

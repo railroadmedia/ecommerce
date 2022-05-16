@@ -69,19 +69,6 @@ class EcommerceServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->listen = [
-            GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
-//            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
-            OrderEvent::class => [
-                OrderShippingFulfilmentListener::class,
-                OrderUserProductListener::class,
-                OrderInvoiceListener::class,
-                DuplicateSubscriptionHandler::class,
-            ],
-            SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
-            MobileOrderEvent::class => [MobileOrderUserProductListener::class]
-        ];
-
         parent::boot();
 
         $this->publishes(
@@ -161,6 +148,21 @@ class EcommerceServiceProvider extends ServiceProvider
 
     public function register()
     {
+        $this->listen = [
+            GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
+//            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
+            OrderEvent::class => [
+                OrderShippingFulfilmentListener::class,
+                OrderUserProductListener::class,
+                OrderInvoiceListener::class,
+                DuplicateSubscriptionHandler::class,
+            ],
+            SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
+            MobileOrderEvent::class => [MobileOrderUserProductListener::class]
+        ];
+
+        parent::register();
+
         $this->setupEntityManager();
     }
 
@@ -217,6 +219,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration = new Configuration();
         $ormConfiguration->setMetadataCache($phpFileCacheAdapter);
         $ormConfiguration->setQueryCache($phpFileCacheAdapter);
+        $ormConfiguration->setResultCache($arrayCacheAdapter);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(

@@ -106,8 +106,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_credit_card_payment_method_set_default_existing_address()
     {
-        Event::fake();
-
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
@@ -273,8 +271,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_credit_card_payment_method_not_default()
     {
-        Event::fake();
-
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
@@ -998,8 +994,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_update_payment_method_set_default()
     {
-        Event::fake();
-
         $userId = $this->createAndLogInNewUser();
 
         $customer = $this->fakeUser();
@@ -1279,8 +1273,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_set_default()
     {
-        Event::fake();
-
         $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress([
@@ -1494,7 +1486,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_paypal_agreement()
     {
-        Event::fake();
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 

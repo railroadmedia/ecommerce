@@ -2421,7 +2421,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address->setStreetLine1($this->faker->address);
+        $address->setStreetLine1($this->faker->streetAddress);
         $address->setCity($this->faker->city);
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);
@@ -2488,7 +2488,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address->setStreetLine1($this->faker->address);
+        $address->setStreetLine1($this->faker->streetAddress);
         $address->setCity($this->faker->city);
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);

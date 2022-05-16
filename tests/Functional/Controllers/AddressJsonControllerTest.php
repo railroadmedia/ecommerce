@@ -394,7 +394,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $otherUserId = rand();
 
-        $address = $this->faker->address();
+        $address = $this->faker->streetAddress();
 
         $response = $this->call(
             'PUT',
@@ -431,7 +431,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $address = $this->faker->address();
+        $address = $this->faker->streetAddress();
 
         $response = $this->call(
             'PUT',
@@ -871,7 +871,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
 
         $user = $this->fakeUser();
 
-        $address = $this->faker->address();
+        $address = $this->faker->streetAddress();
 
         $response = $this->call(
             'PUT',
@@ -1055,7 +1055,7 @@ class AddressJsonControllerTest extends EcommerceTestCase
     {
         $customer = $this->fakeCustomer();
 
-        $address = $this->faker->address();
+        $address = $this->faker->streetAddress();
 
         $results = $this->call(
             'PUT',
