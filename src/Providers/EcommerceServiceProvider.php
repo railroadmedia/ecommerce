@@ -196,7 +196,7 @@ class EcommerceServiceProvider extends ServiceProvider
         DoctrineExtensions::registerAbstractMappingIntoDriverChainORM($driverChain, $cachedAnnotationReader);
 
         // entities
-        foreach (config('ecommerce.entities') as $driverConfig) {
+        foreach (config('ecommerce.entities', []) as $driverConfig) {
             $annotationDriver = new AnnotationDriver($cachedAnnotationReader, $driverConfig['path']);
 
             $driverChain->addDriver($annotationDriver, $driverConfig['namespace']);
