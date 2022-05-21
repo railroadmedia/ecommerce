@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -16,12 +17,14 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CartJsonControllerTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     /**
      * @var Store
      */
     protected $session;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -192,7 +195,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -441,7 +444,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -560,7 +563,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -775,7 +778,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1003,7 +1006,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert recommended products collection type
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['recommendedProducts']));
@@ -1067,7 +1070,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1123,7 +1126,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1207,7 +1210,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1330,7 +1333,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1415,7 +1418,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1582,7 +1585,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1695,7 +1698,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert the error message
         $this->assertEquals(
@@ -1813,7 +1816,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -1899,7 +1902,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -2012,7 +2015,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert the error message
         $this->assertEquals(
@@ -2135,7 +2138,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert the error message
         $this->assertEquals(
@@ -2255,7 +2258,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $financeCharge = 1;
 
@@ -2333,7 +2336,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -2389,7 +2392,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -2418,7 +2421,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address->setStreetLine1($this->faker->address);
+        $address->setStreetLine1($this->faker->streetAddress);
         $address->setCity($this->faker->city);
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);
@@ -2456,7 +2459,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -2485,7 +2488,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // setup initial session address
         $address = new Address();
 
-        $address->setStreetLine1($this->faker->address);
+        $address->setStreetLine1($this->faker->streetAddress);
         $address->setCity($this->faker->city);
         $address->setLastName($this->faker->word);
         $address->setZip($this->faker->postcode);
@@ -2526,7 +2529,7 @@ class CartJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -2607,7 +2610,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert total due
         $this->assertEquals(
@@ -2711,7 +2714,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -2865,7 +2868,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -3029,7 +3032,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));

@@ -113,7 +113,7 @@ class OrderFormSubmitRequest extends FormRequest
         return parent::getValidatorInstance();
     }
 
-    protected function validationData()
+    public function validationData()
     {
         $all = parent::validationData();
 

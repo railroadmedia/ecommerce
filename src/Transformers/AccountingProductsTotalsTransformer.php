@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Entities\Structures\AccountingProductTotals;
 
 class AccountingProductsTotalsTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param AccountingProductTotals $accountingProductTotals

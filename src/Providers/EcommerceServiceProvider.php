@@ -4,18 +4,17 @@ namespace Railroad\Ecommerce\Providers;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Cache\PhpFileCache;
-use Doctrine\Common\Cache\RedisCache;
+use Doctrine\Common\Annotations\IndexedReader;
+use Doctrine\Common\Annotations\PsrCachedReader;
+use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain;
 use Doctrine\Common\Proxy\AbstractProxyFactory;
-use Doctrine\DBAL\Logging\EchoSQLLogger;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\Inflector\InflectorFactory;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
+use Doctrine\Persistence\Mapping\Driver\MappingDriverChain;
 use Gedmo\DoctrineExtensions;
 use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
@@ -58,6 +57,8 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Services\CustomValidationRules;
 use Railroad\Ecommerce\Types\UserType;
 use Redis;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
@@ -68,19 +69,6 @@ class EcommerceServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->listen = [
-            GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
-//            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
-            OrderEvent::class => [
-                OrderShippingFulfilmentListener::class,
-                OrderUserProductListener::class,
-                OrderInvoiceListener::class,
-                DuplicateSubscriptionHandler::class,
-            ],
-            SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
-            MobileOrderEvent::class => [MobileOrderUserProductListener::class]
-        ];
-
         parent::boot();
 
         $this->publishes(
@@ -160,6 +148,21 @@ class EcommerceServiceProvider extends ServiceProvider
 
     public function register()
     {
+        $this->listen = [
+            GiveContentAccess::class => [GiveContentAccessListener::class . '@handle'],
+//            UserDefaultPaymentMethodEvent::class => [UserDefaultPaymentMethodListener::class],
+            OrderEvent::class => [
+                OrderShippingFulfilmentListener::class,
+                OrderUserProductListener::class,
+                OrderInvoiceListener::class,
+                DuplicateSubscriptionHandler::class,
+            ],
+            SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
+            MobileOrderEvent::class => [MobileOrderUserProductListener::class]
+        ];
+
+        parent::register();
+
         $this->setupEntityManager();
     }
 
@@ -170,33 +173,30 @@ class EcommerceServiceProvider extends ServiceProvider
         // set proxy dir to temp folder
         $proxyDir = sys_get_temp_dir();
 
-        // setup redis
-        $redis = new Redis();
-        $redis->connect(config('ecommerce.redis_host'), config('ecommerce.redis_port'));
-
-        $redisCache = new RedisCache();
-        $redisCache->setRedis($redis);
-
-        app()->instance('EcommerceRedisCache', $redisCache);
-        app()->instance('EcommerceArrayCache', new ArrayCache());
+        // array cache
+        $arrayCacheAdapter = new ArrayAdapter();
+        $doctrineArrayCache = DoctrineProvider::wrap($arrayCacheAdapter);
+        app()->instance('EcommerceArrayCache', $doctrineArrayCache);
 
         // file cache
-        $phpFileCache = new PhpFileCache($proxyDir);
+        $phpFileCacheAdapter = new FilesystemAdapter('', 0, $proxyDir);
+        $doctrineFileCache = DoctrineProvider::wrap($arrayCacheAdapter);
 
         // annotation reader
-        AnnotationRegistry::registerLoader('class_exists');
+        $annotationReader = new IndexedReader(new AnnotationReader());
 
-        $annotationReader = new AnnotationReader();
-
-        $cachedAnnotationReader =
-            new CachedReader($annotationReader, $phpFileCache, config('ecommerce.development_mode'));
+        $cachedAnnotationReader = new PsrCachedReader(
+            $annotationReader,
+            $phpFileCacheAdapter,
+            env('APP_DEBUG', false)
+        );
 
         $driverChain = new MappingDriverChain();
 
         DoctrineExtensions::registerAbstractMappingIntoDriverChainORM($driverChain, $cachedAnnotationReader);
 
         // entities
-        foreach (config('ecommerce.entities') as $driverConfig) {
+        foreach (config('ecommerce.entities', []) as $driverConfig) {
             $annotationDriver = new AnnotationDriver($cachedAnnotationReader, $driverConfig['path']);
 
             $driverChain->addDriver($annotationDriver, $driverConfig['namespace']);
@@ -217,9 +217,9 @@ class EcommerceServiceProvider extends ServiceProvider
 
         // orm config
         $ormConfiguration = new Configuration();
-        $ormConfiguration->setMetadataCacheImpl($phpFileCache);
-        $ormConfiguration->setQueryCacheImpl($phpFileCache);
-        $ormConfiguration->setResultCacheImpl($redisCache);
+        $ormConfiguration->setMetadataCache($phpFileCacheAdapter);
+        $ormConfiguration->setQueryCache($phpFileCacheAdapter);
+        $ormConfiguration->setResultCache($arrayCacheAdapter);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(
@@ -264,5 +264,10 @@ class EcommerceServiceProvider extends ServiceProvider
         }
 
         app()->instance(EcommerceEntityManager::class, $entityManager);
+
+        // register global doctrine inflector
+        $inflector = InflectorFactory::create()->build();
+
+        app()->instance('DoctrineInflector', $inflector);
     }
 }

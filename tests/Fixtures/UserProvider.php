@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Fixtures;
 
-use Doctrine\Common\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -97,7 +97,9 @@ class UserProvider implements UserProviderInterface
      */
     public function hydrateTransDomain($entity, string $relationName, array $data): void
     {
-        $setterName = Inflector::camelize('set' . ucwords($relationName));
+        $inflector = app('DoctrineInflector');
+
+        $setterName = $inflector->camelize('set' . ucwords($relationName));
 
         if (isset($data['data']['type']) &&
             $data['data']['type'] === self::RESOURCE_TYPE &&

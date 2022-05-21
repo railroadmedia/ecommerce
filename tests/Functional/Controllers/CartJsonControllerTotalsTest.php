@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -17,12 +18,14 @@ use Railroad\Location\Services\LocationReferenceService;
 
 class CartJsonControllerTotalsTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     /**
      * @var Store
      */
     protected $session;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -74,7 +77,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'products' => [$product['sku'] => $initialQuantity],
             ]
         );
-        $jsonResponse = $response->decodeResponseJson();
+        $jsonResponse = $response->json();
 
         $this->assertNull($jsonResponse["meta"]["cart"]["shipping_address"]);
 
@@ -90,7 +93,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         ];
 
         $response = $this->call('PUT', '/session/address', $shippingAddress);
-        $jsonResponse = $response->decodeResponseJson();
+        $jsonResponse = $response->json();
 
         $this->assertEquals(3.11, $jsonResponse["meta"]["cart"]["totals"]["tax"]);
 
@@ -102,7 +105,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
                 'products' => [$productPhysical['sku'] => $initialQuantity],
             ]
         );
-        $jsonResponse = $response->decodeResponseJson();
+        $jsonResponse = $response->json();
 
         $this->assertEquals(0, $jsonResponse["meta"]["cart"]["totals"]["tax"]);
 
@@ -111,7 +114,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
             'DELETE',
             '/json/remove-from-cart/' . $productPhysical['sku']
         );
-        $jsonResponse = $response->decodeResponseJson();
+        $jsonResponse = $response->json();
 
         $this->assertEquals(3.11, $jsonResponse["meta"]["cart"]["totals"]["tax"]);
 
@@ -122,7 +125,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
         ];
 
         $response = $this->call('PUT', '/session/address', $billingAddress);
-        $jsonResponse = $response->decodeResponseJson();
+        $jsonResponse = $response->json();
 
         $this->assertEquals(0, $jsonResponse["meta"]["cart"]["totals"]["tax"]);
 
@@ -146,7 +149,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
@@ -296,7 +299,7 @@ class CartJsonControllerTotalsTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert total due
         $this->assertEquals(

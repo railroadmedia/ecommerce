@@ -10,7 +10,7 @@ use Railroad\Ecommerce\Entities\AccessCode;
 
 class AccessCodeTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
     protected $productsMap;
 
     /**

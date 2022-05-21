@@ -3,7 +3,10 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Doctrine\ORM\EntityManager;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\Event;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
@@ -12,8 +15,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use Railroad\ActionLog\Managers\ActionLogEntityManager;
-use Railroad\ActionLog\Providers\ActionLogServiceProvider;
 use Railroad\Doctrine\Contracts\UserProviderInterface as DoctrineUserProviderInterface;
 use Railroad\Doctrine\Providers\DoctrineServiceProvider;
 use Railroad\DoctrineArrayHydrator\Contracts\UserProviderInterface as DoctrineArrayHydratorUserProviderInterface;
@@ -34,10 +35,13 @@ use Railroad\Location\Services\CountryListService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
+use Tests\TestCase;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
 {
+    use ArraySubsetAsserts;
+
     const TABLES = [
         'users' => 'users',
         'products' => 'ecommerce_products',
@@ -70,6 +74,13 @@ class EcommerceTestCase extends BaseTestCase
         'retentionStats' => 'ecommerce_retention_stats',
         'membershipActions' => 'ecommerce_membership_actions',
     ];
+
+    /**
+     * All of the fired events.
+     *
+     * @var array
+     */
+    protected $firedEvents = [];
 
     /**
      * @var \Railroad\Ecommerce\Faker\Faker
@@ -146,7 +157,7 @@ class EcommerceTestCase extends BaseTestCase
      */
     protected $app;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -159,35 +170,24 @@ class EcommerceTestCase extends BaseTestCase
         // Run the schema update tool using our entity metadata
         $this->entityManager = app(EcommerceEntityManager::class);
 
-        // todo - find better way to share connection with ActionLogEntityManager
-        $actionLogEntitytManager = app(ActionLogEntityManager::class);
-        $config = $actionLogEntitytManager->getConfiguration();
-        $actionLogEntitytManager->close();
-        $actionLogEntitytManager = ActionLogEntityManager::create(
-            $this->entityManager->getConnection(),
-            $config,
-            $this->entityManager->getEventManager()
-        );
-        $this->app->instance(ActionLogEntityManager::class, $actionLogEntitytManager);
-
         $this->entityManager->getMetadataFactory()
             ->getCacheDriver()
             ->deleteAll();
 
-        $this->entityManager->getConfiguration()
-            ->getResultCacheImpl()
-            ->deleteAll();
+//        $this->entityManager->getConfiguration()
+//            ->getResultCache()
+//            ->clear();
 
         // make sure laravel is using the same connection
         DB::connection()
             ->setPdo(
                 $this->entityManager->getConnection()
-                    ->getWrappedConnection()
+                    ->getNativeConnection()
             );
         DB::connection()
             ->setReadPdo(
                 $this->entityManager->getConnection()
-                    ->getWrappedConnection()
+                    ->getNativeConnection()
             );
 
         $this->permissionServiceMock =
@@ -265,6 +265,11 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.brand', $defaultConfig['brand']);
         $app['config']->set('ecommerce.available_brands', $defaultConfig['available_brands']);
         $app['config']->set('ecommerce.tax_rates_and_options', $defaultConfig['tax_rates_and_options']);
+        $app['config']->set('ecommerce.shipping_tax_rate', $defaultConfig['shipping_tax_rate']);
+        $app['config']->set('ecommerce.product_tax_rate', $defaultConfig['product_tax_rate']);
+        $app['config']->set('ecommerce.gst_hst_tax_rate_display_only', $defaultConfig['gst_hst_tax_rate_display_only']);
+        $app['config']->set('ecommerce.pst_tax_rate_display_only', $defaultConfig['pst_tax_rate_display_only']);
+        $app['config']->set('ecommerce.qst_tax_rate', $defaultConfig['qst_tax_rate']);
         $app['config']->set('ecommerce.paypal', $defaultConfig['payment_gateways']['paypal']);
         $app['config']->set('ecommerce.stripe', $defaultConfig['payment_gateways']['stripe']);
         $app['config']->set('ecommerce.payment_gateways', $defaultConfig['payment_gateways']);
@@ -326,7 +331,7 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('location.countries', CountryListService::all());
 
         $app['config']->set('remotestorage.filesystems.disks', $remoteStorageConfig['filesystems.disks']);
-        $app['config']->set('remotestorage.filesystems.default', $remoteStorageConfig['filesystems.default']);
+        $app['config']->set('remotestorage.filesystems.default', 'local');
 
         $app['config']->set('ecommerce.development_mode', $defaultConfig['development_mode'] ?? true);
         $app['config']->set('usora.development_mode', $defaultConfig['development_mode'] ?? true);
@@ -336,16 +341,8 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('ecommerce.database_in_memory', true);
 
         // if new packages entities are required for testing, their entity directory/namespace config should be merged here
-        $railactionlogEntities = [
-            [
-                'path' => __DIR__ . '/../vendor/railroad/railactionlog/src/Entities',
-                'namespace' => 'Railroad\ActionLog\Entities',
-            ]
-        ];
-        $app['config']->set('doctrine.entities', array_merge(
-            $defaultConfig['entities'],
-            $railactionlogEntities
-        ));
+        $app['config']->set('doctrine.entities', $defaultConfig['entities']);
+
         $app['config']->set('doctrine.redis_host', $defaultConfig['redis_host']);
         $app['config']->set('doctrine.redis_port', $defaultConfig['redis_port']);
 
@@ -358,14 +355,6 @@ class EcommerceTestCase extends BaseTestCase
         $app['config']->set('doctrine.database_user', 'root');
         $app['config']->set('doctrine.database_password', 'root');
         $app['config']->set('doctrine.database_in_memory', true);
-
-        $app['config']->set('railactionlog.development_mode', $defaultConfig['development_mode'] ?? true);
-        $app['config']->set('railactionlog.database_driver', 'pdo_sqlite');
-        $app['config']->set('railactionlog.database_user', 'root');
-        $app['config']->set('railactionlog.database_password', 'root');
-        $app['config']->set('railactionlog.database_in_memory', true);
-        $app['config']->set('railactionlog.entities', $railactionlogEntities);
-        $app['config']->set('railactionlog.data_mode', 'host');
 
         $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
         $app['config']->set('database.default', 'ecommerce_sqlite');
@@ -409,7 +398,6 @@ class EcommerceTestCase extends BaseTestCase
         $app->register(LocationServiceProvider::class);
         $app->register(RemoteStorageServiceProvider::class);
         $app->register(PermissionsServiceProvider::class);
-        $app->register(ActionLogServiceProvider::class);
 
         $this->currencies = $defaultConfig['supported_currencies'];
         $this->defaultCurrency = $defaultConfig['default_currency'];
@@ -480,14 +468,18 @@ class EcommerceTestCase extends BaseTestCase
                     ]
                 );
 
-        Auth::shouldReceive('check')
+        Auth::partialMock()
+            ->shouldReceive('check')
             ->andReturn(true);
 
-        Auth::shouldReceive('id')
+        Auth::partialMock()
+            ->shouldReceive('id')
             ->andReturn($userId);
 
         $userMockResults = ['id' => $userId, 'email' => $email];
-        Auth::shouldReceive('user')
+
+        Auth::partialMock()
+            ->shouldReceive('user')
             ->andReturn($userMockResults);
 
         return $userId;
@@ -1127,7 +1119,7 @@ class EcommerceTestCase extends BaseTestCase
         return $this->faker->randomElement($this->paymentPlanOptions);
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
     }
@@ -1295,5 +1287,43 @@ class EcommerceTestCase extends BaseTestCase
         }
 
         return $products;
+    }
+
+    /**
+     * We don't want to use mockery so this is a reimplementation of the mockery version.
+     *
+     * @param  array|string $events
+     * @return $this
+     *
+     * @throws \Exception
+     */
+    public function expectsEvents($events)
+    {
+        $events = is_array($events) ? $events : func_get_args();
+        $mock = $this->getMockBuilder(Dispatcher::class)
+            ->setMethods(['fire', 'dispatch'])
+            ->getMockForAbstractClass();
+        $mock->method('fire')->willReturnCallback(
+            function ($called) {
+                $this->firedEvents[] = $called;
+            }
+        );
+        $mock->method('dispatch')->willReturnCallback(
+            function ($called) {
+                $this->firedEvents[] = $called;
+            }
+        );
+        $this->app->instance('events', $mock);
+        $this->beforeApplicationDestroyed(
+            function () use ($events) {
+                $fired = $this->getFiredEvents($events);
+                if ($eventsNotFired = array_diff($events, $fired)) {
+                    throw new Exception(
+                        'These expected events were not fired: [' . implode(', ', $eventsNotFired) . ']'
+                    );
+                }
+            }
+        );
+        return $this;
     }
 }

@@ -12,7 +12,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class StatsControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }
@@ -806,7 +806,7 @@ class StatsControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $expected,
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

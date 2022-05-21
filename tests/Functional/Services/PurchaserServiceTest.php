@@ -21,7 +21,7 @@ class PurchaserServiceTest extends EcommerceTestCase
      */
     protected $authManagerMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

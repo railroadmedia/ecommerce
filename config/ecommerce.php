@@ -316,76 +316,76 @@ return [
         ],
     ],
 
-//
-//    //the countries and the region names should be lowercase
-//    'product_tax_rate' => [
-//        'canada' => [
-//            'alberta' => 0.05,
-//            'british columbia' => 0.12,
-//            'manitoba' => 0.05,
-//            'new brunswick' => 0.15,
-//            'newfoundland and labrador' => 0.15,
-//            'northwest territories' => 0.05,
-//            'nova scotia' => 0.15,
-//            'nunavut' => 0.05,
-//            'ontario' => 0.13,
-//            'prince edward island' => 0.15,
-//            'quebec' => 0.05,
-//            'saskatchewan' => 0.05,
-//            'yukon' => 0.05,
-//        ],
-//    ],
-//
-//    // tax rate used on the shipping costs, its sometimes different than tax for product cost
-//    'shipping_tax_rate' => [
-//        'canada' => [
-//            'alberta' => 0.05,
-//            'british columbia' => 0.05,
-//            'manitoba' => 0.05,
-//            'new brunswick' => 0.15,
-//            'newfoundland and labrador' => 0.15,
-//            'northwest territories' => 0.05,
-//            'nova scotia' => 0.15,
-//            'nunavut' => 0.05,
-//            'ontario' => 0.13,
-//            'prince edward island' => 0.15,
-//            'quebec' => 0.05,
-//            'saskatchewan' => 0.05,
-//            'yukon' => 0.05,
-//        ],
-//    ],
-//
-//    // this is used to show how much of the taxes the user paid went to gst in invoices
-//    'gst_hst_tax_rate_display_only' => [
-//        'canada' => [
-//            'alberta' => 0.05,
-//            'british columbia' => 0.05,
-//            'manitoba' => 0.05,
-//            'new brunswick' => 0.15,
-//            'newfoundland and labrador' => 0.15,
-//            'northwest territories' => 0.05,
-//            'nova scotia' => 0.15,
-//            'nunavut' => 0.05,
-//            'ontario' => 0.13,
-//            'prince edward island' => 0.15,
-//            'quebec' => 0.05,
-//            'saskatchewan' => 0.05,
-//            'yukon' => 0.05,
-//        ],
-//    ],
-//
-//    // this is used to show how much of the taxes the user paid went to pst in invoices
-//    'pst_tax_rate_display_only' => [
-//        'canada' => [
-//            'british columbia' => 0.05,
-//        ],
-//    ],
-//
-//    'qst_tax_rate' => [
-//        'canada' => [
-//            'quebec' => 0.09975,
-//        ]
-//    ],
+
+    //the countries and the region names should be lowercase
+    'product_tax_rate' => [
+        'canada' => [
+            'alberta' => 0.05,
+            'british columbia' => 0.12,
+            'manitoba' => 0.05,
+            'new brunswick' => 0.15,
+            'newfoundland and labrador' => 0.15,
+            'northwest territories' => 0.05,
+            'nova scotia' => 0.15,
+            'nunavut' => 0.05,
+            'ontario' => 0.13,
+            'prince edward island' => 0.15,
+            'quebec' => 0.05,
+            'saskatchewan' => 0.05,
+            'yukon' => 0.05,
+        ],
+    ],
+
+    // tax rate used on the shipping costs, its sometimes different than tax for product cost
+    'shipping_tax_rate' => [
+        'canada' => [
+            'alberta' => 0.05,
+            'british columbia' => 0.05,
+            'manitoba' => 0.05,
+            'new brunswick' => 0.15,
+            'newfoundland and labrador' => 0.15,
+            'northwest territories' => 0.05,
+            'nova scotia' => 0.15,
+            'nunavut' => 0.05,
+            'ontario' => 0.13,
+            'prince edward island' => 0.15,
+            'quebec' => 0.05,
+            'saskatchewan' => 0.05,
+            'yukon' => 0.05,
+        ],
+    ],
+
+    // this is used to show how much of the taxes the user paid went to gst in invoices
+    'gst_hst_tax_rate_display_only' => [
+        'canada' => [
+            'alberta' => 0.05,
+            'british columbia' => 0.05,
+            'manitoba' => 0.05,
+            'new brunswick' => 0.15,
+            'newfoundland and labrador' => 0.15,
+            'northwest territories' => 0.05,
+            'nova scotia' => 0.15,
+            'nunavut' => 0.05,
+            'ontario' => 0.13,
+            'prince edward island' => 0.15,
+            'quebec' => 0.05,
+            'saskatchewan' => 0.05,
+            'yukon' => 0.05,
+        ],
+    ],
+
+    // this is used to show how much of the taxes the user paid went to pst in invoices
+    'pst_tax_rate_display_only' => [
+        'canada' => [
+            'british columbia' => 0.05,
+        ],
+    ],
+
+    'qst_tax_rate' => [
+        'canada' => [
+            'quebec' => 0.09975,
+        ]
+    ],
 
     // this is displayed on all invoices to canadian customers
     'canada_gst_hst_number' => [

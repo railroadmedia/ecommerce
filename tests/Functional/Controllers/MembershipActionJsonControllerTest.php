@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class MembershipActionJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -41,7 +41,7 @@ class MembershipActionJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // soft deleted address will not be returned in response
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             [

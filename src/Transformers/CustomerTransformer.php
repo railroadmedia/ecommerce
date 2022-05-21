@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Entities\Customer;
 
 class CustomerTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * CustomerTransformer constructor.

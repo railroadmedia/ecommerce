@@ -11,7 +11,7 @@ use Railroad\RemoteStorage\Services\RemoteStorageService;
 
 class ProductJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -49,7 +49,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
 
@@ -97,7 +97,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $subscription['digital_access_permission_names'] = json_encode($subscription['digital_access_permission_names']);
@@ -152,7 +152,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_validation_for_new_subscription()
@@ -194,7 +194,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_validation_sku_unique()
@@ -229,7 +229,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Validation failed.'
             ]
         ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
 
         // assert product with the same sku was not saved in the db
         $this->assertDatabaseMissing(
@@ -267,12 +267,12 @@ class ProductJsonControllerTest extends EcommerceTestCase
         $errors = [
             [
                 'source' => 'data.attributes.weight',
-                'detail' => 'The weight field is required when is physical is 1.',
+                'detail' => 'The weight field is required when is physical is true.',
                 'title' => 'Validation failed.'
             ]
         ];
 
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_update_product_inexistent()
@@ -292,7 +292,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 'detail' => 'Update failed, product not found with id: ' . $randomProductId
             ]
         ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_update_product()
@@ -338,7 +338,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert product updated in the db
@@ -394,7 +394,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Validation failed.'
             ]
         ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
 
         // assert product raw was not modified in db
         $this->assertDatabaseHas(
@@ -417,7 +417,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not found.'
             ]
         ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_delete_product()
@@ -493,7 +493,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertArraySubset($expected, $results->decodeResponseJson());
+        $this->assertArraySubset($expected, $results->json());
     }
 
     public function test_upload_thumb()
@@ -536,7 +536,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $fileAbsolutePath,
-            $response->decodeResponseJson('meta')['url']
+            $response->json('meta')['url']
         );
     }
 
@@ -600,7 +600,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->assertArraySubset($expected, $results->decodeResponseJson());
+        $this->assertArraySubset($expected, $results->json());
     }
 
     public function test_update_product_same_SKU_pass_validation()
@@ -649,7 +649,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert product updated in the db
@@ -696,7 +696,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Validation failed.'
             ]
         ];
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
 
         // assert product2 was not modified in db
         $this->assertDatabaseHas(
@@ -723,7 +723,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_pull_product()
@@ -751,7 +751,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
     }
 
@@ -780,7 +780,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
     }
 
@@ -803,7 +803,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
             ]
         ];
 
-        $this->assertEquals($errors, $results->decodeResponseJson()['errors']);
+        $this->assertEquals($errors, $results->json()['errors']);
     }
 
     public function test_pull_products_multiple_brands()
@@ -851,7 +851,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
         //assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        $this->assertArraySubset($expected, $results->decodeResponseJson());
+        $this->assertArraySubset($expected, $results->json());
     }
 
     public function test_pull_products_brands_not_set_on_request()
@@ -890,7 +890,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ]
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
     }
 
@@ -938,7 +938,7 @@ class ProductJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert product updated in the db

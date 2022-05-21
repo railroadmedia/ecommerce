@@ -22,7 +22,7 @@ class ShippingServiceTest extends EcommerceTestCase
      */
     protected $discountServiceMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

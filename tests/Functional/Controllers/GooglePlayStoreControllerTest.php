@@ -34,7 +34,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
      */
     protected $sessionGuardMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -201,7 +201,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -336,7 +336,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -497,7 +497,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(422, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertEquals('Validation failed.', $decodedResponse['errors'][0]['title']);
@@ -541,7 +541,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
                     'detail' => 'The password field is required.',
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -1341,7 +1341,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -1478,7 +1478,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -1632,7 +1632,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -1751,7 +1751,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -2199,7 +2199,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertTrue(isset($decodedResponse['shouldLogin']));
     }
@@ -2277,9 +2277,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertTrue(array_key_exists('shouldRenew', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('shouldRenew', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['shouldRenew']);
+        $this->assertTrue($response->json()['shouldRenew']);
     }
 
     public function test_signup_when_not_exists_subscription()
@@ -2345,7 +2345,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertTrue(isset($decodedResponse['shouldSignup']));
     }
@@ -2413,7 +2413,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertTrue(isset($decodedResponse['shouldCreateAccount']));
     }
@@ -2511,9 +2511,9 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $this->assertTrue(array_key_exists('token', $response->decodeResponseJson()));
+        $this->assertTrue(array_key_exists('token', $response->json()));
 
-        $this->assertTrue($response->decodeResponseJson()['success']);
+        $this->assertTrue($response->json()['success']);
 
         $this->assertDatabaseHas(
             'ecommerce_subscriptions',
@@ -2607,7 +2607,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));
@@ -2733,7 +2733,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         // assert the response status code
         $this->assertEquals(200, $response->getStatusCode());
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response has meta key with auth code
         $this->assertTrue(isset($decodedResponse['meta']['auth_code']));

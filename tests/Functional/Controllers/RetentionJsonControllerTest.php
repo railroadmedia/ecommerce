@@ -15,7 +15,7 @@ class RetentionJsonControllerTest extends EcommerceTestCase
      */
     private $retentionStatsService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -149,7 +149,7 @@ class RetentionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             ['data' => $expectedStats],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }
@@ -93,7 +93,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('GET', '/fulfillment');
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -181,7 +181,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -394,7 +394,7 @@ class ShippingFulfillmentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,

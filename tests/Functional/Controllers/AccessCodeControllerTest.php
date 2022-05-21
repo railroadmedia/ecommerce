@@ -28,7 +28,7 @@ class AccessCodeControllerTest extends EcommerceTestCase
      */
     protected $sessionGuardMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -148,6 +148,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_with_expiration_with_context_event()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
         $context = $this->faker->word;
 
@@ -163,8 +165,6 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
@@ -172,6 +172,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'user_password' => $this->faker->word,
             'context' => $context,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -205,6 +207,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_without_expiration()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -219,14 +223,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -257,6 +261,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_extend_active_subscription()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -284,14 +290,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -336,6 +342,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_create_user_product_expired_subscription()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
@@ -363,14 +371,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -494,6 +502,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
      */
     public function test_user_with_access_from_code_redeems_another_code()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $digitalOneTimeDummySku1 = 'digital-one-time-dummy-sku-1';
         $digitalSubscriptionDummySku1 = 'digital-subscription-dummy-sku-1';
 
@@ -535,16 +545,15 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         // call code-redeem first time
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCodeOne['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 

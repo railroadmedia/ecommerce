@@ -6,7 +6,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -42,7 +42,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -86,11 +86,11 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'data.attributes.max',
-                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'detail' => 'The max must be greater than or equal to ' . $minValue . '.',
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -124,7 +124,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -178,7 +178,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     ]
                 )
             ],
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
 
         $this->assertDatabaseHas(
@@ -203,7 +203,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, shipping cost weight range not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -248,11 +248,11 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
             [
                 [
                     'source' => 'data.attributes.max',
-                    'detail' => 'The max must be greater than or equal ' . $minValue . '.',
+                    'detail' => 'The max must be greater than or equal to ' . $minValue . '.',
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         $this->assertDatabaseMissing(
@@ -309,7 +309,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     ['price' => $newPrice]
                 )
             ],
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
 
         $this->assertDatabaseHas(
@@ -338,7 +338,7 @@ class ShippingCostsWeightRangeControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, shipping cost weight range not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 

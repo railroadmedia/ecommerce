@@ -11,7 +11,7 @@ use Railroad\Ecommerce\Entities\Order;
 
 class OrderTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['orderItem', 'user', 'customer', 'billingAddress', 'shippingAddress'];
+    protected array $defaultIncludes = ['orderItem', 'user', 'customer', 'billingAddress', 'shippingAddress'];
 
     /**
      * @param Order $order

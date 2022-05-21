@@ -10,7 +10,7 @@ use Railroad\Ecommerce\Entities\UserPaymentMethods;
 class UserPaymentMethodsTransformer extends TransformerAbstract
 {
     protected $creditCardsMap;
-    protected $defaultIncludes = ['user'];
+    protected array $defaultIncludes = ['user'];
     protected $paypalAgreementsMap;
 
     /**

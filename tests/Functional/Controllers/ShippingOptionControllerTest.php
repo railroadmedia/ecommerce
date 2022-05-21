@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingOptionControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -44,7 +44,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
 
         $this->assertDatabaseHas(
@@ -82,7 +82,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson()['errors']
+            $results->json()['errors']
         );
     }
 
@@ -114,7 +114,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -134,7 +134,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, shipping option not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -192,7 +192,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
 
         $this->assertDatabaseHas(
@@ -221,7 +221,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, shipping option not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -339,7 +339,7 @@ class ShippingOptionControllerTest extends EcommerceTestCase
         // assert response status code
         $this->assertEquals(200, $results->getStatusCode());
 
-        $resultsDecoded = $results->decodeResponseJson();
+        $resultsDecoded = $results->json();
 
         $this->assertEquals(
             $shippingOptions,

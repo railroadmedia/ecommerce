@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
+use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -12,12 +13,14 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class CartControllerTest extends EcommerceTestCase
 {
+    use ArraySubsetAsserts;
+
     /**
      * @var Store
      */
     protected $session;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -1487,7 +1490,7 @@ class CartControllerTest extends EcommerceTestCase
             '/json/update-number-of-payments/' . $numberOfPayments
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // assert response cart number of payments
         $this->assertEquals(

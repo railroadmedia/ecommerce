@@ -3,8 +3,8 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -33,7 +33,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -53,9 +53,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $subscription = $this->fakeSubscription();
 
-        $this->expectsEvents([SubscriptionDeleted::class]);
+        Event::fake([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $subscription['id']);
+
+        Event::assertDispatched(SubscriptionDeleted::class);
 
         $this->assertEquals(204, $results->getStatusCode());
 
@@ -76,9 +78,11 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $randomId = $this->faker->randomNumber();
 
-        $this->doesntExpectEvents([SubscriptionDeleted::class]);
+        Event::fake([SubscriptionDeleted::class]);
 
         $results = $this->call('DELETE', '/subscription/' . $randomId);
+
+        Event::assertNotDispatched(SubscriptionDeleted::class);
 
         // assert response status code
         $this->assertEquals(404, $results->getStatusCode());
@@ -91,7 +95,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, subscription not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -208,7 +212,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -371,7 +375,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -482,7 +486,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -562,7 +566,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     "detail" => "The user id field is required.",
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -598,7 +602,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionCreated::class]);
+        Event::fake([SubscriptionCreated::class]);
 
         $results = $this->call(
             'PUT',
@@ -636,6 +640,8 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionCreated::class);
 
         // assert the response status code
         $this->assertEquals(200, $results->getStatusCode());
@@ -690,7 +696,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         // assert that the subscription exists in the database
@@ -732,7 +738,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, subscription not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -771,7 +777,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $newPrice = $this->faker->numberBetween();
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -783,6 +789,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -843,7 +852,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -915,7 +924,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -927,6 +936,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -988,7 +1000,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1056,7 +1068,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -1068,6 +1080,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1128,7 +1143,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1215,7 +1230,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
         );
 
         // events not fired
-        $this->doesntExpectEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $note = $this->faker->word;
 
@@ -1229,6 +1244,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertNotDispatched(SubscriptionUpdated::class);
+        Event::assertNotDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1289,7 +1307,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1382,7 +1400,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -1426,7 +1444,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
+        Event::fake([SubscriptionUpdated::class, UserSubscriptionUpdated::class]);
 
         $results = $this->call(
             'PATCH',
@@ -1440,6 +1458,9 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 ],
             ]
         );
+
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionUpdated::class);
 
         $this->assertEquals(200, $results->getStatusCode());
 
@@ -1501,7 +1522,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $results->decodeResponseJson()
+            $results->json()
         );
 
         $this->assertDatabaseHas(
@@ -1633,7 +1654,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'title' => 'Subscription renew failed.',
                 'detail' => 'Subscription made by mobile application may not be renewed by web application',
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // Assert a message was not sent to the given users...
@@ -1835,19 +1856,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'created_at' => Carbon::now()->toDateTimeString(),
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $paymentPlan['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $paymentPlan['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_credit_card()
@@ -1991,19 +1999,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => 0,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscription['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_paypal()
@@ -2074,7 +2069,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $this->expectsEvents(
+        Event::fake(
             [
                 SubscriptionRenewed::class,
                 SubscriptionUpdated::class,
@@ -2086,6 +2081,10 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        Event::assertDispatched(SubscriptionRenewed::class);
+        Event::assertDispatched(SubscriptionUpdated::class);
+        Event::assertDispatched(UserSubscriptionRenewed::class);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
@@ -2279,19 +2278,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'shipping_taxes_paid' => 0,
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $subscription['brand'],
-                'resource_name' => Subscription::class,
-                'resource_id' => $subscription['id'],
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_renew_subscription_payment_failed_disabled()
@@ -2379,13 +2365,15 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         config()->set('ecommerce.paypal.failed_payments_before_de_activation', 1);
 
-        $this->expectsEvents([SubscriptionRenewFailed::class]);
-        $this->doesntExpectEvents([SubscriptionRenewed::class]);
+        Event::fake([SubscriptionRenewFailed::class, SubscriptionRenewed::class]);
 
         $results = $this->call(
             'POST',
             '/subscription-renew/' . $subscription['id']
         );
+
+        Event::assertDispatched(SubscriptionRenewFailed::class);
+        Event::assertNotDispatched(SubscriptionRenewed::class);
 
         // assert response status code
         $this->assertEquals(402, $results->getStatusCode());
@@ -2396,7 +2384,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                 'title' => 'Subscription renew failed.',
                 'detail' => 'Payment failed: ' . $exceptionMessage,
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         // assert user product was set
@@ -2537,7 +2525,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $results->decodeResponseJson('data')
+            $results->json('data')
         );
     }
 
@@ -2557,7 +2545,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -2715,7 +2703,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -2873,7 +2861,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3168,7 +3156,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3463,7 +3451,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $subscriptions,
-            $response->decodeResponseJson('data')
+            $response->json('data')
         );
     }
 
@@ -3638,7 +3626,7 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $failedSubscriptions = $response->decodeResponseJson()['data'];
+        $failedSubscriptions = $response->json()['data'];
 
         // assert subscription one is returned
         $this->assertArraySubset(

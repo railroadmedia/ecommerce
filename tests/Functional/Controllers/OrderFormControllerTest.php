@@ -28,7 +28,7 @@ class OrderFormControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->cartService = $this->app->make(CartService::class);
@@ -404,7 +404,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'gateway' => config('ecommerce.brand'),
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
-            'shipping_address_line_1' => $this->faker->address,
+            'shipping_address_line_1' => $this->faker->streetAddress,
             'shipping_city' => $this->faker->city,
             'shipping_region' => $region,
             'shipping_zip_or_postal_code' => $this->faker->postcode,
@@ -566,7 +566,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'gateway' => config('ecommerce.brand'),
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
-            'shipping_address_line_1' => $this->faker->address,
+            'shipping_address_line_1' => $this->faker->streetAddress,
             'shipping_city' => $this->faker->city,
             'shipping_region' => $region,
             'shipping_zip_or_postal_code' => $this->faker->postcode,
@@ -758,7 +758,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             'gateway' => config('ecommerce.brand'),
             'shipping_first_name' => $this->faker->firstName,
             'shipping_last_name' => $this->faker->lastName,
-            'shipping_address_line_1' => $this->faker->address,
+            'shipping_address_line_1' => $this->faker->streetAddress,
             'shipping_city' => $this->faker->city,
             'shipping_region' => $region,
             'shipping_zip_or_postal_code' => $this->faker->postcode,

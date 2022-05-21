@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Controllers\PaymentJsonController;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
@@ -33,7 +32,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
      */
     protected $taxService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -138,7 +137,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -169,19 +168,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -282,7 +268,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -422,7 +408,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -573,7 +559,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -604,19 +590,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'shipping_rate' => $expectedTaxRateShipping,
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -693,7 +666,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -721,19 +694,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $adminEmail,
-                'actor_id' => $adminId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -817,7 +777,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db
@@ -845,19 +805,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             [
                 'product_taxes_paid' => $productTax,
                 'shipping_taxes_paid' => $shippingTax,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 2, // user had an initial payment
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $adminEmail,
-                'actor_id' => $adminId,
-                'actor_role' => ActionLogService::ROLE_ADMIN,
             ]
         );
     }
@@ -911,7 +858,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -972,7 +919,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -1030,7 +977,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The selected order is invalid.'
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -1088,7 +1035,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The selected subscription is invalid.'
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -1182,7 +1129,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             [
@@ -1260,32 +1207,6 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                 'payment_id' => $decodedResponse['data']['id']
             ]
         );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Payment::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Subscription::class,
-                'resource_id' => 1,
-                'action_name' => Subscription::ACTION_RENEW,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
-            ]
-        );
     }
 
     public function test_user_store_paypal_payment_transaction_failed()
@@ -1350,7 +1271,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db
@@ -1444,7 +1365,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db
@@ -1544,7 +1465,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     ],
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -1674,7 +1595,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         // response payment has subscription renewal_attempt value 1, stored in attempt_number field
         $this->assertArraySubset(
@@ -1819,7 +1740,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -1955,7 +1876,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Payment failed: ' . $message
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
 
         // assert payment exists in the db and attempt_number has initial subscription renewal_attempt value
@@ -2116,7 +2037,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expected['data'],
@@ -2273,7 +2194,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expected['data'],
@@ -2383,7 +2304,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertArraySubset(
             $expected,
@@ -2424,7 +2345,7 @@ class PaymentJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, payment not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 

@@ -3,8 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Commands;
 
 use Carbon\Carbon;
-use PHPUnit\Framework\MockObject\MockObject;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -14,7 +12,7 @@ use ReceiptValidator\iTunes\SandboxResponse;
 
 class ProcessAppleExpiredSubscriptionsTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }

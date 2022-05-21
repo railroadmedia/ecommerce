@@ -9,7 +9,7 @@ use Railroad\Ecommerce\Entities\OrderItem;
 
 class OrderItemTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['order', 'product'];
+    protected array $defaultIncludes = ['order', 'product'];
 
     /**
      * @param OrderItem $orderItem

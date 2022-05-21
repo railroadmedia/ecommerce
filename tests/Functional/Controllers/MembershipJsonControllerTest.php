@@ -7,7 +7,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class MembershipJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -67,7 +67,7 @@ class MembershipJsonControllerTest extends EcommerceTestCase
 
         $this->assertEquals(
             $expected,
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }

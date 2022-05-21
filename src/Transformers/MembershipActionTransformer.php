@@ -9,7 +9,7 @@ use Railroad\Ecommerce\Entities\MembershipAction;
 
 class MembershipActionTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [];
+    protected array $defaultIncludes = [];
 
     /**
      * @param MembershipAction $membershipAction

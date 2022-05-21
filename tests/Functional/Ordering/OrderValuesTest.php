@@ -65,7 +65,7 @@ class OrderValuesTest extends EcommerceTestCase
     protected $brand = 'drumeo';
     protected $currency = 'USD';
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

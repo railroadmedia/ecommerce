@@ -24,7 +24,7 @@ class DiscountServiceTest extends EcommerceTestCase
      */
     protected $productRepository;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

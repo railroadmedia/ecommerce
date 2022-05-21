@@ -4,7 +4,6 @@ namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\User;
@@ -20,7 +19,7 @@ use Stripe\Token;
 
 class PaymentMethodJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -66,7 +65,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -101,14 +100,12 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     "detail" => "The address id field is required.",
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
     public function test_user_store_credit_card_payment_method_set_default_existing_address()
     {
-        Event::fake();
-
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
@@ -173,13 +170,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'address_id' => $address['id'],
         ];
 
+        Event::fake([UserDefaultPaymentMethodEvent::class, PaymentMethodCreated::class]);
+
         $results = $this->call(
             'PUT',
             '/payment-method',
             $payload
         );
 
-        $paymentResponse = $results->decodeResponseJson();
+        $paymentResponse = $results->json();
 
         $this->assertArraySubset(
             [
@@ -274,8 +273,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_user_store_credit_card_payment_method_not_default()
     {
-        Event::fake();
-
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
@@ -338,13 +335,15 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'address_id' => $address['id'],
         ];
 
+        Event::fake([UserDefaultPaymentMethodEvent::class, PaymentMethodCreated::class]);
+
         $results = $this->call(
             'PUT',
             '/payment-method',
             $payload
         );
 
-        $paymentResponse = $results->decodeResponseJson();
+        $paymentResponse = $results->json();
 
         $this->assertArraySubset(
             [
@@ -490,7 +489,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'title' => 'Payment failed.',
                 'detail' => 'The card number is incorrect. Check the card’s number or use a different card.',
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
 
@@ -554,7 +553,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -766,7 +765,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert card was created
@@ -782,19 +781,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'expiration_date' => $newDate->toDateTimeString(),
                 'payment_gateway_name' => $payload['gateway'],
                 'updated_at' => Carbon::now()->toDateTimeString()
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => PaymentMethod::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_UPDATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -971,7 +957,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert card was created
@@ -1012,8 +998,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_update_payment_method_set_default()
     {
-        Event::fake();
-
         $userId = $this->createAndLogInNewUser();
 
         $customer = $this->fakeUser();
@@ -1093,6 +1077,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'is_primary' => false
         ]);
 
+        Event::fake([UserDefaultPaymentMethodEvent::class]);
+
         $response = $this->call(
             'PATCH',
             '/payment-method/' . $paymentMethodTwo['id'],
@@ -1118,7 +1104,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert card was created
@@ -1262,7 +1248,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     ),
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert card was created
@@ -1293,8 +1279,6 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
     public function test_set_default()
     {
-        Event::fake();
-
         $userId = $this->createAndLogInNewUser();
 
         $address = $this->fakeAddress([
@@ -1339,6 +1323,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             'payment_method_id' => $newPrimaryPaymentMethod['id'],
             'is_primary' => false
         ]);
+
+        Event::fake([UserDefaultPaymentMethodEvent::class]);
 
         $response = $this->call(
             'PATCH',
@@ -1503,12 +1489,11 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
         $this->assertEquals(200, $response->getStatusCode());
 
         // assert the redirect token is present in the response redirect url
-        $this->assertContains($redirectToken, $response->decodeResponseJson('url'));
+        $this->assertStringContainsString($redirectToken, $response->json('url'));
     }
 
     public function test_paypal_agreement()
     {
-        Event::fake();
         $userEmail = $this->faker->email;
         $userId = $this->createAndLogInNewUser($userEmail);
 
@@ -1517,6 +1502,8 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $this->paypalExternalHelperMock->method('confirmAndCreateBillingAgreement')
             ->willReturn($agreementId);
+
+        Event::fake([PaypalPaymentMethodEvent::class, PaymentMethodCreated::class]);
 
         $response = $this->call(
             'GET',
@@ -1676,7 +1663,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.'
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -1736,7 +1723,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => $message,
             ],
-            $results->decodeResponseJson('error')
+            $results->json('error')
         );
 
         // assert payment method was not soft deleted
@@ -1989,7 +1976,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Delete failed, can not delete the default payment method',
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
 
         $this->assertDatabaseHas(
@@ -2124,7 +2111,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $results = $this->call('GET', '/user-payment-method/' . $userId);
 
-        $decodedResult = $results->decodeResponseJson();
+        $decodedResult = $results->json();
 
         // assert 'data' response block, including related ids
         // the 'included' associated data is not assert here
@@ -2151,7 +2138,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Pull failed, user not found with id: ' . $userId,
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -2246,7 +2233,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
 
         $response = $this->call('GET', '/user-payment-method/' . $userId);
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,
@@ -2388,7 +2375,7 @@ class PaymentMethodJsonControllerTest extends EcommerceTestCase
             ]
         );
 
-        $decodedResponse = $response->decodeResponseJson();
+        $decodedResponse = $response->json();
 
         $this->assertEquals(
             $expectedData,

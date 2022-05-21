@@ -8,7 +8,7 @@ use Railroad\Permissions\Exceptions\NotAllowedException;
 
 class UserProductJsonControllerTest extends EcommerceTestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
     }
@@ -78,7 +78,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
     }
@@ -174,7 +174,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
     }
@@ -205,7 +205,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     'title' => 'Validation failed.',
                 ],
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -261,7 +261,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -349,7 +349,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         //assert that the address exists in the database
@@ -384,7 +384,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     'detail' => 'Update failed, address not found with id: ' . $randomId,
                 ]
             ],
-            $results->decodeResponseJson('errors')
+            $results->json('errors')
         );
     }
 
@@ -472,7 +472,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         $userProduct1['product_id'] = $newProduct['id'];
@@ -530,7 +530,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.',
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 
@@ -559,7 +559,7 @@ class UserProductJsonControllerTest extends EcommerceTestCase
                 'title' => 'Not allowed.',
                 'detail' => 'This action is unauthorized.'
             ],
-            $response->decodeResponseJson('error')
+            $response->json('error')
         );
     }
 }

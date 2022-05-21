@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class TaxServiceTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }

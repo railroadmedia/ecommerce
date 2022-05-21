@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use Railroad\ActionLog\Services\ActionLogService;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Product;
@@ -13,7 +12,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class RefundJsonControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -50,7 +49,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     'detail' => 'The payment field is required.',
                 ]
             ],
-            $response->decodeResponseJson('errors')
+            $response->json('errors')
         );
     }
 
@@ -210,7 +209,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -233,19 +232,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Refund::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -405,7 +391,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -428,19 +414,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             [
                 'id' => $payment['id'],
                 'total_refunded' => $payment['total_refunded'] + $refundAmount,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Refund::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -635,7 +608,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db
@@ -676,19 +649,6 @@ class RefundJsonControllerTest extends EcommerceTestCase
             [
                 'user_id' => $userId,
                 'product_id' => $product['id'],
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'railactionlog_actions_log',
-            [
-                'brand' => $gateway,
-                'resource_name' => Refund::class,
-                'resource_id' => 1,
-                'action_name' => ActionLogService::ACTION_CREATE,
-                'actor' => $userEmail,
-                'actor_id' => $userId,
-                'actor_role' => ActionLogService::ROLE_USER,
             ]
         );
     }
@@ -860,7 +820,7 @@ class RefundJsonControllerTest extends EcommerceTestCase
                     ]
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
 
         // assert refund raw saved in db

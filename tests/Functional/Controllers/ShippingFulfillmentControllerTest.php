@@ -8,7 +8,7 @@ use Railroad\Ecommerce\Tests\EcommerceTestCase;
 
 class ShippingFulfillmentControllerTest extends EcommerceTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }
@@ -96,7 +96,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -224,7 +224,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     ],
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -302,7 +302,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -315,7 +315,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -402,7 +402,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -414,7 +414,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Shipment - Service" name at row: 3 column: 5. Please review.',
                 ],
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 
@@ -495,7 +495,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
             '/fulfillment/mark-fulfilled-csv-upload-shipstation',
             [
                 'csv_file' => new UploadedFile(
-                    $filePath, $fileName, null, null, null, true
+                    $filePath, $fileName, null, null, true
                 ),
             ]
         );
@@ -508,7 +508,7 @@ class ShippingFulfillmentControllerTest extends EcommerceTestCase
                     'Missing "Order - Number" at row: 3 column: 1. Please review.',
                 ]
             ],
-            $response->decodeResponseJson()
+            $response->json()
         );
     }
 }
