@@ -183,6 +183,7 @@ class EcommerceServiceProvider extends ServiceProvider
         $doctrineFileCache = DoctrineProvider::wrap($arrayCacheAdapter);
 
         // annotation reader
+        AnnotationRegistry::registerLoader('class_exists');
         $annotationReader = new IndexedReader(new AnnotationReader());
 
         $cachedAnnotationReader = new PsrCachedReader(
