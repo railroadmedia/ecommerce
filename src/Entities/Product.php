@@ -36,6 +36,17 @@ class Product
     const TYPE_DIGITAL_ONE_TIME = 'digital one time';
     const TYPE_PHYSICAL_ONE_TIME = 'physical one time';
 
+    const DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS = 'all content access';
+    const DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS = 'specific content access';
+
+    const DIGITAL_ACCESS_TIME_TYPE_RECURRING = 'recurring';
+    const DIGITAL_ACCESS_TIME_TYPE_ONE_TIME = 'one time';
+    const DIGITAL_ACCESS_TIME_TYPE_LIFETIME = 'lifetime';
+
+    const DIGITAL_ACCESS_TIME_INTERVAL_TYPE_DAY = 'day';
+    const DIGITAL_ACCESS_TIME_INTERVAL_TYPE_MONTH = 'month';
+    const DIGITAL_ACCESS_TIME_INTERVAL_TYPE_YEAR = 'year';
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
