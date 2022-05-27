@@ -170,10 +170,6 @@ class EcommerceTestCase extends BaseTestCase
         // Run the schema update tool using our entity metadata
         $this->entityManager = app(EcommerceEntityManager::class);
 
-        $this->entityManager->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
-
 //        $this->entityManager->getConfiguration()
 //            ->getResultCache()
 //            ->clear();
