@@ -25,65 +25,50 @@ class PopulatePaymentTaxesTable extends Command
     protected $description = 'Populates ecommerce_payment_taxes table';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * PopulatePaymentTaxesTable constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(
-        DatabaseManager $databaseManager
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         $this->info('Starting PopulatePaymentTaxesTable.');
 
         $done = 0;
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_payments')
             ->where('total_paid', '>', 0)
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
-                function (Collection $rows) use (&$done) {
-
+                function (Collection $rows) use ($databaseManager, &$done) {
                     $insertData = [];
 
                     foreach ($rows as $payment) {
-
                         // cast to array
                         $paymentData = get_object_vars($payment);
 
-                        $order = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $order = $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_order_payments')
                             ->select(['ecommerce_orders.*'])
-                            ->leftJoin('ecommerce_orders', 'ecommerce_order_payments.order_id', '=', 'ecommerce_orders.id')
+                            ->leftJoin(
+                                'ecommerce_orders',
+                                'ecommerce_order_payments.order_id',
+                                '=',
+                                'ecommerce_orders.id'
+                            )
                             ->where('ecommerce_order_payments.payment_id', $paymentData['id'])
                             ->get()
                             ->first();
 
                         if (!empty($order)) {
-
                             $orderData = get_object_vars($order);
 
                             $addressId = $orderData['shipping_address_id'] ?? $orderData['billing_address_id'];
 
-                            $addressCollection = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $addressCollection = $databaseManager->connection(
+                                config('ecommerce.database_connection_name')
+                            )
                                 ->table('ecommerce_addresses')
                                 ->where('id', $addressId)
                                 ->get();
@@ -105,14 +90,12 @@ class PopulatePaymentTaxesTable extends Command
                             }
 
                             if ($orderData['shipping_due']) {
-
                                 $productTaxRate = $shippingTaxRate = round(
                                     $orderData['taxes_due'] / ($orderData['product_due'] + $orderData['shipping_due']),
                                     2
                                 );
                                 $productTax = round($orderData['product_due'] * $productTaxRate, 2);
                                 $shippingTax = round($orderData['shipping_due'] * $shippingTaxRate, 2);
-
                             } else {
                                 $productTaxRate = round($orderData['taxes_due'] / $orderData['product_due'], 2);
                                 $productTax = $orderData['taxes_due'];
@@ -129,13 +112,13 @@ class PopulatePaymentTaxesTable extends Command
                                 'created_at' => Carbon::now()->toDateTimeString()
                             ];
                         } else {
-
-                            $subscription = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $subscription = $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_subscription_payments')
                                 ->select(['ecommerce_subscriptions.*'])
                                 ->leftJoin(
                                     'ecommerce_subscriptions',
-                                    'ecommerce_subscription_payments.subscription_id', '=',
+                                    'ecommerce_subscription_payments.subscription_id',
+                                    '=',
                                     'ecommerce_subscriptions.id'
                                 )
                                 ->where('ecommerce_subscription_payments.payment_id', $paymentData['id'])
@@ -143,7 +126,6 @@ class PopulatePaymentTaxesTable extends Command
                                 ->first();
 
                             if (!empty($subscription)) {
-
                                 $subscriptionData = get_object_vars($subscription);
 
                                 $paymentMethodId = $paymentData['payment_method_id'] ?: $subscriptionData['payment_method_id'];
@@ -160,12 +142,13 @@ class PopulatePaymentTaxesTable extends Command
                                     continue;
                                 }
 
-                                $address = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                                $address = $databaseManager->connection(config('ecommerce.database_connection_name'))
                                     ->table('ecommerce_payment_methods')
                                     ->select(['ecommerce_addresses.*'])
                                     ->leftJoin(
                                         'ecommerce_addresses',
-                                        'ecommerce_payment_methods.billing_address_id', '=',
+                                        'ecommerce_payment_methods.billing_address_id',
+                                        '=',
                                         'ecommerce_addresses.id'
                                     )
                                     ->where('ecommerce_payment_methods.id', $paymentMethodId)
@@ -177,7 +160,7 @@ class PopulatePaymentTaxesTable extends Command
 
                                     $subscriptionProductPrice = $subscriptionData['total_price'] - $subscriptionData['tax'];
                                     $productTaxRate = $subscriptionProductPrice ?
-                                        round($subscriptionData['tax'] / $subscriptionProductPrice, 2):
+                                        round($subscriptionData['tax'] / $subscriptionProductPrice, 2) :
                                         0;
 
                                     $insertData[] = [
@@ -210,7 +193,7 @@ class PopulatePaymentTaxesTable extends Command
                         }
                     }
 
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_payment_taxes')
                         ->insert($insertData);
 

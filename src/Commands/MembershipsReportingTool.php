@@ -27,40 +27,14 @@ class MembershipsReportingTool extends Command
     protected $description = 'Pull membership stats between dates per month.';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * @var MembershipStatsRepository
-     */
-    private $membershipStatsRepository;
-
-
-    /**
-     * MembershipsReportingTool constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     * @param MembershipStatsRepository $membershipStatsRepository
-     */
-    public function __construct(
-        DatabaseManager $databaseManager,
-        MembershipStatsRepository $membershipStatsRepository
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-        $this->membershipStatsRepository = $membershipStatsRepository;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        DatabaseManager $databaseManager,
+        MembershipStatsRepository $membershipStatsRepository
+    ) {
         $startDate = Carbon::parse($this->argument('startDate'))->startOfDay();
         $endDate = Carbon::parse($this->argument('endDate'))->endOfDay();
         $dateInterval = $startDate->copy();
@@ -97,7 +71,7 @@ class MembershipsReportingTool extends Command
 
             foreach ($brands as $brand) {
                 $stats =
-                    $this->membershipStatsRepository->getStats(
+                    $membershipStatsRepository->getStats(
                         $intervalStart->copy(),
                         $intervalEnd->copy(),
                         null,
@@ -152,10 +126,9 @@ class MembershipsReportingTool extends Command
                     }
                 }
 
-                $thisRow[ucwords($brand) . ' Total Memberships'] =+ $totalMemberships;
+                $thisRow[ucwords($brand) . ' Total Memberships'] = +$totalMemberships;
                 $thisRow[ucwords($brand) . ' New Memberships'] = $newMemberships;
                 $thisRow[ucwords($brand) . ' New Non-recurring Memberships'] = $newNonRecurringMemberships;
-
             }
 
             $csvData[] = array_values($thisRow);

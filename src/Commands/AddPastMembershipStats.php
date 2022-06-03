@@ -29,27 +29,6 @@ class AddPastMembershipStats extends Command
      */
     protected $description = 'Create daily membership stats records for a past period';
 
-    /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
-    /**
-     * @var MembershipStatsService
-     */
-    private $membershipStatsService;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-
     // todo: move to config
     const LIFETIME_SKUS = [
         'PIANOTE-MEMBERSHIP-LIFETIME',
@@ -59,35 +38,16 @@ class AddPastMembershipStats extends Command
     ];
 
     /**
-     * AddPastMembershipStats constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     * @param EcommerceEntityManager $entityManager
-     * @param MembershipStatsService $membershipStatsService
-     * @param SubscriptionRepository $subscriptionRepository
-     */
-    public function __construct(
-        DatabaseManager $databaseManager,
-        EcommerceEntityManager $entityManager,
-        MembershipStatsService $membershipStatsService,
-        SubscriptionRepository $subscriptionRepository
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-        $this->entityManager = $entityManager;
-        $this->membershipStatsService = $membershipStatsService;
-        $this->subscriptionRepository = $subscriptionRepository;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        DatabaseManager $databaseManager,
+        EcommerceEntityManager $entityManager,
+        MembershipStatsService $membershipStatsService,
+        SubscriptionRepository $subscriptionRepository
+    ) {
         $startDateString = $this->argument('startDate') ?: Carbon::now()->subDays(3)->toDateString();
         $startDate = Carbon::parse($startDateString);
 
@@ -103,9 +63,9 @@ class AddPastMembershipStats extends Command
 
         $start = microtime(true);
 
-        $this->seedPeriod($startDate, $endDate);
-        $this->processSubscriptions($startDate, $endDate);
-        $this->processSum($startDate, $endDate);
+        $this->seedPeriod($databaseManager, $startDate, $endDate);
+        $this->processSubscriptions($databaseManager, $startDate, $endDate);
+        $this->processSum($databaseManager, $startDate, $endDate);
 
         $finish = microtime(true) - $start;
 
@@ -114,11 +74,11 @@ class AddPastMembershipStats extends Command
         $this->info(sprintf($format, $finish));
     }
 
-    public function seedPeriod(Carbon $smallDate, Carbon $bigDate)
+    public function seedPeriod($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_membership_stats')
             ->whereBetween('stats_date', [$smallDate, $bigDate])
             ->delete();
@@ -131,13 +91,12 @@ class AddPastMembershipStats extends Command
             ->toDateTimeString();
 
         // we dont want duplicate rows so we can delete the old ones first
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_membership_stats')
             ->whereBetween('stats_date', [$smallDate->toDateString(), $bigDate->toDateString()])
             ->delete();
 
         for ($i = 0; $i <= $days; $i++) {
-
             $statsDate = $smallDate->copy()
                 ->addDays($i)
                 ->toDateString();
@@ -229,7 +188,7 @@ class AddPastMembershipStats extends Command
             }
 
             if ($i > 0 && count($insertData) >= $insertChunkSize) {
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_membership_stats')
                     ->insert($insertData);
 
@@ -238,7 +197,7 @@ class AddPastMembershipStats extends Command
         }
 
         if (!empty($insertData)) {
-            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+            $databaseManager->connection(config('ecommerce.database_connection_name'))
                 ->table('ecommerce_membership_stats')
                 ->insert($insertData);
         }
@@ -250,18 +209,18 @@ class AddPastMembershipStats extends Command
         $this->info(sprintf($format, $finish));
     }
 
-    public function processSubscriptions(Carbon $smallDate, Carbon $bigDate)
+    public function processSubscriptions($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
-        $this->processNewSubscriptionsMemberships($smallDate, $bigDate);
-        $this->processExpiredSubscriptionMemberships($smallDate, $bigDate);
-        $this->processCanceledSubscriptionMemberships($smallDate, $bigDate);
-        $this->processUserMembership($smallDate, $bigDate);
+        $this->processNewSubscriptionsMemberships($databaseManager, $smallDate, $bigDate);
+        $this->processExpiredSubscriptionMemberships($databaseManager, $smallDate, $bigDate);
+        $this->processCanceledSubscriptionMemberships($databaseManager, $smallDate, $bigDate);
+        $this->processUserMembership($databaseManager, $smallDate, $bigDate);
     }
 
     /**
      * Update new membership - ecommerce_membership_stats.new column
      */
-    public function processNewSubscriptionsMemberships(Carbon $smallDate, Carbon $bigDate)
+    public function processNewSubscriptionsMemberships($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -308,7 +267,7 @@ EOT;
             $bigDate->copy()->endOfDay()->toDateTimeString()
         );
 
-        $this->databaseManager->statement($statement);
+        $databaseManager->statement($statement);
 
         $finish = microtime(true) - $start;
 
@@ -320,7 +279,7 @@ EOT;
     /**
      * Update expired membership - ecommerce_membership_stats.expired column
      */
-    public function processExpiredSubscriptionMemberships(Carbon $smallDate, Carbon $bigDate)
+    public function processExpiredSubscriptionMemberships($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -366,7 +325,7 @@ EOT;
             $bigDate->copy()->endOfDay()->toDateTimeString()
         );
 
-        $this->databaseManager->statement($statement);
+        $databaseManager->statement($statement);
 
         $finish = microtime(true) - $start;
 
@@ -378,7 +337,7 @@ EOT;
     /**
      * Update canceled membership - ecommerce_membership_stats.canceled column
      */
-    public function processCanceledSubscriptionMemberships(Carbon $smallDate, Carbon $bigDate)
+    public function processCanceledSubscriptionMemberships($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -422,7 +381,7 @@ EOT;
             $bigDate->copy()->endOfDay()->toDateTimeString()
         );
 
-        $this->databaseManager->statement($statement);
+        $databaseManager->statement($statement);
 
         $finish = microtime(true) - $start;
 
@@ -436,7 +395,7 @@ EOT;
      * table: ecommerce_membership_stats, columns: 'active_state', 'suspended_state', 'canceled_state'
      * also adds 'new' for lifetimes
      */
-    public function processUserMembership(Carbon $smallDate, Carbon $bigDate)
+    public function processUserMembership($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $this->info("Started processing user membership total counts.");
 
@@ -456,7 +415,7 @@ EOT;
             ],
         ];
 
-        $lifetimeProductIds = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $lifetimeProductIds = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_products')
             ->whereIn('sku', self::LIFETIME_SKUS)
             ->get()
@@ -467,18 +426,15 @@ EOT;
         $dateIncrement = $smallDate->copy();
 
         while ($dateIncrement <= $bigDate) {
-
             $this->info('Processing date: ' . $dateIncrement->toDateString());
 
             $dateIncrementEndOfDay = $dateIncrement->copy()->endOfDay();
 
             foreach (config('ecommerce.available_brands', []) as $brand) {
-
                 // get total with access (should add up to this...)
                 if (!empty(config('ecommerce.membership_product_skus')[$brand])) {
-
                     $totalMembershipCount =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_user_products')
                             ->join(
                                 'ecommerce_products',
@@ -502,7 +458,7 @@ EOT;
                                         ->orWhereNull('expiration_date');
                                 }
                             )
-                            ->count($this->databaseManager->raw('DISTINCT user_id'));
+                            ->count($databaseManager->raw('DISTINCT user_id'));
 
                     $this->info("Total " . $brand . " users with access as of now: " . $totalMembershipCount);
                 }
@@ -511,7 +467,7 @@ EOT;
 
                 // active lifetimes
                 $lifetimeUserIds =
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_user_products')
                         ->join(
                             'ecommerce_products',
@@ -530,12 +486,12 @@ EOT;
                         )
                         ->where('brand', $brand)
                         ->whereNull('expiration_date')
-                        ->get([$this->databaseManager->raw('DISTINCT user_id')])
+                        ->get([$databaseManager->raw('DISTINCT user_id')])
                         ->pluck('user_id');
 
                 $totalActiveForBrandFromPrimarySources += $lifetimeUserIds->count();
 
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_membership_stats')
                     ->where(
                         'stats_date',
@@ -551,7 +507,7 @@ EOT;
 
                 // new lifetimes
                 $newLifetimeUserIds =
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_user_products')
                         ->join(
                             'ecommerce_products',
@@ -572,10 +528,10 @@ EOT;
                         )
                         ->where('brand', $brand)
                         ->whereNull('expiration_date')
-                        ->get([$this->databaseManager->raw('DISTINCT user_id')])
+                        ->get([$databaseManager->raw('DISTINCT user_id')])
                         ->pluck('user_id');
 
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_membership_stats')
                     ->where(
                         'stats_date',
@@ -590,11 +546,10 @@ EOT;
                     );
 
                 foreach ($subscriptionIntervals as $subscriptionIntervalData) {
-
                     // if a user upgraded to another subscription type during period we will exclude them from
                     // the expired or active totals
                     $otherActiveSubscriptions =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->where('brand', $brand)
@@ -646,7 +601,7 @@ EOT;
 
 
                     $activeSubscriptionsCount =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->where('brand', $brand)
@@ -690,10 +645,10 @@ EOT;
                                     Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                                 ]
                             )
-                            ->count($this->databaseManager->raw('DISTINCT user_id'));
+                            ->count($databaseManager->raw('DISTINCT user_id'));
 
                     $expiredSubscriptionsCount =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
@@ -728,10 +683,10 @@ EOT;
                                     Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                                 ]
                             )
-                            ->count($this->databaseManager->raw('DISTINCT user_id'));
+                            ->count($databaseManager->raw('DISTINCT user_id'));
 
                     $canceledSubscriptionsCount =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
@@ -765,7 +720,7 @@ EOT;
                                     Subscription::TYPE_GOOGLE_SUBSCRIPTION,
                                 ]
                             )
-                            ->count($this->databaseManager->raw('DISTINCT user_id'));
+                            ->count($databaseManager->raw('DISTINCT user_id'));
 
                     // debugging
 //                    $this->info('-------------------------------------------');
@@ -786,7 +741,7 @@ EOT;
                         $intervalType = MembershipStats::TYPE_ONE_YEAR;
                     }
 
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_membership_stats')
                         ->where(
                             'stats_date',
@@ -810,7 +765,7 @@ EOT;
 
                     if (!empty(config('ecommerce.membership_product_skus')[$brand])) {
                         $otherActiveStateCount =
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_user_products')
                                 ->join(
                                     'ecommerce_products',
@@ -834,14 +789,16 @@ EOT;
                                             ->orWhereNull('expiration_date');
                                     }
                                 )
-                                ->count($this->databaseManager->raw('DISTINCT user_id'));
+                                ->count($databaseManager->raw('DISTINCT user_id'));
 
                         $otherActiveStateCount -= $totalActiveForBrandFromPrimarySources;
 
                         $otherNewRows =
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_user_products')
-                                ->select(['ecommerce_user_products.*', 'ecommerce_products.sku as sku', 'es.id as es_id'])
+                                ->select(
+                                    ['ecommerce_user_products.*', 'ecommerce_products.sku as sku', 'es.id as es_id']
+                                )
                                 ->join(
                                     'ecommerce_products',
                                     'ecommerce_products.id',
@@ -850,10 +807,10 @@ EOT;
                                 )
                                 ->leftJoin(
                                     'ecommerce_subscriptions AS es',
-                                    function (Builder $builder) use ($brand, $dateIncrementEndOfDay, $dateIncrement) {
-
+                                    function (Builder $builder) use ($databaseManager, $brand, $dateIncrementEndOfDay, $dateIncrement) {
                                         return $builder->on(
                                             function (Builder $builder) use (
+                                                $databaseManager,
                                                 $brand,
                                                 $dateIncrementEndOfDay,
                                                 $dateIncrement
@@ -862,7 +819,7 @@ EOT;
                                                     ->on(
                                                         'es.start_date',
                                                         '>',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $dateIncrement->copy()->startOfDay() .
                                                             '"'
@@ -871,7 +828,7 @@ EOT;
                                                     ->on(
                                                         'es.start_date',
                                                         '<',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
@@ -880,16 +837,16 @@ EOT;
                                                     ->on(
                                                         'es.brand',
                                                         '=',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $brand .
                                                             '"'
                                                         )
                                                     );
-
                                             }
                                         )->orOn(
                                             function (Builder $builder) use (
+                                                $databaseManager,
                                                 $brand,
                                                 $dateIncrementEndOfDay,
                                                 $dateIncrement
@@ -898,7 +855,7 @@ EOT;
                                                     ->on(
                                                         'es.start_date',
                                                         '<',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
@@ -907,7 +864,7 @@ EOT;
                                                     ->on(
                                                         'es.paid_until',
                                                         '>',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
@@ -916,13 +873,12 @@ EOT;
                                                     ->on(
                                                         'es.brand',
                                                         '=',
-                                                        $this->databaseManager->raw(
+                                                        $databaseManager->raw(
                                                             '"' .
                                                             $brand .
                                                             '"'
                                                         )
                                                     );
-
                                             }
                                         );
                                     }
@@ -960,7 +916,7 @@ EOT;
                         $otherNewCount = $otherNewRows->count();
                     }
 
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_membership_stats')
                         ->where(
                             'stats_date',
@@ -975,14 +931,13 @@ EOT;
                             ]
                         );
                 }
-
             }
 
             $dateIncrement->addDay();
         }
     }
 
-    public function processSum(Carbon $smallDate, Carbon $bigDate)
+    public function processSum($databaseManager, Carbon $smallDate, Carbon $bigDate)
     {
         $start = microtime(true);
 
@@ -1035,7 +990,7 @@ EOT;
             MembershipStats::TYPE_ALL
         );
 
-        $this->databaseManager->statement($statement);
+        $databaseManager->statement($statement);
 
         $finish = microtime(true) - $start;
 

@@ -25,45 +25,28 @@ class FindDuplicateSubscriptionsAndLifetimesWithSubscriptions extends Command
     protected $description = 'FindDuplicateSubscriptionsAndLifetimesWithSubscriptions';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * FindDuplicateSubscriptionsAndLifetimesWithSubscriptions constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(
-        DatabaseManager $databaseManager
-    ) {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(DatabaseManager $databaseManager
+    ) {
         $this->info('Starting FindDuplicateSubscriptionsAndLifetimesWithSubscriptions.');
 
         $done = 0;
 
         // first report he dupe subs
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_subscriptions')
             ->where('is_active', true)
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
-                function (Collection $rows) use (&$done) {
-
+                function (Collection $rows) use ($databaseManager, &$done) {
                     foreach ($rows as $subscription) {
-                        $allUsersSubscriptions = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $allUsersSubscriptions = $databaseManager->connection(
+                            config('ecommerce.database_connection_name')
+                        )
                             ->table('ecommerce_subscriptions')
                             ->where('is_active', true)
                             ->where('type', '!=', Subscription::TYPE_PAYMENT_PLAN)
@@ -96,7 +79,7 @@ class FindDuplicateSubscriptionsAndLifetimesWithSubscriptions extends Command
             }
         }
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_user_products')
             ->join('ecommerce_products', 'ecommerce_products.id', '=', 'ecommerce_user_products.product_id')
             ->whereIn('ecommerce_products.sku', $allMembershipProductSkus)
@@ -105,10 +88,11 @@ class FindDuplicateSubscriptionsAndLifetimesWithSubscriptions extends Command
             ->orderBy('ecommerce_user_products.id', 'desc')
             ->chunk(
                 500,
-                function (Collection $rows) use (&$done) {
-
+                function (Collection $rows) use ($databaseManager, &$done) {
                     foreach ($rows as $userProduct) {
-                        $allUsersSubscriptions = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $allUsersSubscriptions = $databaseManager->connection(
+                            config('ecommerce.database_connection_name')
+                        )
                             ->table('ecommerce_subscriptions')
                             ->where('is_active', true)
                             ->where('brand', $userProduct->brand)

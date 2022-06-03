@@ -27,50 +27,19 @@ class VerifyAppleNotifications extends Command
     protected $description = 'Verify if apple subscriptions are correctly synchronized based on Apple notifications';
 
     /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
-     * @var AppleReceiptRepository
-     */
-    private $appleReceiptRepository;
-
-    /**
-     * @var AppleStoreKitGateway
-     */
-    private $appleStoreKitGateway;
-
-    /**
-     * VerifyAppleNotifications constructor.
-     *
-     * @param SubscriptionRepository $subscriptionRepository
-     * @param AppleReceiptRepository $appleReceiptRepository
-     * @param AppleStoreKitGateway $appleStoreKitGateway
-     */
-    public function __construct(
-        SubscriptionRepository $subscriptionRepository,
-        AppleReceiptRepository $appleReceiptRepository,
-        AppleStoreKitGateway $appleStoreKitGateway
-    ) {
-        parent::__construct();
-
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->appleReceiptRepository = $appleReceiptRepository;
-        $this->appleStoreKitGateway = $appleStoreKitGateway;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        SubscriptionRepository $subscriptionRepository,
+        AppleReceiptRepository $appleReceiptRepository,
+        AppleStoreKitGateway $appleStoreKitGateway
+    ) {
         $this->info('------------------Process Apple Expired Subscriptions command------------------');
         $notifications =
-            $this->appleReceiptRepository->createQueryBuilder('s')
+            $appleReceiptRepository->createQueryBuilder('s')
                 ->where('s.requestType = :type')
                 ->andWhere('s.notificationRequestData is not null')
                 ->setParameter('type', 'notification')
@@ -81,7 +50,7 @@ class VerifyAppleNotifications extends Command
             $latestReceiptInfo = $notificationRequestData['unified_receipt']['latest_receipt_info'];
             $latestPurchasedInfo = $latestReceiptInfo[0];
             $subscription =
-                $this->subscriptionRepository->createQueryBuilder('s')
+                $subscriptionRepository->createQueryBuilder('s')
                     ->where('s.id = :id')
                     ->setParameter(
                         'id',
@@ -100,7 +69,7 @@ class VerifyAppleNotifications extends Command
                 );
             } else {
                 $expireDateFromReceipt =
-                    ($this->appleStoreKitGateway->getResponse($notification->getReceipt())
+                    ($appleStoreKitGateway->getResponse($notification->getReceipt())
                         ->getLatestReceiptInfo()[0]->getExpiresDate());
                 if ($subscription->getPaidUntil() == Carbon::parse($expireDateFromReceipt)) {
                     $this->info(

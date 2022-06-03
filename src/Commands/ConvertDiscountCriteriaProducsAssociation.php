@@ -22,49 +22,28 @@ class ConvertDiscountCriteriaProducsAssociation extends Command
      * @var string
      */
     protected $description = 'Take values in the discount_criteria table product_id column and create ' .
-        'a new record in ecommerce_discount_criterias_products table';
-
-    /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * RenewalDueSubscriptions constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(
-        DatabaseManager $databaseManager
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
+    'a new record in ecommerce_discount_criterias_products table';
 
     /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(DatabaseManager $databaseManager
+    ) {
         $this->info('Starting ConvertDiscountCriteriaProducsAssociation.');
 
         $done = 0;
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_discount_criteria')
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
                 function (Collection $rows) use (&$done) {
-
                     $insertData = [];
 
                     foreach ($rows as $item) {
-
                         // cast to array
                         $itemData = get_object_vars($item);
 
@@ -74,7 +53,7 @@ class ConvertDiscountCriteriaProducsAssociation extends Command
                         ];
                     }
 
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_discount_criterias_products')
                         ->insert($insertData);
 

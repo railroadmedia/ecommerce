@@ -31,51 +31,19 @@ class RenewalDueSubscriptions extends Command
     protected $description = 'Renewal of due subscriptions.';
 
     /**
-     * @var EcommerceEntityManager
-     */
-    private $entityManager;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
-     * @var SubscriptionService
-     */
-    private $subscriptionService;
-
-    /**
-     * RenewalDueSubscriptions constructor.
-     *
-     * @param EcommerceEntityManager $entityManager
-     * @param SubscriptionRepository $subscriptionRepository
-     * @param SubscriptionService $subscriptionService
-     */
-    public function __construct(
-        EcommerceEntityManager $entityManager,
-        SubscriptionRepository $subscriptionRepository,
-        SubscriptionService $subscriptionService
-    )
-    {
-        parent::__construct();
-
-        $this->entityManager = $entityManager;
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->subscriptionService = $subscriptionService;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        EcommerceEntityManager $entityManager,
+        SubscriptionRepository $subscriptionRepository,
+        SubscriptionService $subscriptionService
+    ) {
         $this->info('------------------Renewal Due Subscriptions command------------------');
 
         $tStart = microtime(true);
-        $dueSubscriptions = $this->subscriptionRepository->getSubscriptionsDueToRenew();
+        $dueSubscriptions = $subscriptionRepository->getSubscriptionsDueToRenew();
         $this->info('Query time: ' . (microtime(true) - $tStart));
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
@@ -88,16 +56,13 @@ class RenewalDueSubscriptions extends Command
             $oldSubscriptionState = clone($dueSubscription);
 
             try {
-
-                $payment = $this->subscriptionService->renew($dueSubscription);
+                $payment = $subscriptionService->renew($dueSubscription);
 
                 if ($payment) {
                     /** @var $payment Payment */
                     event(new CommandSubscriptionRenewed($dueSubscription, $payment));
                 }
-
             } catch (Throwable $throwable) {
-
                 error_log('---------------------------- RENEWAL ERROR ------------------------------------');
                 error_log($throwable);
 
@@ -123,15 +88,15 @@ class RenewalDueSubscriptions extends Command
                     is_array(config('ecommerce.subscriptions_renew_cycles')) &&
                     $dueSubscription->getType() !== Subscription::TYPE_PAYMENT_PLAN &&
                     $dueSubscription->getRenewalAttempt() > count(config('ecommerce.subscriptions_renew_cycles'))) {
-
                     $dueSubscription->setCanceledOn(Carbon::now());
                     $dueSubscription->setIsActive(false);
                     $dueSubscription->setCancellationReason('All renewal attempts failed.');
 
-                    $this->entityManager->flush();
+                    $entityManager->flush();
 
                     $this->info(
-                        'Cancelling subscription due to max attempts tried ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
+                        'Cancelling subscription due to max attempts tried ID: ' . $dueSubscription->getId(
+                        ) . ' - ' . $throwable->getMessage()
                     );
                 }
 
@@ -141,7 +106,7 @@ class RenewalDueSubscriptions extends Command
             }
         }
 
-        $this->entityManager->flush();
+        $entityManager->flush();
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');
     }

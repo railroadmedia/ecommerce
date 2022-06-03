@@ -8,6 +8,7 @@ use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Throwable;
 
 class SynchOrdersWithPaymentPlans extends Command
 {
@@ -26,38 +27,14 @@ class SynchOrdersWithPaymentPlans extends Command
     protected $description = 'Reads payments linked to payment plans and updates orders total paid and payment links';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
-     * AddPastMembershipStats constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     * @param SubscriptionRepository $subscriptionRepository
-     */
-    public function __construct(
-        DatabaseManager $databaseManager,
-        SubscriptionRepository $subscriptionRepository
-    ) {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-        $this->subscriptionRepository = $subscriptionRepository;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        DatabaseManager $databaseManager,
+        SubscriptionRepository $subscriptionRepository
+    ) {
         $start = microtime(true);
 
         $this->info('Started updating payment plan orders');
@@ -67,7 +44,7 @@ class SynchOrdersWithPaymentPlans extends Command
         $insertChunkSize = 1000;
         $insertData = [];
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_subscriptions')
             ->select(['ecommerce_subscriptions.*', 'ecommerce_orders.total_paid'])
             ->join(
@@ -82,14 +59,20 @@ class SynchOrdersWithPaymentPlans extends Command
             ->orderBy('ecommerce_subscriptions.id', 'desc')
             ->chunk(
                 $readChunkSize,
-                function (Collection $rows) use (&$done, &$insertData, $insertChunkSize) {
-
+                function (Collection $rows) use (
+                    $subscriptionRepository,
+                    $databaseManager,
+                    &$done,
+                    &$insertData,
+                    $insertChunkSize
+                ) {
                     $now = Carbon::now()
                         ->toDateTimeString();
 
                     foreach ($rows as $subscription) {
-
-                        $subscriptionPayments = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $subscriptionPayments = $databaseManager->connection(
+                            config('ecommerce.database_connection_name')
+                        )
                             ->table('ecommerce_subscription_payments')
                             ->select([
                                 'ecommerce_subscription_payments.*',
@@ -116,7 +99,7 @@ class SynchOrdersWithPaymentPlans extends Command
                         $paymentsCount = count($paymentIds);
 
                         if ($paymentsCount > $subscription->total_cycles_due) {
-                            $subscriptionEntity = $this->subscriptionRepository->find($subscription->id);
+                            $subscriptionEntity = $subscriptionRepository->find($subscription->id);
                             $user = $subscriptionEntity->getUser();
 
                             if ($user) {
@@ -148,13 +131,13 @@ class SynchOrdersWithPaymentPlans extends Command
                         }
 
                         if ($paid != $subscription->total_paid) {
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_orders')
                                 ->where('id', $subscription->order_id)
                                 ->update(['total_paid' => $paid]);
                         }
 
-                        $orderPayments = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $orderPayments = $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_order_payments')
                             ->where('order_id', $subscription->order_id)
                             ->get();
@@ -175,8 +158,7 @@ class SynchOrdersWithPaymentPlans extends Command
                         }
 
                         if (count($insertData) >= $insertChunkSize) {
-
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_order_payments')
                                 ->insert($insertData);
 
@@ -185,9 +167,9 @@ class SynchOrdersWithPaymentPlans extends Command
                     }
                 }
             );
-        
+
         if (count($insertData)) {
-            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+            $databaseManager->connection(config('ecommerce.database_connection_name'))
                 ->table('ecommerce_order_payments')
                 ->insert($insertData);
         }

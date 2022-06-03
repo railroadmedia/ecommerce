@@ -24,59 +24,47 @@ class LifeTimeValueStatisticsTool extends Command
     protected $description = 'LifeTimeValueStatisticsTool';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * Create a new command instance.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(DatabaseManager $databaseManager)
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         $count = 0;
         $userLifeTimeValueTotal = 0;
         $allPaymentIds = [];
 
-        $users = $this->connection()->table('usora_users')
+        $users = $this->connection($databaseManager)->table('usora_users')
             ->groupBy('usora_users.id')
             ->orderBy('usora_users.id', 'asc')
             ->select(['usora_users.id'])
             ->chunk(
                 500,
-                function (Collection $users) use (&$userLifeTimeValueTotal, &$count, &$allPaymentIds) {
-                    $subscriptionIds = $this->connection()->table('ecommerce_subscriptions')
+                function (Collection $users) use (
+                    $databaseManager,
+                    &$userLifeTimeValueTotal,
+                    &$count,
+                    &$allPaymentIds
+                ) {
+                    $subscriptionIds = $this->connection($databaseManager)->table('ecommerce_subscriptions')
                         ->whereIn('user_id', $users->pluck('id'))
                         ->where('type', Subscription::TYPE_SUBSCRIPTION)
                         ->pluck('id')
                         ->toArray();
 
-                    $orderIds = $this->connection()->table('ecommerce_orders')
+                    $orderIds = $this->connection($databaseManager)->table('ecommerce_orders')
                         ->whereIn('user_id', $users->pluck('id'))
                         ->pluck('id')
                         ->toArray();
 
-                    $paymentIds = $this->connection()->table('ecommerce_order_payments')
+                    $paymentIds = $this->connection($databaseManager)->table('ecommerce_order_payments')
                         ->whereIn('order_id', [])
                         ->pluck('id')
                         ->toArray();
 
                     $paymentIds = array_merge(
                         $paymentIds,
-                        $this->connection()->table('ecommerce_subscription_payments')
+                        $this->connection($databaseManager)->table('ecommerce_subscription_payments')
                             ->whereIn('subscription_id', $subscriptionIds)
                             ->pluck('id')
                             ->toArray()
@@ -88,9 +76,9 @@ class LifeTimeValueStatisticsTool extends Command
 
                     $allPaymentIds = array_merge($paymentIds, $allPaymentIds);
 
-                    $payments = $this->connection()->table('ecommerce_payments')
+                    $payments = $this->connection($databaseManager)->table('ecommerce_payments')
                         ->whereIn('id', $paymentIds)
-                        ->selectRaw($this->databaseManager->raw('SUM(total_paid) as total_paid'))
+                        ->selectRaw($databaseManager->raw('SUM(total_paid) as total_paid'))
                         ->first();
 
                     $userLifeTimeValueTotal += $payments->total_paid;
@@ -104,8 +92,8 @@ class LifeTimeValueStatisticsTool extends Command
         $this->info('Total revenue: ' . $userLifeTimeValueTotal);
     }
 
-    private function connection()
+    private function connection($databaseManager)
     {
-        return $this->databaseManager->connection(config('ecommerce.database_connection_name'));
+        return $databaseManager->connection(config('ecommerce.database_connection_name'));
     }
 }

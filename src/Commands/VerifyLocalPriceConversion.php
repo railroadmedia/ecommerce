@@ -26,46 +26,22 @@ class VerifyLocalPriceConversion extends Command
     protected $description = 'Verify local price conversion and update subscription/payments prices with the correctly USD value';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * @var CurrencyConversion
-     */
-    private $currencyConversionHelper;
-
-    /**
-     * VerifyLocalPriceConversion constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     * @param CurrencyConversion $currencyConversionHelper
-     */
-    public function __construct(
-        DatabaseManager $databaseManager,
-        CurrencyConversion $currencyConversionHelper
-    ) {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-        $this->currencyConversionHelper = $currencyConversionHelper;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        DatabaseManager $databaseManager,
+        CurrencyConversion $currencyConversionHelper
+    ) {
         $this->info('Starting LocalPriceConversionVerification.');
 
         $start = microtime(true);
 
         $chunkSize = 100;
 
-        $this->databaseManager->connection('musora_mysql')
+        $databaseManager->connection('musora_mysql')
             ->table('ecommerce_apple_receipts')
             ->select(
                 'ecommerce_apple_receipts.id',
@@ -98,9 +74,9 @@ class VerifyLocalPriceConversion extends Command
             ->orderBy('ecommerce_apple_receipts.id', 'desc')
             ->chunk(
                 $chunkSize,
-                function (Collection $datas) use ($chunkSize) {
+                function (Collection $datas) use ($currencyConversionHelper, $databaseManager, $chunkSize) {
                     foreach ($datas as $data) {
-                        $newConvertedValue = $this->currencyConversionHelper->convert(
+                        $newConvertedValue = $currencyConversionHelper->convert(
                             $data->local_price,
                             $data->local_currency,
                             'USD'
@@ -113,19 +89,20 @@ class VerifyLocalPriceConversion extends Command
                                 ') greater than product price(' .
                                 $data->price .
                                 ') + 45 =' .
-                                ($data->price + 45).'                    Apple receipt id: '.$data->id. ' - ' .
+                                ($data->price + 45) . '                    Apple receipt id: ' . $data->id . ' - ' .
                                 $data->local_price .
                                 ' ' .
-                                $data->local_currency.
-                            ' email:'.$data->email.'  created at::'.$data->created_at);
+                                $data->local_currency .
+                                ' email:' . $data->email . '  created at::' . $data->created_at
+                            );
                         }
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->where('id', $data->subscription_id)
                             ->update(['total_price' => $newConvertedValue]);
 
                         $payments =
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_payments')
                                 ->select('ecommerce_payments.id')
                                 ->join(
@@ -143,7 +120,7 @@ class VerifyLocalPriceConversion extends Command
                                 ->toArray();
 
                         if (!empty($payments)) {
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_payments')
                                 ->whereIn('id', $payments)
                                 ->update(
@@ -157,7 +134,7 @@ class VerifyLocalPriceConversion extends Command
                 }
             );
 
-        $this->databaseManager->connection('musora_mysql')
+        $databaseManager->connection('musora_mysql')
             ->table('ecommerce_google_receipts')
             ->select(
                 'ecommerce_google_receipts.id',
@@ -190,10 +167,10 @@ class VerifyLocalPriceConversion extends Command
             ->orderBy('ecommerce_google_receipts.id', 'desc')
             ->chunk(
                 $chunkSize,
-                function (Collection $datas) use ($chunkSize) {
+                function (Collection $datas) use ($databaseManager, $currencyConversionHelper, $chunkSize) {
                     foreach ($datas as $data) {
                         $newConvertedValue =
-                            $this->currencyConversionHelper->convert($data->local_price, $data->local_currency, 'USD');
+                            $currencyConversionHelper->convert($data->local_price, $data->local_currency, 'USD');
 
                         if ($newConvertedValue > ($data->price + 45)) {
                             $this->info(
@@ -208,18 +185,18 @@ class VerifyLocalPriceConversion extends Command
                                 ' - ' .
                                 $data->local_price .
                                 ' ' .
-                                $data->local_currency.
-                                ' email:'.$data->email.'  created at::'.$data->created_at
+                                $data->local_currency .
+                                ' email:' . $data->email . '  created at::' . $data->created_at
                             );
                         }
 
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->where('id', $data->subscription_id)
                             ->update(['total_price' => $newConvertedValue]);
 
                         $payments =
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_payments')
                                 ->select('ecommerce_payments.id')
                                 ->join(
@@ -234,7 +211,7 @@ class VerifyLocalPriceConversion extends Command
                                 ->toArray();
 
                         if (!empty($payments)) {
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_payments')
                                 ->whereIn('id', $payments)
                                 ->update(

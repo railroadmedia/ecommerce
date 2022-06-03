@@ -26,47 +26,22 @@ class ProcessAppleExpiredSubscriptions extends Command
     protected $description = 'Queries Apple to get the state of subscriptions due to expire';
 
     /**
-     * @var AppleStoreKitService
-     */
-    private $appleStoreKitService;
-
-    /**
-     * @var SubscriptionRepository
-     */
-    private $subscriptionRepository;
-
-    /**
-     * ProcessAppleExpiredSubscriptions constructor.
-     *
-     * @param AppleStoreKitService $appleStoreKitService
-     * @param SubscriptionRepository $subscriptionRepository
-     */
-    public function __construct(
-        AppleStoreKitService $appleStoreKitService,
-        SubscriptionRepository $subscriptionRepository
-    )
-    {
-        parent::__construct();
-
-        $this->appleStoreKitService = $appleStoreKitService;
-        $this->subscriptionRepository = $subscriptionRepository;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        AppleStoreKitService $appleStoreKitService,
+        SubscriptionRepository $subscriptionRepository
+    ) {
         $this->info('------------------Process Apple Expired Subscriptions command------------------');
 
-        $subscriptions = $this->subscriptionRepository->getAppleExpiredSubscriptions();
+        $subscriptions = $subscriptionRepository->getAppleExpiredSubscriptions();
 
         foreach ($subscriptions as $subscription) {
             try {
-                $this->appleStoreKitService->processSubscriptionRenewal($subscription);
+                $appleStoreKitService->processSubscriptionRenewal($subscription);
             } catch (Exception $e) {
                 $this->error($e->getMessage());
             }

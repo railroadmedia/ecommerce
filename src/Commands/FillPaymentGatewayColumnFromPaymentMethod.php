@@ -26,42 +26,24 @@ class FillPaymentGatewayColumnFromPaymentMethod extends Command
     ' on the payments table.';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * RenewalDueSubscriptions constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(DatabaseManager $databaseManager)
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         $this->info('Starting FillPaymentGatewayColumnFromPaymentMethod.');
 
         $done = 0;
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_payment_methods')
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
-                function (Collection $rows) use (&$done) {
-
+                function (Collection $rows) use ($databaseManager, &$done) {
                     $creditCardRows =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_credit_cards')
                             ->whereIn(
                                 'id',
@@ -72,7 +54,7 @@ class FillPaymentGatewayColumnFromPaymentMethod extends Command
                             ->keyBy('id');
 
                     $paypalBillingAgreementRows =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_paypal_billing_agreements')
                             ->whereIn(
                                 'id',
@@ -83,7 +65,7 @@ class FillPaymentGatewayColumnFromPaymentMethod extends Command
                             ->keyBy('id');
 
                     $payments =
-                        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                        $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_payments')
                             ->whereIn(
                                 'payment_method_id',
@@ -100,39 +82,35 @@ class FillPaymentGatewayColumnFromPaymentMethod extends Command
 
                             if (!empty($creditCard)) {
                                 foreach ($paymentsForMethod as $paymentForMethod) {
-                                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                                         ->table('ecommerce_payments')
                                         ->where('id', $paymentForMethod->id)
                                         ->update(['gateway_name' => $creditCard->payment_gateway_name]);
                                 }
-                            }
-                            else {
+                            } else {
                                 $this->info(
                                     'Could not migrate to credit card payment gateway, id not found. Payment method ID: ' .
                                     $row->id
                                 );
                             }
-                        }
-                        elseif ($row->method_type == PaymentMethod::TYPE_PAYPAL) {
+                        } elseif ($row->method_type == PaymentMethod::TYPE_PAYPAL) {
                             $billingAgreement = $paypalBillingAgreementRows[$row->method_id] ?? null;
                             $paymentsForMethod = $payments[$row->id] ?? [];
 
                             if (!empty($billingAgreement)) {
                                 foreach ($paymentsForMethod as $paymentForMethod) {
-                                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                                         ->table('ecommerce_payments')
                                         ->where('id', $paymentForMethod->id)
                                         ->update(['gateway_name' => $billingAgreement->payment_gateway_name]);
                                 }
-                            }
-                            else {
+                            } else {
                                 $this->info(
                                     'Could not migrate to paypal billing agreement payment gateway, id not found. Payment method ID: ' .
                                     $row->id
                                 );
                             }
-                        }
-                        else {
+                        } else {
                             $this->info(
                                 'Could not migrate to method, invalid type. Payment method ID: ' . $row->id
                             );

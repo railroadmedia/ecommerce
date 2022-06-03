@@ -27,28 +27,11 @@ class FixSerializeErrorInAppPurchaseTables extends Command
     protected $description = 'FixSerializeErrorInAppPurchaseTables';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * RenewalDueSubscriptions constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(DatabaseManager $databaseManager)
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         ini_set('xdebug.var_display_max_depth', '100');
         ini_set('xdebug.var_display_max_children', '256');
@@ -56,7 +39,7 @@ class FixSerializeErrorInAppPurchaseTables extends Command
 
         $this->info('Starting FixSerializeErrorInAppPurchaseTables.');
 
-        $googleReceipts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $googleReceipts = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_google_receipts')
             ->get();
 
@@ -92,7 +75,7 @@ class FixSerializeErrorInAppPurchaseTables extends Command
             }
 
             if (!empty($unSerialized)) {
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_google_receipts')
                     ->where('id', $googleReceipt->id)
                     ->update(['raw_receipt_response' => base64_encode(serialize($unSerialized))]);
@@ -101,7 +84,7 @@ class FixSerializeErrorInAppPurchaseTables extends Command
 
         $this->info('Google done.');
 
-        $appleReceipts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $appleReceipts = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_apple_receipts')
             ->orderBy('id', 'desc')
             ->get();
@@ -140,7 +123,7 @@ class FixSerializeErrorInAppPurchaseTables extends Command
             }
 
             if (!empty($unSerialized)) {
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_apple_receipts')
                     ->where('id', $appleReceipt->id)
                     ->update(['raw_receipt_response' => base64_encode(serialize($unSerialized))]);
@@ -148,12 +131,12 @@ class FixSerializeErrorInAppPurchaseTables extends Command
         }
 
         // do a test to make sure they are all valid
-        $googleReceipts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $googleReceipts = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_google_receipts')
             ->get()
             ->toArray();
 
-        $appleReceipts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $appleReceipts = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_apple_receipts')
             ->orderBy('id', 'desc')
             ->get()

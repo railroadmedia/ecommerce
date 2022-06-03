@@ -24,42 +24,22 @@ class FixSubscriptionTotalAndTaxes extends Command
     protected $description = 'Populates ecommerce_payment_taxes table';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * FixSubscriptionTotalAndTaxes constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(
-        DatabaseManager $databaseManager
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         $this->info('Starting FixSubscriptionTotalAndTaxes.');
 
         $done = 0;
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_subscriptions')
             ->orderBy('id', 'desc')
             ->chunk(
                 500,
-                function (Collection $rows) use (&$done) {
-
+                function (Collection $rows) use ($databaseManager, &$done) {
                     foreach ($rows as $subscription) {
                         $totalWithoutTax = round($subscription->total_price - $subscription->tax, 2);
 
@@ -74,7 +54,7 @@ class FixSubscriptionTotalAndTaxes extends Command
                             }
 
 //                            continue;
-                            $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                            $databaseManager->connection(config('ecommerce.database_connection_name'))
                                 ->table('ecommerce_subscriptions')
                                 ->where('id', $subscription->id)
                                 ->update(['total_price' => $totalWithoutTax]);

@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class MatchOrderItemDiscountAmountToTotal extends Command
@@ -25,41 +24,23 @@ class MatchOrderItemDiscountAmountToTotal extends Command
     protected $description = 'This makes sure that the total discount amount for an order item is not greater that its total cost. This issue was initially caused by a bug which has since been fixed.';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * MatchOrderItemDiscountAmountToTotal constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     */
-    public function __construct(
-        DatabaseManager $databaseManager
-    ) {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(DatabaseManager $databaseManager
+    ) {
         $this->info("Started MatchOrderItemDiscountAmountToTotal command");
 
         $totalProcessed = 0;
 
-        $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_order_items')
             ->whereRaw("(initial_price*quantity) - total_discounted < 0")
             ->orderBy('id', 'asc')
-            ->chunkById(5000, function (Collection $rows) use (&$totalProcessed) {
+            ->chunkById(5000, function (Collection $rows) use ($databaseManager, &$totalProcessed) {
                 foreach ($rows as $row) {
-                    $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                    $databaseManager->connection(config('ecommerce.database_connection_name'))
                         ->table('ecommerce_order_items')
                         ->where('id', $row->id)
                         ->update(['total_discounted' => $row->initial_price * $row->quantity]);

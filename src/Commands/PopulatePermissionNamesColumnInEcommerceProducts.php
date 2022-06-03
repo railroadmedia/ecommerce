@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
+use Throwable;
 
 class PopulatePermissionNamesColumnInEcommerceProducts extends Command
 {
@@ -22,31 +23,26 @@ class PopulatePermissionNamesColumnInEcommerceProducts extends Command
      */
     protected $description = 'Populate new column from ecommerce_products table, digital_access_permission_names, with the permission names saved in config files of each brand.';
 
-    public function __construct(
-        DatabaseManager $databaseManager
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-    }
-
     /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
+    public function handle(DatabaseManager $databaseManager)
     {
         $start = microtime(true);
         $permissionsNamesPerSku = [];
         $nrOfUpdatedProducts = 0;
 
-        foreach (config('event-data-synchronizer.ecommerce_product_sku_to_content_permission_name_map') as $key => $item) {
+        foreach (
+            config(
+                'event-data-synchronizer.ecommerce_product_sku_to_content_permission_name_map'
+            ) as $key => $item
+        ) {
             $permissionsNamesPerSku[$key] = $item;
         }
 
-        $ecommerceProducts = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+        $ecommerceProducts = $databaseManager->connection(config('ecommerce.database_connection_name'))
             ->table('ecommerce_products')
             ->whereIn('sku', array_keys($permissionsNamesPerSku))
             ->get()
@@ -54,10 +50,12 @@ class PopulatePermissionNamesColumnInEcommerceProducts extends Command
 
         foreach ($ecommerceProducts as $ecommerceProduct) {
             if (array_key_exists($ecommerceProduct->sku, $permissionsNamesPerSku)) {
-                $this->databaseManager->connection(config('ecommerce.database_connection_name'))
+                $databaseManager->connection(config('ecommerce.database_connection_name'))
                     ->table('ecommerce_products')
                     ->where('sku', $ecommerceProduct->sku)
-                    ->update(['digital_access_permission_names' => '["' . $permissionsNamesPerSku[$ecommerceProduct->sku] . '"]']);
+                    ->update(
+                        ['digital_access_permission_names' => '["' . $permissionsNamesPerSku[$ecommerceProduct->sku] . '"]']
+                    );
                 $nrOfUpdatedProducts++;
             }
         }
@@ -65,7 +63,6 @@ class PopulatePermissionNamesColumnInEcommerceProducts extends Command
         $finish = microtime(true) - $start;
         $format = "Finished updating digital access permission names columns in ecommerce_products table in total %s seconds.\nTotal number of updated products: %s.\n";
         $this->info(sprintf($format, $finish, $nrOfUpdatedProducts));
-
     }
 
 }

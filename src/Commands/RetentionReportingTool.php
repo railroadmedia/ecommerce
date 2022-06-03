@@ -28,39 +28,14 @@ class RetentionReportingTool extends Command
     protected $description = 'Pull retention stats between dates per month.';
 
     /**
-     * @var DatabaseManager
-     */
-    private $databaseManager;
-
-    /**
-     * @var RetentionStatsService
-     */
-    private $retentionStatsService;
-
-    /**
-     * RetentionReportingTool constructor.
-     *
-     * @param DatabaseManager $databaseManager
-     * @param RetentionStatsService $retentionStatsService
-     */
-    public function __construct(
-        DatabaseManager $databaseManager,
-        RetentionStatsService $retentionStatsService
-    )
-    {
-        parent::__construct();
-
-        $this->databaseManager = $databaseManager;
-        $this->retentionStatsService = $retentionStatsService;
-    }
-
-    /**
      * Execute the console command.
      *
      * @throws Throwable
      */
-    public function handle()
-    {
+    public function handle(
+        DatabaseManager $databaseManager,
+        RetentionStatsService $retentionStatsService
+    ) {
         $startDate = Carbon::parse($this->argument('startDate'))->startOfDay();
         $endDate = Carbon::parse($this->argument('endDate'))->endOfDay();
         $dateInterval = $startDate->copy();
@@ -95,7 +70,7 @@ class RetentionReportingTool extends Command
                 ]
             );
 
-            $stats = $this->retentionStatsService->getStats($request);
+            $stats = $retentionStatsService->getStats($request);
 
             $thisRow = $csvData[0];
 
