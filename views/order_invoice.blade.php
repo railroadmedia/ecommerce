@@ -341,7 +341,13 @@
                                                     <table class="invoice-items" cellpadding="0" cellspacing="0">
                                                         @foreach($orderItems ?? [] as $orderItem)
                                                             <tr>
-                                                                <td>{{ $orderItem->getProduct()->getName() }}</td>
+
+                                                                @if($orderItem->getQuantity() > 1)
+                                                                    <td>{!! $orderItem->getProduct()->getName() . ' - x' . $orderItem->getQuantity() !!}</td>
+                                                                @else
+                                                                    <td>{{ $orderItem->getProduct()->getName() }}</td>
+                                                                @endif
+
                                                                 <td class="alignright">
                                                                     $ {{ number_format($orderItem->getFinalPrice(), 2) }} USD
                                                                 </td>
