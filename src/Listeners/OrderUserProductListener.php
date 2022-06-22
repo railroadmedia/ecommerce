@@ -74,19 +74,19 @@ class OrderUserProductListener
                     if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                         $expirationDate =
                             Carbon::now()
-                                ->addMonths($product->getSubscriptionIntervalCount());
+                                ->addMonths($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
 
                     }
                     elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                         $expirationDate =
                             Carbon::now()
-                                ->addYears($product->getSubscriptionIntervalCount());
+                                ->addYears($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
 
                     }
                     elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                         $expirationDate =
                             Carbon::now()
-                                ->addDays($product->getSubscriptionIntervalCount());
+                                ->addDays($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
                     }
                 }
 
