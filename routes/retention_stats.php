@@ -14,11 +14,11 @@ Route::group([
         '/retention-stats/average-membership-end',
         Railroad\Ecommerce\Controllers\RetentionJsonController::class . '@averageMembershipEnd'
     )
-        ->name('retention.stats');
+        ->name('retention.average-membership-end');
 
     Route::get(
         '/retention-stats/membership-end-stats',
         Railroad\Ecommerce\Controllers\RetentionJsonController::class . '@membershipEndStats'
     )
-        ->name('retention.stats');
+        ->name('retention.membership-end-stats');
 });

@@ -14,5 +14,5 @@ Route::group([
         ->name('stats.orders');
 
     Route::get('/daily-statistics', \Railroad\Ecommerce\Controllers\StatsController::class . '@dailyStatistics')
-        ->name('stats.orders');
+        ->name('stats.daily-statistics');
 });
