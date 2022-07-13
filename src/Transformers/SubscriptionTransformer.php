@@ -71,11 +71,15 @@ class SubscriptionTransformer extends TransformerAbstract
             $this->defaultIncludes[] = 'failedPayment';
         }
 
-        /** @var $address Address */
-        if (!empty($subscription->getPaymentMethod()) &&
-            !empty($subscription->getPaymentMethod()->getBillingAddress())) {
-            $address = $subscription->getPaymentMethod()->getBillingAddress()->toStructure();
-        } else {
+        try {
+            /** @var $address Address */
+            if (!empty($subscription->getPaymentMethod()) &&
+                !empty($subscription->getPaymentMethod()->getBillingAddress())) {
+                $address = $subscription->getPaymentMethod()->getBillingAddress()->toStructure();
+            } else {
+                $address = new Address();
+            }
+        } catch (\Exception $exception) {
             $address = new Address();
         }
 
