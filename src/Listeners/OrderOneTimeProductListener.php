@@ -103,5 +103,6 @@ class OrderOneTimeProductListener
         $this->ecommerceEntityManager->persist($subscription);
         $this->ecommerceEntityManager->flush($subscription);
         event(new SubscriptionUpdated($oldSubscription, $subscription));
+        $this->userProductService->updateSubscriptionProducts($subscription);
     }
 }

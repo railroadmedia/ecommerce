@@ -27,6 +27,7 @@ use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
 use Railroad\Ecommerce\Commands\FixSerializeErrorInAppPurchaseTables;
 use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
+use Railroad\Ecommerce\Commands\GetOneTimeProductSubscriptionIssues;
 use Railroad\Ecommerce\Commands\ListDueSubscriptions;
 use Railroad\Ecommerce\Commands\MatchOrderItemDiscountAmountToTotal;
 use Railroad\Ecommerce\Commands\MembershipsReportingTool;
@@ -149,7 +150,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 VerifyLocalPriceConversion::class,
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
-                PopulatePermissionNamesColumnInEcommerceProducts::class
+                PopulatePermissionNamesColumnInEcommerceProducts::class,
+                GetOneTimeProductSubscriptionIssues::class
             ]
         );
 
