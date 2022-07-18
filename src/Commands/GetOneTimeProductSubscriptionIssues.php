@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Commands;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Listeners\OrderOneTimeProductListener;
@@ -90,6 +91,19 @@ class GetOneTimeProductSubscriptionIssues extends Command
      */
     public function handle()
     {
+        $flaggedSubscriptions = $this->FindIssues();
+
+
+        if ($this->confirm('Attempt to resolve issues automatically?')) {
+            $this->HandleIssues($flaggedSubscriptions);
+        }
+    }
+
+    /**
+     * @return Collection
+     */
+    public function FindIssues(): Collection
+    {
         $flaggedSubscriptions = collect($this->databaseManager->connection('musora_mysql')
             ->select("SELECT s.id, s.user_id, u.email, s.brand, s.start_date, s.paid_until, latest_expiration_date.access_until, latest_expiration_date.name, latest_expiration_date.product_id, o2.id as order_id
                             FROM ecommerce_subscriptions s
@@ -109,36 +123,44 @@ class GetOneTimeProductSubscriptionIssues extends Command
             return collect([$row->user_id, $row->email, $row->brand, $row->name, $row->paid_until, $row->access_until, $diffDays]);
         }));
         $this->info("{$flaggedSubscriptions->count()} records found");
+        return $flaggedSubscriptions;
+    }
 
+    /**
+     * @param Collection $flaggedSubscriptions
+     * @return void
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Throwable
+     */
+    public function HandleIssues(Collection $flaggedSubscriptions): void
+    {
+        $listener = new OrderOneTimeProductListener($this->subscriptionRepository,
+            $this->ecommerceEntityManager,
+            $this->userProductService,
+            $this->dateTimeService);
 
-        if ($this->confirm('Attempt to resolve issues automatically?')) {
-            $listener = new OrderOneTimeProductListener($this->subscriptionRepository,
-                $this->ecommerceEntityManager,
-                $this->userProductService,
-                $this->dateTimeService);
+        $i = 1;
+        foreach ($flaggedSubscriptions as $flaggedSubscription) {
+            $orderId = $flaggedSubscription->order_id;
+            $this->info("\n<fg=white>{$i}/{$flaggedSubscriptions->count()}</>");
 
-            $i = 1;
-            foreach ($flaggedSubscriptions as $flaggedSubscription){
-                $orderId = $flaggedSubscription->order_id;
-                $this->info("<fg=white>{i}/{$flaggedSubscriptions->count()}</>");
+            $order = $this->orderRepository->find($orderId);
+            $listener->handle(new OrderEvent($order, null));
 
-                $order = $this->orderRepository->find($orderId);
-                $listener->handle(new OrderEvent($order, null));
-
-                $subscriptionID = $flaggedSubscription->id;
-                $updates = collect($this->databaseManager->connection('musora_mysql')
-                    ->select("SELECT s.id, s.paid_until, up.expiration_date
+            $subscriptionID = $flaggedSubscription->id;
+            $updates = collect($this->databaseManager->connection('musora_mysql')
+                ->select("SELECT s.id, s.paid_until, up.expiration_date
                             FROM ecommerce_subscriptions s
                             INNER JOIN ecommerce_products p on s.product_id = p.id
                             INNER JOIN ecommerce_user_products up on up.product_id = p.id and up.user_id = s.user_id
                             WHERE s.id = {$subscriptionID}
                             "))->first();
 
-                $this->info("\nUser: {$flaggedSubscription->user_id}\nOne Time Product: {$flaggedSubscription->name}");
-                $this->info("Subscription paid_until <fg=white>{$flaggedSubscription->paid_until}</> to <fg=white>{$updates->paid_until}</>");
-                $this->info("Subscription expiration_date <fg=white>{$flaggedSubscription->access_until}</> to <fg=white>{$updates->expiration_date}</>");
-                $i++;
-            };
-        }
+            $this->info("User: {$flaggedSubscription->user_id}\nOne Time Product: {$flaggedSubscription->name}");
+            $this->info("Subscription paid_until <fg=white>{$flaggedSubscription->paid_until}</> to <fg=white>{$updates->paid_until}</>");
+            $this->info("Subscription expiration_date <fg=white>{$flaggedSubscription->access_until}</> to <fg=white>{$updates->expiration_date}</>");
+            $i++;
+        };
     }
 }
