@@ -7,6 +7,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Services\DateTimeService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
 
@@ -23,16 +24,24 @@ class OrderUserProductListener
     protected $userProductService;
 
     /**
+     * @var DateTimeService
+     */
+    protected $dateTimeService;
+
+    /**
      * @param SubscriptionRepository $subscriptionRepository
      * @param UserProductService $userProductService
+     * @param DateTimeService $dateTimeService
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService
+        UserProductService $userProductService,
+        DateTimeService $dateTimeService
     )
     {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
+        $this->dateTimeService = $dateTimeService;
     }
 
     /**
@@ -65,29 +74,16 @@ class OrderUserProductListener
                         $expirationDate = $subscription->getPaidUntil()->copy();
                     }
                 }
-
                 // if its a non-recurring one time membership product
-                if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
+                else if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
                     !empty($product->getSubscriptionIntervalType()) &&
                     !empty($product->getSubscriptionIntervalCount())) {
+                    $userProduct = $this->userProductService->getUserProduct($order->getUser(), $product);
+                    $start = $userProduct->getExpirationDate()->copy() ?? Carbon::now();
+                    $intervalType = $product->getSubscriptionIntervalType();
+                    $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
 
-                    if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
-                        $expirationDate =
-                            Carbon::now()
-                                ->addMonths($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
-
-                    }
-                    elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
-                        $expirationDate =
-                            Carbon::now()
-                                ->addYears($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
-
-                    }
-                    elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
-                        $expirationDate =
-                            Carbon::now()
-                                ->addDays($product->getSubscriptionIntervalCount() * $orderItem->getQuantity());
-                    }
+                    $expirationDate = $this->dateTimeService->addInterval($start, $intervalType, $nIntervals);
                 }
 
                 if (!empty($expirationDate)) {
