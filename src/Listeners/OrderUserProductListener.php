@@ -79,7 +79,7 @@ class OrderUserProductListener
                     !empty($product->getSubscriptionIntervalType()) &&
                     !empty($product->getSubscriptionIntervalCount())) {
                     $userProduct = $this->userProductService->getUserProduct($order->getUser(), $product);
-                    $start = $userProduct->getExpirationDate()->copy() ?? Carbon::now();
+                    $start = ($userProduct ? $userProduct->getExpirationDate()->copy() : null) ?? Carbon::now();
                     $intervalType = $product->getSubscriptionIntervalType();
                     $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
 
