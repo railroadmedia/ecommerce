@@ -35,8 +35,8 @@ class OrderUserProductListener
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
-        UserProductService $userProductService,
-        DateTimeService $dateTimeService
+        UserProductService     $userProductService,
+        DateTimeService        $dateTimeService
     )
     {
         $this->subscriptionRepository = $subscriptionRepository;
@@ -64,32 +64,29 @@ class OrderUserProductListener
                 $expirationDate = null;
 
                 if ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
-
                     $subscription = $this->subscriptionRepository->getOrderProductSubscription(
                         $order,
                         $product
                     );
 
                     if ($subscription) {
-                        $expirationDate = $subscription->getPaidUntil()->copy();
+                        $expirationDate = $subscription->getPaidUntil()->copy()->addDays(
+                            config('ecommerce.days_before_access_revoked_after_expiry', 5)
+                        );
                     }
-                }
-                // if its a non-recurring one time membership product
-                else if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
+                } else if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
                     !empty($product->getSubscriptionIntervalType()) &&
                     !empty($product->getSubscriptionIntervalCount())) {
-                    $userProduct = $this->userProductService->getUserProduct($order->getUser(), $product);
-                    $start = ($userProduct ? $userProduct->getExpirationDate()->copy() : null) ?? Carbon::now();
                     $intervalType = $product->getSubscriptionIntervalType();
                     $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
-
-                    $expirationDate = $this->dateTimeService->addInterval($start, $intervalType, $nIntervals);
-                }
-
-                if (!empty($expirationDate)) {
-                    $expirationDate = $expirationDate->addDays(
+                    $userProduct = $this->userProductService->getUserProduct($order->getUser(), $product);
+                    $newProductExpirationDate = $this->dateTimeService->addInterval(Carbon::now(), $intervalType, $nIntervals)->addDays(
                         config('ecommerce.days_before_access_revoked_after_expiry', 5)
                     );
+                    $existingProductExpirationDate = $userProduct ? $this->dateTimeService->addInterval($userProduct->getExpirationDate()->copy(), $intervalType, $nIntervals) : null;
+                    $expirationDate = ($existingProductExpirationDate && $existingProductExpirationDate > $newProductExpirationDate) ?
+                        $existingProductExpirationDate :
+                        $newProductExpirationDate;
                 }
 
                 $this->userProductService->assignUserProduct(
