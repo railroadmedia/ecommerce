@@ -14,6 +14,7 @@ use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Services\DateTimeService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
+
 use function Aws\map;
 
 class OrderOneTimeProductListener
@@ -44,10 +45,9 @@ class OrderOneTimeProductListener
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         EcommerceEntityManager $ecommerceEntityManager,
-        UserProductService     $userProductService,
-        DateTimeService        $dateTimeService
-    )
-    {
+        UserProductService $userProductService,
+        DateTimeService $dateTimeService
+    ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->ecommerceEntityManager = $ecommerceEntityManager;
         $this->userProductService = $userProductService;
@@ -63,9 +63,13 @@ class OrderOneTimeProductListener
     public function handle(OrderEvent $event)
     {
         $order = $event->getOrder();
-        if (!$order->getUser() || !$order->getOrderItems() || !count($order->getOrderItems())) return;
+        if (!$order->getUser() || !$order->getOrderItems() || !count($order->getOrderItems())) {
+            return;
+        }
         $orderItems = $order->getOrderItems();
-        $subscriptions = collect($this->subscriptionRepository->getActiveSubscriptionsByUserId($order->getUser()->getId()));
+        $subscriptions = collect(
+            $this->subscriptionRepository->getActiveSubscriptionsByUserId($order->getUser()->getId())
+        );
         $subscriptionsMap = $subscriptions->mapWithKeys(function ($subscription, $key) {
             return [$subscription->getBrand() => $subscription];
         });
@@ -73,15 +77,17 @@ class OrderOneTimeProductListener
         foreach ($orderItems as $orderItem) {
             $product = $orderItem->getProduct();
             $subscription = $subscriptionsMap[$product->getBrand()] ?? null;
-            if ($subscription == null) continue;
+            if ($subscription == null) {
+                continue;
+            }
             $paidUntil = $subscription->getPaidUntil()->copy();
             $isOneTimeProduct = $product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
-                !empty($product->getSubscriptionIntervalType()) &&
-                !empty($product->getSubscriptionIntervalCount());
+                !empty($product->getDigitalAccessTimeIntervalType()) &&
+                !empty($product->getDigitalAccessTimeIntervalLength());
 
             if ($isOneTimeProduct) {
-                $intervalType = $product->getSubscriptionIntervalType();
-                $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
+                $intervalType = $product->getDigitalAccessTimeIntervalType();
+                $nIntervals = $product->getDigitalAccessTimeIntervalLength() * $orderItem->getQuantity();
                 $paidUntil = $this->dateTimeService->addInterval($paidUntil, $intervalType, $nIntervals);
 
                 $this->updateSubscription($subscription, $paidUntil);

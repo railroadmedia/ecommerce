@@ -7,6 +7,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
+use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Services\DateTimeService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
@@ -35,10 +36,10 @@ class OrderUserProductListener
      */
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
-        UserProductService     $userProductService,
-        DateTimeService        $dateTimeService
-    )
-    {
+        UserProductService $userProductService,
+        UserProductRepository $userProductRepository,
+        DateTimeService $dateTimeService
+    ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductService = $userProductService;
         $this->dateTimeService = $dateTimeService;
@@ -58,7 +59,6 @@ class OrderUserProductListener
             $orderItems = $order->getOrderItems();
 
             foreach ($orderItems as $orderItem) {
-
                 $product = $orderItem->getProduct();
 
                 $expirationDate = null;
@@ -74,20 +74,32 @@ class OrderUserProductListener
                             config('ecommerce.days_before_access_revoked_after_expiry', 5)
                         );
                     }
-                } else if ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
-                    !empty($product->getSubscriptionIntervalType()) &&
-                    !empty($product->getSubscriptionIntervalCount())) {
-                    $intervalType = $product->getSubscriptionIntervalType();
-                    $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
-                    $userProduct = $this->userProductService->getUserProduct($order->getUser(), $product);
-                    $newProductExpirationDate = $this->dateTimeService->addInterval(Carbon::now(), $intervalType, $nIntervals)->addDays(
+                } elseif ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
+                    !empty($product->getDigitalAccessTimeIntervalType()) &&
+                    !empty($product->getDigitalAccessTimeIntervalLength())) {
+                    $intervalType = $product->getDigitalAccessTimeIntervalType();
+                    $nIntervals = $product->getDigitalAccessTimeIntervalLength() * $orderItem->getQuantity();
+                    $latestExpirationDate = $this->userProductService->getLatestExpirationDateByBrand(
+                        $order->getUser(),
+                        $product->getBrand()
+                    );
+                    $newProductExpirationDate = $this->dateTimeService->addInterval(
+                        Carbon::now(),
+                        $intervalType,
+                        $nIntervals
+                    )->addDays(
                         config('ecommerce.days_before_access_revoked_after_expiry', 5)
                     );
-                    $existingProductExpirationDate = $userProduct ? $this->dateTimeService->addInterval($userProduct->getExpirationDate()->copy(), $intervalType, $nIntervals) : null;
+                    $existingProductExpirationDate = $latestExpirationDate ? $this->dateTimeService->addInterval(
+                        $latestExpirationDate,
+                        $intervalType,
+                        $nIntervals
+                    ) : null;
                     $expirationDate = ($existingProductExpirationDate && $existingProductExpirationDate > $newProductExpirationDate) ?
                         $existingProductExpirationDate :
                         $newProductExpirationDate;
                 }
+
 
                 $this->userProductService->assignUserProduct(
                     $order->getUser(),
