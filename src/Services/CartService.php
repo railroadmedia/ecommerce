@@ -236,6 +236,7 @@ class CartService
             throw new ProductNotActiveException($product);
         }
 
+
         if ($product->getStock() !== null && $product->getStock() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
@@ -707,6 +708,21 @@ class CartService
         }
 
         return false;
+    }
+
+
+    public function checkProductsStock($cart) {
+        $productsBySku = $this->productRepository->bySkus($cart->listSkus());
+        $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
+
+        foreach ($cart->getItems() as $cartItem) {
+            $product = $productsBySku[$cartItem->getSku()];
+            if ($product->getStock() !== null && $product->getStock() < $cartItem->getQuantity()) {
+                throw new ProductOutOfStockException($product);
+            }
+        }
+
+        return true;
     }
 
     /**
