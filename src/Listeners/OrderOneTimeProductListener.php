@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Faker\Provider\DateTime;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -70,7 +71,10 @@ class OrderOneTimeProductListener
         $subscriptions = collect(
             $this->subscriptionRepository->getActiveSubscriptionsByUserId($order->getUser()->getId())
         );
-        $subscriptionsMap = $subscriptions->mapWithKeys(function ($subscription, $key) {
+        $subscriptionsMap = $subscriptions->sortBy(function (Subscription $subscription) {
+            //mapWithKeys takes the last value for duplicate keys which is why we sort by ascending here
+            return $subscription->getPaidUntil();
+        })->mapWithKeys(function ($subscription, $key) {
             return [$subscription->getBrand() => $subscription];
         });
 

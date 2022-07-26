@@ -92,7 +92,7 @@ class OneTimeProductTest extends EcommerceTestCase
             'is_physical' => 0,
             'weight' => 0,
             'brand' => $this->brand,
-            'type' => 'digital one time',
+            'type' => Product::TYPE_DIGITAL_ONE_TIME,
             'subscription_interval_type' => 'year',
             'subscription_interval_count' => 1,
             'digital_access_time_interval_type' => 'year',
@@ -114,7 +114,7 @@ class OneTimeProductTest extends EcommerceTestCase
             'is_physical' => 0,
             'weight' => 0,
             'brand' => $this->brand,
-            'type' => 'digital subscription',
+            'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
             'subscription_interval_type' => 'year',
             'subscription_interval_count' => 1,
             'digital_access_time_interval_type' => 'year',
@@ -210,6 +210,32 @@ class OneTimeProductTest extends EcommerceTestCase
         );
     }
 
+    public function test_one_time_product_multiple_active_subscription()
+    {
+        $userId = $this->createAndLogInNewUser();
+
+        $product1 = $this->subscriptionProduct();
+        $this->purchaseProduct($product1);
+        $product2 = $this->subscriptionProduct([
+            'subscription_interval_type' => 'month',
+            'digital_access_time_interval_type' => 'month'
+        ]);
+        $this->purchaseProduct($product2);
+        $product3 = $this->oneTimeProduct();
+        $this->purchaseProduct($product3);
+
+        $this->assertDatabaseHas(
+            'ecommerce_subscriptions',
+            [
+                'brand' => $this->brand,
+                'product_id' => $product1['id'],
+                'user_id' => $userId,
+                'is_active' => 1,
+                'paid_until' => Carbon::now()->addYear(2)->toDateTimeString(),
+            ]
+        );
+    }
+
     /**
      * Test buying another one time product
      * if original one time product is not expired
@@ -219,17 +245,17 @@ class OneTimeProductTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->oneTimeProduct();
-        $this->purchaseProduct($product);
+        $product1 = $this->oneTimeProduct();
+        $this->purchaseProduct($product1);
         Carbon::setTestNow(Carbon::now()->addMonth(6));
-        $product = $this->oneTimeProduct();
-        $this->purchaseProduct($product);
+        $product2 = $this->oneTimeProduct();
+        $this->purchaseProduct($product2);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
                 'user_id' => $userId,
-                'product_id' => $product['id'],
+                'product_id' => $product2['id'],
                 'expiration_date' => Carbon::now()->addMonth(18)->addDays(
                     config('ecommerce.days_before_access_revoked_after_expiry', 5)
                 )->toDateTimeString(),
@@ -246,17 +272,17 @@ class OneTimeProductTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->oneTimeProduct();
-        $this->purchaseProduct($product);
+        $product1 = $this->oneTimeProduct();
+        $this->purchaseProduct($product1);
         Carbon::setTestNow(Carbon::now()->addMonth(18));
-        $product = $this->oneTimeProduct();
-        $this->purchaseProduct($product);
+        $product2 = $this->oneTimeProduct();
+        $this->purchaseProduct($product2);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
                 'user_id' => $userId,
-                'product_id' => $product['id'],
+                'product_id' => $product2['id'],
                 'expiration_date' => Carbon::now()->addYear(1)->addDays(
                     config('ecommerce.days_before_access_revoked_after_expiry', 5)
                 )->toDateTimeString(),
@@ -273,17 +299,17 @@ class OneTimeProductTest extends EcommerceTestCase
     {
         $userId = $this->createAndLogInNewUser();
 
-        $product = $this->oneTimeProduct(['brand' => 'drumeo']);
-        $this->purchaseProduct($product);
+        $product1 = $this->oneTimeProduct(['brand' => 'drumeo']);
+        $this->purchaseProduct($product1);
         Carbon::setTestNow(Carbon::now()->addMonth(6));
-        $product = $this->oneTimeProduct(['brand' => 'pianote']);
-        $this->purchaseProduct($product);
+        $product2 = $this->oneTimeProduct(['brand' => 'pianote']);
+        $this->purchaseProduct($product2);
 
         $this->assertDatabaseHas(
             'ecommerce_user_products',
             [
                 'user_id' => $userId,
-                'product_id' => $product['id'],
+                'product_id' => $product2['id'],
                 'expiration_date' => Carbon::now()->addYear(1)->addDays(
                     config('ecommerce.days_before_access_revoked_after_expiry', 5)
                 )->toDateTimeString(),
