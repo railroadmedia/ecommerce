@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Faker\Provider\DateTime;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\OrderEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
@@ -14,6 +15,7 @@ use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Railroad\Ecommerce\Services\DateTimeService;
 use Railroad\Ecommerce\Services\UserProductService;
 use Throwable;
+
 use function Aws\map;
 
 class OrderOneTimeProductListener
@@ -44,10 +46,9 @@ class OrderOneTimeProductListener
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         EcommerceEntityManager $ecommerceEntityManager,
-        UserProductService     $userProductService,
-        DateTimeService        $dateTimeService
-    )
-    {
+        UserProductService $userProductService,
+        DateTimeService $dateTimeService
+    ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->ecommerceEntityManager = $ecommerceEntityManager;
         $this->userProductService = $userProductService;
@@ -63,25 +64,34 @@ class OrderOneTimeProductListener
     public function handle(OrderEvent $event)
     {
         $order = $event->getOrder();
-        if (!$order->getUser() || !$order->getOrderItems() || !count($order->getOrderItems())) return;
+        if (!$order->getUser() || !$order->getOrderItems() || !count($order->getOrderItems())) {
+            return;
+        }
         $orderItems = $order->getOrderItems();
-        $subscriptions = collect($this->subscriptionRepository->getActiveSubscriptionsByUserId($order->getUser()->getId()));
-        $subscriptionsMap = $subscriptions->mapWithKeys(function ($subscription, $key) {
+        $subscriptions = collect(
+            $this->subscriptionRepository->getActiveSubscriptionsByUserId($order->getUser()->getId())
+        );
+        $subscriptionsMap = $subscriptions->sortBy(function (Subscription $subscription) {
+            //mapWithKeys takes the last value for duplicate keys which is why we sort by ascending here
+            return $subscription->getPaidUntil();
+        })->mapWithKeys(function ($subscription, $key) {
             return [$subscription->getBrand() => $subscription];
         });
 
         foreach ($orderItems as $orderItem) {
             $product = $orderItem->getProduct();
             $subscription = $subscriptionsMap[$product->getBrand()] ?? null;
-            if ($subscription == null) continue;
+            if ($subscription == null) {
+                continue;
+            }
             $paidUntil = $subscription->getPaidUntil()->copy();
             $isOneTimeProduct = $product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
-                !empty($product->getSubscriptionIntervalType()) &&
-                !empty($product->getSubscriptionIntervalCount());
+                !empty($product->getDigitalAccessTimeIntervalType()) &&
+                !empty($product->getDigitalAccessTimeIntervalLength());
 
             if ($isOneTimeProduct) {
-                $intervalType = $product->getSubscriptionIntervalType();
-                $nIntervals = $product->getSubscriptionIntervalCount() * $orderItem->getQuantity();
+                $intervalType = $product->getDigitalAccessTimeIntervalType();
+                $nIntervals = $product->getDigitalAccessTimeIntervalLength() * $orderItem->getQuantity();
                 $paidUntil = $this->dateTimeService->addInterval($paidUntil, $intervalType, $nIntervals);
 
                 $this->updateSubscription($subscription, $paidUntil);

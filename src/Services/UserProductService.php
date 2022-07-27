@@ -47,8 +47,7 @@ class UserProductService
     public function __construct(
         EcommerceEntityManager $entityManager,
         UserProductRepository $userProductRepository
-    )
-    {
+    ) {
         $this->entityManager = $entityManager;
         $this->userProductRepository = $userProductRepository;
 
@@ -71,7 +70,6 @@ class UserProductService
             if ($userProduct->getProduct()
                     ->getId() == $productId &&
                 ($userProduct->isValid())) {
-
                 return true;
             }
         }
@@ -98,7 +96,6 @@ class UserProductService
                     $productIds
                 ) &&
                 ($userProduct->isValid())) {
-
                 return true;
             }
         }
@@ -119,10 +116,8 @@ class UserProductService
         $userProducts = $this->getAllUsersProducts($userId);
 
         foreach ($userProducts as $userProduct) {
-
             if ($userProduct->getProduct()
                     ->getId() == $productId) {
-
                 if ($userProduct->getExpirationDate() == null) {
                     return null;
                 }
@@ -192,9 +187,7 @@ class UserProductService
     public function getUserProduct(
         User $user,
         Product $product
-    ): ?UserProduct
-    {
-
+    ): ?UserProduct {
         /** @var $qb QueryBuilder */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
@@ -210,7 +203,7 @@ class UserProductService
             ->setParameter('product', $product);
 
         return $qb->getQuery()
-            ->getResult()[0] ?? null;
+                ->getResult()[0] ?? null;
     }
 
     /**
@@ -224,8 +217,7 @@ class UserProductService
     public function getUserProducts(
         User $user,
         $products
-    ): array
-    {
+    ): array {
         /** @var $qb QueryBuilder */
         $qb = $this->userProductRepository->createQueryBuilder('up');
 
@@ -273,9 +265,7 @@ class UserProductService
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity
-    ): UserProduct
-    {
-
+    ): UserProduct {
         $userProduct = new UserProduct();
 
         $userProduct->setUser($user);
@@ -306,8 +296,7 @@ class UserProductService
         UserProduct $userProduct,
         ?DateTimeInterface $expirationDate,
         $quantity
-    )
-    {
+    ) {
         $oldUserProduct = clone($userProduct);
 
         $userProduct->setExpirationDate($expirationDate);
@@ -352,8 +341,7 @@ class UserProductService
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity = 0
-    )
-    {
+    ) {
         /**
          * @var $userProduct UserProduct
          */
@@ -362,8 +350,7 @@ class UserProductService
         if (!$userProduct) {
             $productQuantity = ($quantity == 0) ? 1 : $quantity;
             $this->createUserProduct($user, $product, $expirationDate, $productQuantity);
-        }
-        else {
+        } else {
             $this->updateUserProduct($userProduct, $expirationDate, ($userProduct->getQuantity() + $quantity));
         }
     }
@@ -383,8 +370,7 @@ class UserProductService
     public function removeUserProducts(
         User $user,
         $products
-    )
-    {
+    ) {
         $userProducts = $this->getUserProducts(
             $user,
             $products->pluck('product')
@@ -392,7 +378,6 @@ class UserProductService
         );
 
         foreach ($products as $productData) {
-
             /**
              * @var $product Product
              */
@@ -410,9 +395,7 @@ class UserProductService
                 $this->entityManager->remove($userProduct);
 
                 event(new UserProductDeleted($userProduct));
-            }
-            else {
-
+            } else {
                 $quantity = $userProduct->getQuantity() - $productData['quantity'];
 
                 $userProduct->setQuantity($quantity);
@@ -436,7 +419,6 @@ class UserProductService
     public function getSubscriptionProducts(Subscription $subscription)
     {
         if ($subscription->getType() == config('ecommerce.type_payment_plan')) {
-
             if (!$subscription->getOrder()) {
                 return collect([]);
             }
@@ -453,10 +435,7 @@ class UserProductService
                     ];
                 }
             );
-
-        }
-        else {
-
+        } else {
             return collect(
                 [
                     [
@@ -482,7 +461,6 @@ class UserProductService
         // we only want to update the expiration date of non-payment plan subscription products
         if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
             foreach ($products as $productData) {
-
                 /** @var $paidUntil Carbon */
                 $paidUntil = $subscription->getPaidUntil()
                     ->copy();
@@ -510,7 +488,6 @@ class UserProductService
         // we only want to update the expiration date of non-payment plan subscription products
         if ($subscription->getType() != Subscription::TYPE_PAYMENT_PLAN) {
             foreach ($products as $productData) {
-
                 /** @var $paidUntil Carbon */
                 $paidUntil = $subscription->getPaidUntil()
                     ->copy();
@@ -518,7 +495,9 @@ class UserProductService
                 $this->assignUserProduct(
                     $subscription->getUser(),
                     $productData['product'],
-                    $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5))
+                    $paidUntil->addDays(
+                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
+                    )
                 );
             }
         }
@@ -527,7 +506,7 @@ class UserProductService
     /**
      * If the user has or had any digital product from brand, return true. Otherwise, false.
      *
-     * @param  User  $user
+     * @param User $user
      * @param $brand
      * @throws Throwable
      */
@@ -546,5 +525,10 @@ class UserProductService
             ->setParameter('brand', $brand);
 
         return $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+
+    public function getLatestExpirationDateByBrand(User $user, string $brand)
+    {
+        return $this->userProductRepository->getLatestExpirationDateByBrand($user, $brand);
     }
 }
