@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\QueryBuilder;
@@ -111,7 +112,7 @@ class UserProductRepository extends RepositoryBase
             ->setParameter('userId', $userId);
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 
     /**
@@ -151,8 +152,7 @@ class UserProductRepository extends RepositoryBase
         User $user,
         DiscountCriteria $discountCriteria,
         $maxOverride = null
-    ): int
-    {
+    ): int {
         /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
@@ -187,6 +187,23 @@ class UserProductRepository extends RepositoryBase
             ->setParameter('max', !empty($maxOverride) ? $maxOverride : (integer)$discountCriteria->getMax());
 
         return (integer)$qb->getQuery()
-                ->getSingleScalarResult();
+            ->getSingleScalarResult();
+    }
+
+    public function getLatestExpirationDateByBrand(User $user, string $brand): ?Carbon
+    {
+        /** @var $qb QueryBuilder */
+        $qb = $this->getEntityManager()->createQueryBuilder('up');
+
+        $qb->select('max(up.expirationDate) as expirationDate')
+            ->from(UserProduct::class, 'up')
+            ->join('up.product', 'p')
+            ->where($qb->expr()->eq('up.user', ':user'))
+            ->andWhere($qb->expr()->eq('p.brand', ':brand'))
+            ->orderBy('up.expirationDate', 'desc')
+            ->setParameter('user', $user)
+            ->setParameter('brand', $brand);;
+        $result = $qb->getQuery()->getOneOrNullResult()['expirationDate'];
+        return $result ? Carbon::parse($result) : null;
     }
 }
