@@ -908,4 +908,26 @@ class SubscriptionRepository extends RepositoryBase
             ->getQuery()
             ->getResult();
     }
+
+
+    public function getFirstSubscriptionBrand(int $userId, array $brands): string
+    {
+        $qb = $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select('s.brand')
+            ->from($this->getClassName(), 's')
+            ->where(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )->andWhere('s.brand in (:brands)'
+            )->orderBy('s.createdAt');
+
+        $result = $qb->setParameter('userId', $userId)
+            ->setParameter('brands', $brands)
+            ->getQuery()
+            ->setMaxResults(1)
+            ->getResult();
+        return $result[0]['brand'];
+    }
 }
