@@ -431,6 +431,7 @@ class OrderFormSubmitRequest extends FormRequest
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
             $purchaser->setType(Purchaser::USER_TYPE);
+            $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
             return $purchaser;
         }
@@ -440,6 +441,7 @@ class OrderFormSubmitRequest extends FormRequest
             $purchaser->setEmail($this->get('account_creation_email'));
             $purchaser->setRawPassword($this->get('account_creation_password'));
             $purchaser->setType(Purchaser::USER_TYPE);
+            $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
             return $purchaser;
         }
@@ -453,6 +455,7 @@ class OrderFormSubmitRequest extends FormRequest
             $purchaser->setEmail($existingCustomer->getEmail());
             $purchaser->setId($existingCustomer->getId());
             $purchaser->setType(Purchaser::CUSTOMER_TYPE);
+            $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
             return $purchaser;
         }
@@ -461,6 +464,7 @@ class OrderFormSubmitRequest extends FormRequest
         elseif (!empty($this->get('billing_email'))) {
             $purchaser->setEmail($this->get('billing_email'));
             $purchaser->setType(Purchaser::CUSTOMER_TYPE);
+            $purchaser->setBrand($this->get('brand', config('ecommerce.brand')));
 
             return $purchaser;
         }

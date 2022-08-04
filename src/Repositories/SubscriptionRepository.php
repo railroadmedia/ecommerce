@@ -908,4 +908,59 @@ class SubscriptionRepository extends RepositoryBase
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @param int $userId
+     *
+     * @return Subscription[]
+     */
+    public function getActiveSubscriptionsByUserId(int $userId): array
+    {
+        $qb = $this->createQueryBuilder('s');
+
+        $qb->andWhere(
+                $qb->expr()
+                    ->in('s.type', ':types')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.stopped', ':not')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':true')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gt('s.paidUntil', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )
+            ->setParameter(
+                'now',
+                Carbon::now()
+                    ->toDateTimeString()
+            )
+            ->setParameter('not', false)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION,
+                    Subscription::TYPE_PAYPAL_SUBSCRIPTION,
+                ]
+            )
+            ->setParameter('userId', $userId)
+            ->setParameter('true', true);
+
+        return $qb->getQuery()
+            ->getResult();
+    }
 }
