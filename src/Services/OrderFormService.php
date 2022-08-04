@@ -53,6 +53,11 @@ class OrderFormService
     private $paymentMethodRepository;
 
     /**
+     * @var OrderValidationService
+     */
+    private $orderValidationService;
+
+    /**
      * OrderFormService constructor.
      *
      * @param CartService $cartService
@@ -70,7 +75,8 @@ class OrderFormService
         PayPalPaymentGateway $payPalPaymentGateway,
         PurchaserService $purchaserService,
         ShippingService $shippingService,
-        PaymentMethodRepository $paymentMethodRepository
+        PaymentMethodRepository $paymentMethodRepository,
+        OrderValidationService $orderValidationService
     )
     {
         $this->cartService = $cartService;
@@ -80,6 +86,7 @@ class OrderFormService
         $this->purchaserService = $purchaserService;
         $this->shippingService = $shippingService;
         $this->paymentMethodRepository = $paymentMethodRepository;
+        $this->orderValidationService = $orderValidationService;
     }
 
     /**
@@ -109,6 +116,9 @@ class OrderFormService
             $purchaser = $request->getPurchaser();
 
             $paymentAmountInBaseCurrency = $this->cartService->getDueForInitialPayment();
+
+            // order validation / trial spam prevention
+            $this->orderValidationService->validateOrder($cart, $purchaser);
 
             // if its a credit card we must validate inside the gateway to avoid spam bot accounts
             if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD &&

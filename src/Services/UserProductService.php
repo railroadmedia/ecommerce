@@ -36,7 +36,7 @@ class UserProductService
     /**
      * @var ArrayCache
      */
-    protected $arrayCache;
+    public $arrayCache;
 
     /**
      * UserProductService constructor.
