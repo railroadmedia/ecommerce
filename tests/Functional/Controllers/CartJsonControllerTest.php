@@ -1031,6 +1031,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => 0,
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1044,7 +1045,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -1072,11 +1073,69 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
 
-        $this->assertFalse(empty($decodedResponse['meta']['cart']['items']));
+        // backend asserts
+        $cart = Cart::fromSession();
 
-        $this->assertNotEquals(
-            0,
-            $decodedResponse['meta']['cart']['totals']['due']
+        // assert cart items collection is empty
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertTrue(empty($cart->getItems()));
+    }
+
+    public function test_add_product_with_min_stock_level_too_low()
+    {
+        $this->addRecommendedProducts();
+
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(10, 50),
+            'min_stock_level' => $this->faker->numberBetween(50, 1000),
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
+
+        $quantity = $this->faker->numberBetween(2, 10);
+
+        $response = $this->call('PUT', '/json/add-to-cart/', [
+            'products' => [$product['sku'] => $quantity],
+        ]);
+
+        // assert response status code
+        $this->assertEquals(403, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'recommendedProducts',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        $this->assertEquals(
+            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+            $decodedResponse['meta']['cart']['errors']
         );
 
         // backend asserts
@@ -1085,7 +1144,9 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertFalse(empty($cart->getItems()));
+
+
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
@@ -1307,7 +1368,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         ]);
 
         // assert response status code
-        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -1335,9 +1396,9 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert items collection
         $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
 
-        $this->assertFalse(empty($decodedResponse['meta']['cart']['items']));
+        $this->assertTrue(empty($decodedResponse['meta']['cart']['items']));
 
-        $this->assertNotEquals(
+        $this->assertEquals(
             0,
             $decodedResponse['meta']['cart']['totals']['due']
         );
@@ -1348,7 +1409,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertFalse(empty($cart->getItems()));
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()
@@ -1360,6 +1421,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1369,6 +1431,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1963,6 +2026,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(3, 5),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1988,7 +2052,129 @@ class CartJsonControllerTest extends EcommerceTestCase
         );
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
+
+        // assert cart structure
+        $response->assertJsonStructure(
+            [
+                'meta' => [
+                    'cart' => [
+                        'items',
+                        'recommendedProducts',
+                        'discounts',
+                        'shipping_address',
+                        'billing_address',
+                        'number_of_payments',
+                        'totals' => [
+                            'shipping',
+                            'tax',
+                            'due'
+                        ],
+                        'errors'
+                    ]
+                ]
+            ]
+        );
+
+        $decodedResponse = $response->decodeResponseJson();
+
+        // assert the error message
+        $this->assertEquals(
+            ['Product ' . $product['name'] . ' is currently out of stock, please check back later.'],
+            $decodedResponse['meta']['cart']['errors']
+        );
+
+        // assert the cart data is the initial data
+
+        // assert items collection
+        $this->assertTrue(is_array($decodedResponse['meta']['cart']['items']));
+
+        // assert items collection count
+        $this->assertEquals(1, count($decodedResponse['meta']['cart']['items']));
+
+        // assert cart item data
+        $this->assertEquals(
+            [
+                'sku' => $product['sku'],
+                'name' => $product['name'],
+                'quantity' => $initialProductQuantity,
+                'thumbnail_url' => $product['thumbnail_url'],
+                'sales_page_url' => $product['sales_page_url'],
+                'description' => $product['description'],
+                'stock' => $product['stock'],
+                'subscription_interval_type' => $product['subscription_interval_type'],
+                'subscription_interval_count' => $product['subscription_interval_count'],
+                'subscription_renewal_price' => null,
+                'price_before_discounts' => $product['price'] * $initialProductQuantity,
+                'price_after_discounts' => $product['price'] * $initialProductQuantity,
+                'requires_shipping' => true,
+                'is_digital' => !$product['is_physical'],
+                'id' => $product['id'],
+                'type' => $product['type'],
+            ],
+            $decodedResponse['meta']['cart']['items'][0]
+        );
+
+        $totalDue = $product['price'] * $initialProductQuantity;
+
+        // assert total due
+        $this->assertEquals(
+            $totalDue,
+            $decodedResponse['meta']['cart']['totals']['due']
+        );
+
+        // backend asserts
+        $cart = Cart::fromSession();
+
+        // assert cart items count
+        $this->assertTrue(is_array($cart->getItems()));
+
+        $this->assertEquals(1, count($cart->getItems()));
+
+        // assert cart item
+        $cartItemOne = $cart->getItemBySku($product['sku']);
+
+        $this->assertEquals(CartItem::class, get_class($cartItemOne));
+
+        $this->assertEquals($initialProductQuantity, $cartItemOne->getQuantity());
+    }
+
+    public function test_update_cart_item_quantity_higher_amount_than_min_stock_level()
+    {
+        $this->addRecommendedProducts();
+
+        $this->session->flush();
+
+        $product = $this->fakeProduct([
+            'active' => 1,
+            'stock' => $this->faker->numberBetween(25, 30),
+            'min_stock_level' => 20,
+            'is_physical' => true,
+            'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+            'subscription_interval_type' => null,
+            'subscription_interval_count' => null,
+        ]);
+
+        $cartService = $this->app->make(CartService::class);
+
+        $initialProductQuantity = $this->faker->numberBetween(2, 4);
+
+        $cartService->addToCart(
+            $product['sku'],
+            $initialProductQuantity,
+            false,
+            ''
+        );
+
+        $newProductQuantity = $this->faker->numberBetween(10, 20);
+
+        $response = $this->call(
+            'PATCH',
+            '/json/update-product-quantity/' . $product['sku'] . '/' . $newProductQuantity
+        );
+
+        // assert response status code
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(
@@ -2111,7 +2297,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         );
 
         // assert response status code
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(403, $response->getStatusCode());
 
         // assert cart structure
         $response->assertJsonStructure(

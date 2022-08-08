@@ -410,28 +410,7 @@ class CartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'cart',
             [
-                'items' => [
-                    [
-                        'sku' => $product['sku'],
-                        'name' => $product['name'],
-                        'quantity' => $quantity,
-                        'thumbnail_url' => $product['thumbnail_url'],
-                        'sales_page_url' => $product['sales_page_url'],
-                        'description' => $product['description'],
-                        'stock' => $product['stock'],
-                        'subscription_interval_type' => $product['subscription_interval_type'],
-                        'subscription_interval_count' => $product['subscription_interval_count'],
-                        'subscription_renewal_price' => null,
-                        'price_before_discounts' => $product['price'] * $quantity,
-                        'price_after_discounts' => $product['price'] * $quantity,
-                        'requires_shipping' => false,
-                        'is_digital' => !$product['is_physical'],
-                        'id' => $product['id'],
-                        'type' => $product['type'],
-                        'id' => $product['id'],
-                        'type' => $product['type'],
-                    ]
-                ],
+                'items' => [],
                 'recommendedProducts' => [
                     $recommendedProductOne,
                     $recommendedProductTwo,
@@ -454,26 +433,14 @@ class CartControllerTest extends EcommerceTestCase
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
-                    'due' => $product['price'] * $quantity,
+                    'due' => 0,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
                     'shipping_taxes' => 0,
                 ],
-                'payment_plan_options' => [
-                    [
-                        "value" => 1,
-                        "label" => "1 payment of $184.44",
-                    ],
-                    [
-                        "value" => 2,
-                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
-                    ],
-                    [
-                        "value" => 5,
-                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
-                    ]
-                ],
+                'payment_plan_options' => [],
                 'bonuses' => [],
+                'errors' => ['Product ' . $product['name']. ' is currently out of stock, please check back later.']
             ]
         );
 
@@ -483,7 +450,7 @@ class CartControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertFalse(empty($cart->getItems()));
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_inexistent_product_to_cart()
@@ -955,6 +922,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_count' => null,
             'weight' => 0,
             'stock' => 1,
+            'min_stock_level' => 2,
             'price' => 92.22,
         ]);
 
@@ -1076,28 +1044,7 @@ class CartControllerTest extends EcommerceTestCase
         $response->assertSessionHas(
             'cart',
             [
-                'items' => [
-                    [
-                        'sku' => $product['sku'],
-                        'name' => $product['name'],
-                        'quantity' => $quantity,
-                        'thumbnail_url' => $product['thumbnail_url'],
-                        'sales_page_url' => $product['sales_page_url'],
-                        'description' => $product['description'],
-                        'stock' => $product['stock'],
-                        'subscription_interval_type' => $product['subscription_interval_type'],
-                        'subscription_interval_count' => $product['subscription_interval_count'],
-                        'subscription_renewal_price' => null,
-                        'price_before_discounts' => $product['price'] * $quantity,
-                        'price_after_discounts' => $product['price'] * $quantity,
-                        'requires_shipping' => false,
-                        'is_digital' => !$product['is_physical'],
-                        'id' => $product['id'],
-                        'type' => $product['type'],
-                        'id' => $product['id'],
-                        'type' => $product['type'],
-                    ]
-                ],
+                'items' => [],
                 'recommendedProducts' => [
                     $recommendedProductOne,
                     $recommendedProductTwo,
@@ -1120,26 +1067,14 @@ class CartControllerTest extends EcommerceTestCase
                 'totals' => [
                     'shipping' => 0,
                     'tax' => 0,
-                    'due' => $product['price'] * $quantity,
+                    'due' => 0,
                     'shipping_before_override' => 0,
                     'product_taxes' => 0,
                     'shipping_taxes' => 0,
                 ],
-                'payment_plan_options' => [
-                    [
-                        "value" => 1,
-                        "label" => "1 payment of $184.44",
-                    ],
-                    [
-                        "value" => 2,
-                        "label" => "2 payments of $92.72 ($1.00 finance charge)",
-                    ],
-                    [
-                        "value" => 5,
-                        "label" => "5 payments of $37.09 ($1.00 finance charge)",
-                    ]
-                ],
+                'payment_plan_options' => [],
                 'bonuses' => [],
+                'errors' => ['Product ' . $product['name']. ' is currently out of stock, please check back later.']
             ]
         );
 
@@ -1149,7 +1084,7 @@ class CartControllerTest extends EcommerceTestCase
         // assert cart items collection is empty
         $this->assertTrue(is_array($cart->getItems()));
 
-        $this->assertFalse(empty($cart->getItems()));
+        $this->assertTrue(empty($cart->getItems()));
     }
 
     public function test_add_products_available_and_not_available_to_cart()
@@ -1182,6 +1117,7 @@ class CartControllerTest extends EcommerceTestCase
             ),
             'subscription_interval_count' => $this->faker->numberBetween(0, 12),
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => $this->faker->numberBetween(1, 4),
             'price' => 22.82,
             'weight' => 0,
         ]);
@@ -1193,6 +1129,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_type' => null,
             'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => $this->faker->numberBetween(1, 4),
             'price' => 1.02,
             'weight' => 0,
         ]);
@@ -1393,7 +1330,7 @@ class CartControllerTest extends EcommerceTestCase
                 ],
                 'errors' => [
                     'No product with SKU ' . $randomSku1 . ' was found.',
-                    'No product with SKU ' . $randomSku2 . ' was found.',
+                    'No product with SKU ' . $randomSku2 . ' was found.'
                 ],
                 'payment_plan_options' => [],
                 'bonuses' => [],
@@ -1437,6 +1374,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_type' => null,
             'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => $this->faker->numberBetween(0, 4),
             'price' => 290.92,
         ]);
 
@@ -1453,6 +1391,7 @@ class CartControllerTest extends EcommerceTestCase
                 ]
             ),
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => $this->faker->numberBetween(0, 4),
             'price' => 150.07,
         ]);
 
@@ -1464,6 +1403,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_type' => null,
             'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => $this->faker->numberBetween(0, 4),
             'price' => 26.68,
         ]);
 
