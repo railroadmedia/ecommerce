@@ -66,6 +66,7 @@ $.ajax({
                 "subscription_interval_type":"year",
                 "subscription_interval_count":7,
                 "stock":402,
+                "min_stock_level": 10,
                 "auto_decrement_stock":true,
                 "note":"some note",
                 "created_at":"2019-04-30 21:29:48",
@@ -123,6 +124,7 @@ Create a new product.
 |body|data.attributes.subscription_interval_type|yes if subscription||'month', 'year'||
 |body|data.attributes.subscription_interval_count|yes if subscription||||
 |body|data.attributes.stock||null|||
+|body|data.attributes.min_stock_level||null|||
 |body|data.attributes.auto_decrement_stock||false|||
 
 ### Validation Rules
@@ -144,6 +146,7 @@ Create a new product.
     'data.attributes.is_physical' => 'required|boolean',
     'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
     'data.attributes.stock' => 'nullable|numeric',
+    'data.attributes.min_stock_level' => 'nullable|numeric',
     'data.attributes.auto_decrement_stock' => 'boolean',
     'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION,
     'data.attributes.subscription_interval_count' => 'required_if:data.attributes.type,' . Product::TYPE_DIGITAL_SUBSCRIPTION
@@ -170,6 +173,7 @@ Create a new product.
             "subscription_interval_type": "month",
             "subscription_interval_count": 8,
             "stock": 620,
+            "min_stock_level": 20,
             "auto_decrement_stock":true,
             "brand": "brand",
             "note": "some note", 
@@ -203,6 +207,7 @@ Create a new product.
             "subscription_interval_type":"year",
             "subscription_interval_count":6,
             "stock":877,
+            "min_stock_level": 20,
             "auto_decrement_stock":true,
             "note":"some note",
             "created_at":"2019-04-30 21:37:58",
@@ -245,6 +250,7 @@ Update an existing product.
 |body|data.attributes.subscription_interval_type|||'month', 'year'||
 |body|data.attributes.subscription_interval_count|||||
 |body|data.attributes.stock||null|||
+|body|data.attributes.min_stock_level||null|||
 |body|data.attributes.auto_decrement_stock||false|||
 
 ### Validation Rules
@@ -317,6 +323,7 @@ $.ajax({
             "subscription_interval_type":"year",
             "subscription_interval_count":2,
             "stock":870,
+            "min_stock_level": 0,
             "auto_decrement_stock":false,
             "note":"some note",
             "created_at":"2019-04-30 21:45:45",

@@ -43,6 +43,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.subscription_interval_type' => 'subscription interval type',
             'data.attributes.subscription_interval_count' => 'subscription interval count',
             'data.attributes.stock' => 'stock',
+            'data.attributes.min_stock_level' => 'minimum stock level',
             'data.attributes.auto_decrement_stock' => 'auto decrement stock',
             'data.attributes.note' => 'note',
             'data.attributes.public_stock_count' => 'public stock count',
@@ -84,6 +85,7 @@ class ProductUpdateRequest extends FormRequest
             'data.attributes.is_physical' => 'boolean',
             'data.attributes.weight' => 'required_if:data.attributes.is_physical,true',
             'data.attributes.stock' => 'nullable|numeric',
+            'data.attributes.min_stock_level' => 'nullable|numeric',
             'data.attributes.auto_decrement_stock' => 'boolean',
             'data.attributes.subscription_interval_type' => 'required_if:data.attributes.type,' .
                 Product::TYPE_DIGITAL_SUBSCRIPTION,
@@ -123,6 +125,7 @@ class ProductUpdateRequest extends FormRequest
                 'data.attributes.subscription_interval_type',
                 'data.attributes.subscription_interval_count',
                 'data.attributes.stock',
+                'data.attributes.min_stock_level',
                 'data.attributes.auto_decrement_stock',
                 'data.attributes.note',
                 'data.attributes.digital_access_permission_names',
