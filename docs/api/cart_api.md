@@ -394,6 +394,37 @@ Returns the entire cart.
 }
 ```
 
+```403 NOT OK```
+- this response happens if (stock <= min_stock_level) or (stock == 0)
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[],
+            "recommendedProducts": [
+                {},
+                {}
+            ],
+            "discounts":[],
+            "shipping_address":null,
+            "billing_address":null,
+            "number_of_payments":1,
+            "locked":0,
+            "locked":0,
+            "totals":{
+                "shipping":0,
+                "tax":0,
+                "due":0
+            },
+            "errors" :  ["Product test-product is currently out of stock, please check back later."]
+        }
+    }
+}
+```
+
+
 <!--- -------------------------------------------------------------------------------------------------------------- -->
 
 ### `{ DELETE /*/json/remove-from-cart/{PRODUCT SKU} }`
@@ -541,7 +572,7 @@ $.ajax({
 });
 ```
 
-### Response Example
+### Response Examples
 
 Returns the entire cart.
 
@@ -637,6 +668,38 @@ Returns the entire cart.
     }
 }
 ```
+
+```403 NOT OK```
+- this response happens if (stock <= min_stock_level) or (stock == 0)
+
+```json
+{
+    "data":null,
+    "meta":{
+        "cart":{
+            "items":[],
+            "recommendedProducts": [
+                {},
+                {}
+            ],
+            "discounts":[
+
+            ],
+            "shipping_address":null,
+            "billing_address":null,
+            "number_of_payments":1,
+            "locked":0,
+            "totals":{
+                "shipping":0,
+                "tax":0,
+                "due":1730
+            },
+            "errors" :  ["Product test-product is currently out of stock, please check back later."]
+        }
+    }
+}
+```
+
 
 <!--- -------------------------------------------------------------------------------------------------------------- -->
 
