@@ -590,10 +590,11 @@
 | `subscription_interval_type` | VARCHAR(255) |  | NULL |  |
 | `subscription_interval_count` | INT(11) |  | NULL |  |
 | `stock` | INT(11) |  | NULL |  |
+| `min_stock_level` | INT(11) |  | NULL |  |
 | `auto_decrement_stock` | TINYINT(1) |  | NULL |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
-
+todo: update
 ### Indices:
 
 | Name | Columns | Type | Description |
