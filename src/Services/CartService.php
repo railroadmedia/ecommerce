@@ -150,7 +150,7 @@ class CartService
             throw new ProductNotFoundException($sku);
         }
 
-        if ($product->getStock() !== null && $product->getStock() < $quantity) {
+        if ($product->getStock() !== null && $product->getStockAvailability() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
 
@@ -236,8 +236,7 @@ class CartService
             throw new ProductNotActiveException($product);
         }
 
-
-        if ($product->getStock() !== null && $product->getStock() < $quantity) {
+        if ($product->getStock() !== null && $product->getStockAvailability() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
 
@@ -717,7 +716,7 @@ class CartService
 
         foreach ($cart->getItems() as $cartItem) {
             $product = $productsBySku[$cartItem->getSku()];
-            if ($product->getStock() !== null && $product->getStock() < $cartItem->getQuantity()) {
+            if ($product->getStockAvailability() < $cartItem->getQuantity()) {
                 throw new ProductOutOfStockException($product);
             }
         }
