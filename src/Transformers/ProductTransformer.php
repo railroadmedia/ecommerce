@@ -33,6 +33,7 @@ class ProductTransformer extends TransformerAbstract
             'subscription_interval_type' => $product->getSubscriptionIntervalType(),
             'subscription_interval_count' => $product->getSubscriptionIntervalCount(),
             'stock' => $product->getStock(),
+            'min_stock_level' => $product->getMinStockLevel(),
             'public_stock_count' => $product->getPublicStockCount(),
             'auto_decrement_stock' => $product->getAutoDecrementStock(),
             'digital_access_time_interval_length' =>$product->getDigitalAccessTimeIntervalLength(),
