@@ -150,7 +150,7 @@ class CartService
             throw new ProductNotFoundException($sku);
         }
 
-        if ($product->getStock() !== null && $product->getStockAvailability() < $quantity) {
+        if ($product && $product->getStock() !== null && $product->getStockAvailability() < $quantity) {
             throw new ProductOutOfStockException($product);
         }
 
