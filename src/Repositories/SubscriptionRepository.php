@@ -928,6 +928,6 @@ class SubscriptionRepository extends RepositoryBase
             ->getQuery()
             ->setMaxResults(1)
             ->getResult();
-        return $result[0]['brand'];
+        return $result[0]['brand'] ?? '';
     }
 }

@@ -189,4 +189,26 @@ class UserProductRepository extends RepositoryBase
         return (integer)$qb->getQuery()
                 ->getSingleScalarResult();
     }
+
+    public function getFirstUserProductBrand(int $userId, array $brands): string
+    {
+        $qb = $this->getEntityManager()
+            ->createQueryBuilder();
+
+        $qb->select('p.brand')
+            ->from($this->getClassName(), 'up')
+            ->join('up.product', 'p')
+            ->where(
+                $qb->expr()
+                    ->eq('up.user', ':userId')
+            )->andWhere('p.brand in (:brands)'
+            )->orderBy('up.createdAt');
+
+        $result = $qb->setParameter('userId', $userId)
+            ->setParameter('brands', $brands)
+            ->getQuery()
+            ->setMaxResults(1)
+            ->getResult();
+        return $result[0]['brand'] ?? '';
+    }
 }
