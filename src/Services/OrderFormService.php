@@ -7,6 +7,7 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
@@ -107,10 +108,24 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-        try {
 
+        try {
             // setup the cart
             $cart = $request->getCart();
+            // check if cart items are still in stock
+            $this->cartService->checkProductsStock($cart);
+        } catch (ProductOutOfStockException $productOutOfStockException) {
+            $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
+
+            return [
+                'redirect' => $url,
+                'errors' => [
+                    'out-of-stock' => $productOutOfStockException->getMessage()
+                ],
+            ];
+        }
+
+        try {
             $this->cartService->setCart($cart);
 
             $purchaser = $request->getPurchaser();

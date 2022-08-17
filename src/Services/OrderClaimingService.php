@@ -203,7 +203,7 @@ class OrderClaimingService
 
             if ($purchasedProduct->getAutoDecrementStock() && is_numeric($purchasedProduct->getStock())) {
                 $this->entityManager->persist($purchasedProduct);
-                $purchasedProduct->setStock($purchasedProduct->getStock() - 1);
+                $purchasedProduct->setStock($purchasedProduct->getStock() - $orderItem->getQuantity());
             }
 
             // create product subscriptions
