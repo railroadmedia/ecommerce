@@ -658,4 +658,12 @@ class Product
         return intval($this->getStock()) - intval($this->getMinStockLevel());
     }
 
+    /**
+     * @return bool
+     */
+    public function isProductSoldOut()
+    {
+        return intval($this->getStock()) <= intval($this->getMinStockLevel());
+    }
+
 }
