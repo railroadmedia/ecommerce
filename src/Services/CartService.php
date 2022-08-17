@@ -716,7 +716,7 @@ class CartService
 
         foreach ($cart->getItems() as $cartItem) {
             $product = $productsBySku[$cartItem->getSku()];
-            if ($product->getStockAvailability() < $cartItem->getQuantity()) {
+            if ($product->getStock() !== null && $product->getStockAvailability() < $cartItem->getQuantity()) {
                 throw new ProductOutOfStockException($product);
             }
         }
