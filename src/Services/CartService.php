@@ -150,7 +150,7 @@ class CartService
             throw new ProductNotFoundException($sku);
         }
 
-        if ($product && $product->getStock() !== null && $product->getStockAvailability() < $quantity) {
+        if ($product && $product->getStock() !== null && $product->getStockAvailability() < $quantity && $product->getType() == Product::TYPE_PHYSICAL_ONE_TIME) {
             throw new ProductOutOfStockException($product);
         }
 
@@ -716,7 +716,7 @@ class CartService
 
         foreach ($cart->getItems() as $cartItem) {
             $product = $productsBySku[$cartItem->getSku()];
-            if ($product->getStock() !== null && $product->getStockAvailability() < $cartItem->getQuantity()) {
+            if ($product->getStock() !== null && $product->getStockAvailability() < $cartItem->getQuantity() && $product->getType() == Product::TYPE_PHYSICAL_ONE_TIME) {
                 throw new ProductOutOfStockException($product);
             }
         }
