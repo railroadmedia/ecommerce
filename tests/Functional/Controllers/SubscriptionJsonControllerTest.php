@@ -43,9 +43,6 @@ class SubscriptionJsonControllerTest extends EcommerceTestCase
     public function test_delete()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
-        $em->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
 
         $this->permissionServiceMock->method('can')->willReturn(true);
 

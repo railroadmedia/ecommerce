@@ -45,8 +45,7 @@ class AddressRepository extends RepositoryBase
                 ->from(Address::class, 'a')
                 ->where('a.id = :id')
                 ->getQuery()
-                ->setParameter('id', $id)
-                ->setResultCacheDriver($this->arrayCache);
+                ->setParameter('id', $id);
 
         return $q->getResult()[0] ?? null;
     }

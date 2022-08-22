@@ -66,7 +66,7 @@ class OneTimeProductTest extends EcommerceTestCase
     protected $userProductRepository;
     protected $brand;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 

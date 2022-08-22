@@ -9,6 +9,7 @@ use Doctrine\Common\Annotations\PsrCachedReader;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\Common\EventManager;
 use Doctrine\Common\Proxy\AbstractProxyFactory;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\Inflector\InflectorFactory;
 use Doctrine\ORM\Configuration;
@@ -19,6 +20,8 @@ use Gedmo\DoctrineExtensions;
 use Gedmo\SoftDeleteable\Filter\SoftDeleteableFilter;
 use Gedmo\SoftDeleteable\SoftDeleteableListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\DB;
+use PDO;
 use Railroad\Doctrine\TimestampableListener;
 use Railroad\Ecommerce\Commands\AddPastMembershipStats;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
@@ -40,6 +43,7 @@ use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
 use Railroad\Ecommerce\Commands\UpdateLastDigits;
 use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
 use Railroad\Ecommerce\Commands\VerifyLocalPriceConversion;
+use Railroad\Ecommerce\Drivers\ExistingPDOSqliteDriver;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\OrderEvent;
@@ -219,8 +223,6 @@ class EcommerceServiceProvider extends ServiceProvider
         // orm config
         $ormConfiguration = new Configuration();
         $ormConfiguration->setMetadataCache($phpFileCacheAdapter);
-        $ormConfiguration->setQueryCache($phpFileCacheAdapter);
-        $ormConfiguration->setResultCache($arrayCacheAdapter);
         $ormConfiguration->setProxyDir($proxyDir);
         $ormConfiguration->setProxyNamespace('DoctrineProxies');
         $ormConfiguration->setAutoGenerateProxyClasses(
@@ -232,26 +234,45 @@ class EcommerceServiceProvider extends ServiceProvider
         $ormConfiguration->addFilter('soft-deleteable', SoftDeleteableFilter::class);
 
         // database config
-        if (config('ecommerce.database_in_memory') !== true) {
-            $databaseOptions = [
-                'driver' => config('ecommerce.database_driver'),
-                'dbname' => config('ecommerce.database_name'),
-                'user' => config('ecommerce.database_user'),
-                'password' => config('ecommerce.database_password'),
-                'host' => config('ecommerce.database_host'),
-                'charset' => config('ecommerce.charset', 'UTF8'),
-            ];
-        }
-        else {
-            $databaseOptions = [
-                'driver' => config('ecommerce.database_driver'),
-                'user' => config('ecommerce.database_user'),
-                'password' => config('ecommerce.database_password'),
-                'memory' => true,
-            ];
-        }
+        $databaseOptions = [
+            'driver' => config('ecommerce.database_driver'),
+            'dbname' => config('ecommerce.database_name'),
+            'user' => config('ecommerce.database_user'),
+            'password' => config('ecommerce.database_password'),
+            'host' => config('ecommerce.database_host'),
+            'charset' => config('ecommerce.charset', 'UTF8'),
+        ];
 
-        $entityManager = EcommerceEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
+        $config = new Configuration();
+        $config->setProxyDir(__DIR__ . '/EntityProxy');
+        $config->setProxyNamespace('EntityProxy');
+        $config->setAutoGenerateProxyClasses(true);
+
+        AnnotationRegistry::registerFile(__DIR__ . '/../../vendor/doctrine/orm/lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php');
+
+        $config->setMetadataDriverImpl(new AnnotationDriver(
+            new AnnotationReader(),
+            array(__DIR__ . '/')
+        ));
+
+
+        if (config('ecommerce.database_in_memory', false)) {
+            $pdo = DB::connection(config('ecommerce.database_connection_name'))->getPdo();
+
+            $entityManager = EcommerceEntityManager::create(
+                DriverManager::getConnection(
+                    [
+                        'driver' => 'pdo_' . $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME),
+                        'driverClass' => ExistingPDOSqliteDriver::class,
+                        'pdo' => $pdo,
+                    ],
+                    $config, $eventManager),
+                $ormConfiguration,
+                $eventManager
+            );
+        } else {
+            $entityManager = EcommerceEntityManager::create($databaseOptions, $ormConfiguration, $eventManager);
+        }
 
         $entityManager->getFilters()
             ->enable('soft-deleteable');

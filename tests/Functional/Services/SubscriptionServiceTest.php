@@ -39,10 +39,6 @@ class SubscriptionServiceTest extends EcommerceTestCase
     {
         $em = $this->app->make(EcommerceEntityManager::class);
 
-        $em->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
-
         $stripeCustomer = new Customer(rand());
 
         $this->stripeExternalHelperMock->method('createCustomer')
@@ -215,10 +211,6 @@ class SubscriptionServiceTest extends EcommerceTestCase
     public function test_renew_deleted_payment_method()
     {
         $em = $this->app->make(EcommerceEntityManager::class);
-
-        $em->getMetadataFactory()
-            ->getCacheDriver()
-            ->deleteAll();
 
         $stripeCustomer = new Customer(rand());
 

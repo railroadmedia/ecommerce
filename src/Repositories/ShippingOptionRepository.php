@@ -94,7 +94,6 @@ class ShippingOptionRepository extends RepositoryBase
          */
         $shippingOption =
             $qb->getQuery()
-                ->setQueryCacheDriver($this->arrayCache)
                 ->getResult()[0] ?? null;
 
         if (!empty($shippingOption) && !empty($shippingOption->getShippingCostsWeightRanges()[0])) {
@@ -124,7 +123,6 @@ class ShippingOptionRepository extends RepositoryBase
             ->setParameter('shippingOptionId', $shippingOptionId);
 
         return $qb->getQuery()
-            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 }

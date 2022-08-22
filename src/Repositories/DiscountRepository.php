@@ -84,8 +84,6 @@ class DiscountRepository extends RepositoryBase
             ->setParameter('id', $id);
 
         return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
             ->getOneOrNullResult();
     }
 
@@ -120,10 +118,6 @@ class DiscountRepository extends RepositoryBase
             ->setParameter('active', true);
 
         return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
-            ->useQueryCache(true)
-            ->useResultCache(true)
             ->getResult();
     }
 
@@ -170,8 +164,6 @@ class DiscountRepository extends RepositoryBase
             );
 
         return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 
@@ -219,8 +211,6 @@ class DiscountRepository extends RepositoryBase
             );
 
         return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 }

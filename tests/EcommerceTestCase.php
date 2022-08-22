@@ -175,17 +175,6 @@ class EcommerceTestCase extends BaseTestCase
 //            ->clear();
 
         // make sure laravel is using the same connection
-        DB::connection()
-            ->setPdo(
-                $this->entityManager->getConnection()
-                    ->getNativeConnection()
-            );
-        DB::connection()
-            ->setReadPdo(
-                $this->entityManager->getConnection()
-                    ->getNativeConnection()
-            );
-
         $this->permissionServiceMock =
             $this->getMockBuilder(PermissionService::class)
                 ->disableOriginalConstructor()
@@ -244,7 +233,7 @@ class EcommerceTestCase extends BaseTestCase
         $locationConfig = require(__DIR__ . '/../vendor/railroad/location/config/location.php');
         $remoteStorageConfig = require(__DIR__ . '/../vendor/railroad/remotestorage/config/remotestorage.php');
 
-        $app['config']->set('ecommerce.database_connection_name', 'testbench');
+        $app['config']->set('ecommerce.database_connection_name', 'ecommerce_sqlite');
         $app['config']->set(
             'ecommerce.database_info_for_unique_user_email_validation',
             $defaultConfig['database_info_for_unique_user_email_validation']

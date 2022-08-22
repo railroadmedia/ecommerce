@@ -48,9 +48,7 @@ class PaymentMethodRepository extends RepositoryBase
                 ->leftJoin('pm.paypalBillingAgreement', 'ppba')
                 ->where('pm.id = :id')
                 ->getQuery()
-                ->setParameter('id', $id)
-                ->setResultCacheDriver($this->arrayCache)
-                ->setQueryCacheDriver($this->arrayCache);
+                ->setParameter('id', $id);
 
         return $q->getOneOrNullResult();
     }
@@ -86,7 +84,6 @@ class PaymentMethodRepository extends RepositoryBase
             ->setParameter('paymentMethodId', $paymentMethodId);
 
         return $qb->getQuery()
-            ->useResultCache($this->arrayCache)
             ->getOneOrNullResult();
     }
 
@@ -121,7 +118,6 @@ class PaymentMethodRepository extends RepositoryBase
             ->setParameter('paymentMethodId', $paymentMethodId);
 
         return $qb->getQuery()
-            ->useResultCache($this->arrayCache)
             ->getOneOrNullResult();
     }
 
@@ -154,7 +150,6 @@ class PaymentMethodRepository extends RepositoryBase
             ->setParameter('userId', $userId);
 
         return $qb->getQuery()
-            ->useResultCache($this->arrayCache)
             ->getOneOrNullResult();
     }
 

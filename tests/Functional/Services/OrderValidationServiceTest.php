@@ -38,7 +38,7 @@ class OrderValidationServiceTest extends EcommerceTestCase
      */
     protected $cartService;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
