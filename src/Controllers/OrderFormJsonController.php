@@ -98,11 +98,17 @@ class OrderFormJsonController extends Controller
         elseif (isset($result['errors'])) {
             $errors = [];
             foreach ($result['errors'] as $message) {
-
-                $errors[] = [
-                    'title' => 'Payment failed.',
-                    'detail' => $message,
-                ];
+                if (array_key_exists("out-of-stock", $result['errors'])) {
+                    $errors[] = [
+                        'title' => 'Product out of stock',
+                        'detail' => $message,
+                    ];
+                } else {
+                    $errors[] = [
+                        'title' => 'Payment failed.',
+                        'detail' => $message,
+                    ];
+                }
             }
 
             return response()->json(
