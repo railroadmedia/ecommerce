@@ -12373,4 +12373,227 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
             ]
         );
     }
+
+    /* if product.stock == 0 the order submit must get a 404 error */
+    public function test_submit_order_having_product_with_stock_zero() {
+
+        $this->createAndLogInNewUser();
+        $orderRequestData = $this->createOrderForStockErrors();
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 2,
+                'stock' => 2,
+                'min_stock_level' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $responseUpdateProduct = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    'attributes' => [
+                        'stock' => 0,
+                    ],
+
+                ]
+            ]
+        );
+
+        $this->assertEquals(200, $responseUpdateProduct->getStatusCode());
+
+        $responseSubmitOrder = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $orderRequestData
+        );
+
+        $errors[] = ['title' => 'Product out of stock'];
+        $this->assertEquals(404, $responseSubmitOrder->getStatusCode());
+        $decodedResponse = $responseSubmitOrder->decodeResponseJson();
+        $this->assertArrayHasKey("errors", $decodedResponse);
+        $this->assertArraySubset($errors, $decodedResponse['errors']);
+    }
+
+    /* if product.stock == product.min_stock_level the order submit must get a 404 error */
+    public function test_submit_order_product_stock_equal_min_stock_level() {
+
+        $this->createAndLogInNewUser();
+        $orderRequestData = $this->createOrderForStockErrors();
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 12.95,
+                'type' => Product::TYPE_PHYSICAL_ONE_TIME,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 1,
+                'weight' => 2,
+                'stock' => 10,
+                'min_stock_level' => 0,
+                'subscription_interval_type' => null,
+                'subscription_interval_count' => null,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+        $responseUpdateProduct = $this->call(
+            'PATCH',
+            '/product/' . $product['id'],
+            [
+                'data' => [
+                    'id' => $product['id'],
+                    'type' => 'product',
+                    'attributes' => [
+                        'min_stock_level' => 10,
+                    ],
+
+                ]
+            ]
+        );
+
+        $this->assertEquals(200, $responseUpdateProduct->getStatusCode());
+
+        $responseSubmitOrder = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $orderRequestData
+        );
+
+        $errors[] = ['title' => 'Product out of stock'];
+        $this->assertEquals(404, $responseSubmitOrder->getStatusCode());
+        $decodedResponse = $responseSubmitOrder->decodeResponseJson();
+        $this->assertArrayHasKey("errors", $decodedResponse);
+        $this->assertArraySubset($errors, $decodedResponse['errors']);
+    }
+
+    /* if product.type == 'digital subscription' and product.stock == NULL, the order submit must not get any errors */
+    public function test_submit_order_digital_product_stock_null() {
+        $this->createAndLogInNewUser();
+        $orderRequestData = $this->createOrderForStockErrors();
+
+        $product = $this->fakeProduct(
+            [
+                'price' => 44.55,
+                'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
+                'active' => 1,
+                'description' => $this->faker->word,
+                'is_physical' => 0,
+                'weight' => 0,
+                'stock' => NULL,
+                'min_stock_level' => 0,
+                'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
+                'subscription_interval_count' => 1,
+            ]
+        );
+
+        $productQuantity = 1;
+
+        $this->cartService->addToCart(
+            $product['sku'],
+            $productQuantity,
+            false,
+            ''
+        );
+
+
+        $responseSubmitOrder = $this->call(
+            'PUT',
+            '/json/order-form/submit',
+            $orderRequestData
+        );
+
+        $this->assertEquals(200, $responseSubmitOrder->getStatusCode());
+
+    }
+
+    private function createOrderForStockErrors() {
+
+        // in order to test other brands we have to configure the gateway for them
+        config()->set('ecommerce.brand', "drumeo");
+        $currency = $this->getCurrency();
+
+        $country = 'Canada';
+        $region = 'Alberta';
+        $zip = $this->faker->postcode;
+
+        $cardToken = $this->faker->word;
+
+        $orderRequestData = [
+            'payment_method_type' => PaymentMethod::TYPE_CREDIT_CARD,
+            'card_token' => $cardToken,
+            'billing_region' => $region,
+            'billing_zip_or_postal_code' => $zip,
+            'billing_country' => $country,
+            'company_name' => $this->faker->creditCardType,
+            'gateway' => "drumeo",
+            'shipping_first_name' => $this->faker->firstName,
+            'shipping_last_name' => $this->faker->lastName,
+            'shipping_address_line_1' => $this->faker->words(3, true),
+            'shipping_city' => $this->faker->city,
+            'shipping_region' => 'Alberta',
+            'shipping_zip_or_postal_code' => $this->faker->postcode,
+            'shipping_country' => 'Canada',
+            'currency' => $currency
+        ];
+
+        $this->stripeExternalHelperMock->method('getCustomersByEmail')
+            ->willReturn(['data' => '']);
+        $fakerCustomer = new Customer($this->faker->word . rand());
+        $fakerCustomer->email = $this->faker->email;
+
+        $this->stripeExternalHelperMock->method('createCustomer')
+            ->willReturn($fakerCustomer);
+
+        $fakerCard = new Card($this->faker->word);
+        $fakerCard->fingerprint = $this->faker->word;
+        $fakerCard->brand = $this->faker->word;
+        $fakerCard->last4 = $this->faker->randomNumber(4);
+        $fakerCard->exp_year = 2020;
+        $fakerCard->exp_month = 12;
+        $fakerCard->name = $this->faker->word;
+        $this->stripeExternalHelperMock->method('createCard')
+            ->willReturn($fakerCard);
+
+        $fakerCharge = new Charge($this->faker->word);
+        $fakerCharge->currency = 'cad';
+        $fakerCharge->amount = 100;
+        $fakerCharge->status = 'succeeded';
+        $this->stripeExternalHelperMock->method('chargeCard')
+            ->willReturn($fakerCharge);
+
+        $fakerToken = new Token();
+        $this->stripeExternalHelperMock->method('retrieveToken')
+            ->willReturn($fakerToken);
+
+
+        return $orderRequestData;
+    }
 }
