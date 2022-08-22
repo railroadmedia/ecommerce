@@ -243,19 +243,6 @@ class EcommerceServiceProvider extends ServiceProvider
             'charset' => config('ecommerce.charset', 'UTF8'),
         ];
 
-        $config = new Configuration();
-        $config->setProxyDir(__DIR__ . '/EntityProxy');
-        $config->setProxyNamespace('EntityProxy');
-        $config->setAutoGenerateProxyClasses(true);
-
-        AnnotationRegistry::registerFile(__DIR__ . '/../../vendor/doctrine/orm/lib/Doctrine/ORM/Mapping/Driver/DoctrineAnnotations.php');
-
-        $config->setMetadataDriverImpl(new AnnotationDriver(
-            new AnnotationReader(),
-            array(__DIR__ . '/')
-        ));
-
-
         if (config('ecommerce.database_in_memory', false)) {
             $pdo = DB::connection(config('ecommerce.database_connection_name'))->getPdo();
 
@@ -266,7 +253,7 @@ class EcommerceServiceProvider extends ServiceProvider
                         'driverClass' => ExistingPDOSqliteDriver::class,
                         'pdo' => $pdo,
                     ],
-                    $config, $eventManager),
+                    $ormConfiguration, $eventManager),
                 $ormConfiguration,
                 $eventManager
             );
