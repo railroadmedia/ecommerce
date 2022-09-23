@@ -62,7 +62,7 @@ class SyncInAppPurchasedItems
         $appleReceipt = $request->get('receipt', $request->get('purchases')['receipt'] ?? null);
         $googlePurchases = (!empty($purchases) && is_array($purchases) && array_key_exists('product_id', $purchases[0]??[])) ? $purchases : [];
 
-        $platform = $request->get('platform');
+        $platform = $request->get('device_name', $request->get('platform'));
         error_log('SyncInAppPurchasedItems request  :::  email address:' .$request->get('email') . '    platform:'.$platform);
 
         if ($platform) {
