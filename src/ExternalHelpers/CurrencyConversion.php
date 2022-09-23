@@ -16,8 +16,8 @@ class CurrencyConversion
             app()
                 ->make('EcommerceArrayCache');
 
-        if ($cache->get('exchangeRates')) {
-            $response = $cache->get('exchangeRates');
+        if ($cache->contains('exchangeRates')) {
+            $response = $cache->fetch('exchangeRates');
         } else {
             //$url = 'https://api.exchangeratesapi.io/latest?symbols=' . $to . '&base=' . $from;
             try {
@@ -45,7 +45,7 @@ class CurrencyConversion
                 }
 
                 //cache exchangeRates
-                $cache->put('exchangeRates', $response, $response->time_next_update_unix);
+                $cache->save('exchangeRates', $response, $response->time_next_update_unix);
 
             } catch (Exception $e) {
                 return null;
