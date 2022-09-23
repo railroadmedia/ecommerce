@@ -1059,7 +1059,7 @@ class AppleStoreKitService
                     ->getResult();
 
             if (!empty($appleReceipts)) {
-                $appleReceipt = array_first($appleReceipts);
+                $appleReceipt = \Arr::first($appleReceipts);
             }
 
             if (($latestPurchaseItem->getExpiresDate() >
