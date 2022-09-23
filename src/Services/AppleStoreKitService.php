@@ -599,7 +599,7 @@ class AppleStoreKitService
                 ->getResult();
 
         if (!empty($appleReceipts)) {
-            $appleReceipt = array_first($appleReceipts);
+            $appleReceipt = \Arr::first($appleReceipts);
         }
 
         error_log('restoreAndSyncPurchasedItems  appleReceiptFromDB '.var_export($appleReceipt, true));

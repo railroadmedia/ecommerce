@@ -14,7 +14,7 @@ class CurrencyConversion
     {
         $cache =
             app()
-                ->make('EcommerceRedisCache')
+                ->make('EcommerceArrayCache')
                 ->getRedis();
 
         if ($cache->get('exchangeRates')) {
@@ -46,7 +46,7 @@ class CurrencyConversion
                 }
 
                 //cache exchangeRates
-                $cache->set('exchangeRates', $response, $response->time_next_update_unix);
+                $cache->put('exchangeRates', $response, $response->time_next_update_unix);
 
             } catch (Exception $e) {
                 return null;
