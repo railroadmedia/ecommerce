@@ -70,7 +70,7 @@ class GoogleReceiptRequest extends FormRequest
             ]
         );
 
-        $data['data']['attributes']['brand'] = config('ecommerce.brand');
+        $data['data']['attributes']['brand'] = 'drumeo';
         $data['data']['attributes']['requestType'] = GoogleReceipt::MOBILE_APP_REQUEST_TYPE;
 
         return $data;
