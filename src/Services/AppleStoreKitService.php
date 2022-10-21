@@ -163,6 +163,9 @@ class AppleStoreKitService
         $appleResponse = null;
 
         try {
+            $this->entityManager->persist($receipt);
+            $this->entityManager->flush();
+
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
             $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);

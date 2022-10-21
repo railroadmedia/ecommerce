@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Requests\AppleReceiptRequest;
@@ -60,10 +61,10 @@ class AppleStoreKitController extends Controller
      */
     public function processReceipt(AppleReceiptRequest $request)
     {
-        error_log(
+        Log::info(
             'AppleStoreKitController processReceipt Request Dump --------------------------------------------------'
         );
-        error_log(var_export($request->input(), true));
+        Log::info(var_export($request->input(), true));
 
         $receipt = new AppleReceipt();
 
@@ -104,20 +105,20 @@ class AppleStoreKitController extends Controller
      */
     public function processNotification(Request $request)
     {
-        error_log(
+        Log::info(
             'AppleStoreKitController processNotification Request Dump --------------------------------------------------'
         );
-        error_log(var_export($request->get('notification_type'), true));
+        Log::info(var_export($request->get('notification_type'), true));
 
         if (!$request->has('unified_receipt') && !$request->has('latest_receipt')) {
-            error_log(
+            Log::info(
                 'AppleStoreKitController processNotification -------- Missing unified_receipt and latest_receipt in Apple request'
             );
 
             return response()->json();
         }
 
-        error_log(var_export($request->get('unified_receipt')['latest_receipt_info'], true));
+        Log::info(var_export($request->get('unified_receipt')['latest_receipt_info'], true));
 
         $notificationType = $request->get('notification_type');
 
@@ -132,7 +133,7 @@ class AppleStoreKitController extends Controller
         try {
             $this->appleStoreKitService->processNotification($receipt);
         } catch (Exception $e) {
-            error_log($e);
+            Log::info($e);
 
             return response()->json();
         }
@@ -147,6 +148,8 @@ class AppleStoreKitController extends Controller
      */
     public function signup(Request $request)
     {
+        Log::info('Attempting to apple signup for receipt: ' . $request->get('receipt'));
+
         $action = $this->appleStoreKitService->checkSignup($request->get('receipt'));
 
         switch ($action) {
@@ -186,7 +189,7 @@ class AppleStoreKitController extends Controller
         $receipt = $request->get('receipt', []);
 
         if (empty($receipt)) {
-            error_log('NoReceiptOnTheRequest'.var_export($request->input(), true));
+            Log::info('NoReceiptOnTheRequest'.var_export($request->input(), true));
 
             return response()->json(
                 [
@@ -196,10 +199,14 @@ class AppleStoreKitController extends Controller
             );
         }
 
+        Log::info('Attempting to restore apple purchases for receipt: ' . $receipt);
+
         $results = $this->appleStoreKitService->restoreAndSyncPurchasedItems($receipt);
 
+        Log::info('Apple response for restore purchase attempt: ' . var_export($results, true));
+
         if (!$results) {
-            error_log('restorePurchaseNoValidPurchasedItemsInAppleResponse '.var_export($request->input(), true));
+            Log::info('restorePurchaseNoValidPurchasedItemsInAppleResponse '.var_export($request->input(), true));
 
             return response()->json(
                 [
@@ -210,7 +217,7 @@ class AppleStoreKitController extends Controller
             );
         }
         if ($results['shouldLogin'] == true) {
-            error_log('restorePurchaseShouldLoginWithEmail '.var_export($results['receiptUser']->getEmail(), true));
+            Log::info('restorePurchaseShouldLoginWithEmail '.var_export($results['receiptUser']->getEmail(), true));
             auth()->logout();
 
             return response()->json([
@@ -218,7 +225,7 @@ class AppleStoreKitController extends Controller
                                         'email' => $results['receiptUser']->getEmail(),
                                     ]);
         } elseif ($results['shouldCreateAccount'] == true) {
-            error_log('restorePurchaseShouldCreateAccount '.var_export($receipt, true));
+            Log::info('restorePurchaseShouldCreateAccount '.var_export($receipt, true));
             return response()->json([
                                         'shouldCreateAccount' => true,
                                     ]);
@@ -226,7 +233,7 @@ class AppleStoreKitController extends Controller
             $user = $results['receiptUser'] ?? auth()->user();
             $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
-            error_log('restorePurchaseUserExists '.var_export($user, true));
+            Log::info('restorePurchaseUserExists '.var_export($user, true));
 
             return response()->json([
                                         'success' => true,
@@ -236,8 +243,8 @@ class AppleStoreKitController extends Controller
                                     ]);
         }
 
-        error_log('IMPORTANT restoreWithoutCreateAccountOrLogin  receipt '.var_export($receipt, true));
-        error_log('IMPORTANT restoreWithoutCreateAccountOrLogin  responseFromBERestore '.var_export($results, true));
+        Log::info('IMPORTANT restoreWithoutCreateAccountOrLogin  receipt '.var_export($receipt, true));
+        Log::info('IMPORTANT restoreWithoutCreateAccountOrLogin  responseFromBERestore '.var_export($results, true));
 
         return response()->json([
                                     'success' => true,
