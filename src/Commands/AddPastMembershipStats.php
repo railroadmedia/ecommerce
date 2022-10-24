@@ -101,7 +101,7 @@ class AddPastMembershipStats extends Command
                 ->addDays($i)
                 ->toDateString();
 
-            foreach (config('ecommerce.available_brands', []) as $brand) {
+            foreach (['musora'] as $brand) {
                 $insertData[] = [
                     'new' => 0,
                     'active_state' => 0,
@@ -234,8 +234,7 @@ INNER JOIN (
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 6, '%s', NULL),
             IF (interval_type = '%s' AND interval_count = 1, '%s', NULL)
-        ) AS stats_interval_type,
-        brand
+        ) AS stats_interval_type
     FROM ecommerce_subscriptions
     WHERE
         ((interval_type = '%s' AND (interval_count = 1 OR interval_count = 6))
@@ -244,11 +243,10 @@ INNER JOIN (
         AND created_at <= '%s'
         AND paid_until >= '%s'
         AND product_id IS NOT NULL
-    GROUP BY stats_date, stats_interval_type, brand
+    GROUP BY stats_date, stats_interval_type
 ) n ON
     ms.stats_date = n.stats_date
     AND ms.interval_type = n.stats_interval_type
-    AND ms.brand = n.brand
 SET ms.new = n.new
 
 EOT;
@@ -304,11 +302,10 @@ INNER JOIN (
         AND canceled_on IS NULL
         AND paid_until >= '%s'
         AND paid_until <= '%s'
-    GROUP BY stats_date, stats_interval_type, brand
+    GROUP BY stats_date, stats_interval_type
 ) e ON
     ms.stats_date = e.stats_date
     AND ms.interval_type = e.stats_interval_type
-    AND ms.brand = e.brand
 SET ms.expired = e.expired
 EOT;
         $statement = sprintf(
@@ -360,11 +357,10 @@ INNER JOIN (
         AND canceled_on IS NOT NULL
         AND canceled_on >= '%s'
         AND canceled_on <= '%s'
-    GROUP BY stats_date, stats_interval_type, brand
+    GROUP BY stats_date, stats_interval_type
 ) c ON
     ms.stats_date = c.stats_date
     AND ms.interval_type = c.stats_interval_type
-    AND ms.brand = c.brand
 SET ms.canceled = c.canceled
 EOT;
         $statement = sprintf(
@@ -430,7 +426,7 @@ EOT;
 
             $dateIncrementEndOfDay = $dateIncrement->copy()->endOfDay();
 
-            foreach (config('ecommerce.available_brands', []) as $brand) {
+            foreach (['musora'] as $brand) {
                 // get total with access (should add up to this...)
                 if (!empty(config('ecommerce.membership_product_skus')[$brand])) {
                     $totalMembershipCount =
@@ -451,7 +447,6 @@ EOT;
                                 '<=',
                                 $dateIncrementEndOfDay->toDateTimeString()
                             )
-                            ->where('brand', $brand)
                             ->where(
                                 function (Builder $builder) {
                                     $builder->where('expiration_date', '>', Carbon::now()->toDateTimeString())
@@ -484,7 +479,6 @@ EOT;
                             '<=',
                             $dateIncrementEndOfDay->toDateTimeString()
                         )
-                        ->where('brand', $brand)
                         ->whereNull('expiration_date')
                         ->get([$databaseManager->raw('DISTINCT user_id')])
                         ->pluck('user_id');
@@ -526,7 +520,6 @@ EOT;
                                 $dateIncrementEndOfDay->toDateTimeString()
                             ]
                         )
-                        ->where('brand', $brand)
                         ->whereNull('expiration_date')
                         ->get([$databaseManager->raw('DISTINCT user_id')])
                         ->pluck('user_id');
@@ -552,7 +545,6 @@ EOT;
                         $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
-                            ->where('brand', $brand)
                             ->where(
                                 'ecommerce_subscriptions.created_at',
                                 '<',
@@ -604,7 +596,6 @@ EOT;
                         $databaseManager->connection(config('ecommerce.database_connection_name'))
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
-                            ->where('brand', $brand)
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
                             ->where(
@@ -652,7 +643,6 @@ EOT;
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
-                            ->where('brand', $brand)
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->where(
                                 'ecommerce_subscriptions.created_at',
@@ -690,7 +680,6 @@ EOT;
                             ->table('ecommerce_subscriptions')
                             ->whereNotNull('ecommerce_subscriptions.product_id')
                             ->whereNotIn('user_id', $otherActiveSubscriptions->pluck('user_id')->toArray())
-                            ->where('brand', $brand)
                             ->whereNotIn('user_id', $lifetimeUserIds->toArray())
                             ->where(
                                 'ecommerce_subscriptions.created_at',
@@ -782,7 +771,6 @@ EOT;
                                     '<=',
                                     $dateIncrementEndOfDay->toDateTimeString()
                                 )
-                                ->where('brand', $brand)
                                 ->where(
                                     function (Builder $builder) {
                                         $builder->where('expiration_date', '>', Carbon::now()->toDateTimeString())
@@ -833,15 +821,6 @@ EOT;
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
                                                         )
-                                                    )
-                                                    ->on(
-                                                        'es.brand',
-                                                        '=',
-                                                        $databaseManager->raw(
-                                                            '"' .
-                                                            $brand .
-                                                            '"'
-                                                        )
                                                     );
                                             }
                                         )->orOn(
@@ -869,15 +848,6 @@ EOT;
                                                             $dateIncrementEndOfDay->toDateTimeString() .
                                                             '"'
                                                         )
-                                                    )
-                                                    ->on(
-                                                        'es.brand',
-                                                        '=',
-                                                        $databaseManager->raw(
-                                                            '"' .
-                                                            $brand .
-                                                            '"'
-                                                        )
                                                     );
                                             }
                                         );
@@ -899,7 +869,6 @@ EOT;
                                         $dateIncrementEndOfDay->toDateTimeString()
                                     ]
                                 )
-                                ->where('ecommerce_products.brand', $brand)
                                 ->where(
                                     function (Builder $builder) use ($dateIncrementEndOfDay) {
                                         return $builder->where(
