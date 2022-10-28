@@ -326,7 +326,7 @@
                                             <tr>
                                                 <td>
                                                     <br>Invoice #{{$order->getId()}}<br>
-                                                    {{ $order->getCreatedAt()->format('F j, Y') }}
+                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}
 
                                                     @if(!empty($order->getUser()))
                                                         <br>{{ $order->getUser()->getEmail() }}
