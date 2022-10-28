@@ -334,7 +334,7 @@
                                             <tr>
                                                 <td>
                                                     <br>Invoice #{{$payment->getId()}}<br>
-                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}
+                                                    Receipt Date: {{ $payment->getCreatedAt()->format('F j, Y') }}
 
                                                     @if(!empty($subscription->getUser()))
                                                         <br>{{ $subscription->getUser()->getEmail() }}
