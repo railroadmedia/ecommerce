@@ -334,7 +334,16 @@
                                             <tr>
                                                 <td>
                                                     <br>Invoice #{{$payment->getId()}}<br>
-                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}<br><br>
+                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}
+
+                                                    @if(!empty($subscription->getUser()))
+                                                        <br>{{ $subscription->getUser()->getEmail() }}
+                                                    @elseif(!empty($subscription->getCustomer()))
+                                                        <br>{{ $subscription->getCustomer()->getEmail() }}
+                                                    @endif
+
+                                                    <br><br>
+                                                    
                                                     {{ config('ecommerce.company_name_on_invoice')[$subscription->getBrand()] ?? '' }}
 
                                                     @if(!empty(config('ecommerce.canada_gst_hst_number')[$subscription->getBrand()]))
