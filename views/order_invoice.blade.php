@@ -327,10 +327,15 @@
                                                 <td>
                                                     <br>Invoice #{{$order->getId()}}<br>
 
-                                                    @if(!empty($payment))
-                                                        {{ $payment->getCreatedAt()->format('F j, Y') }}
+                                                    @if(!empty($paymentPlan) && $paymentPlan->getType() == \Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN)
+                                                        Initial Order Date: {{ $order->getCreatedAt()->format('F j, Y') }}<br>
+                                                        Receipt Date: {{ $payment->getCreatedAt()->format('F j, Y') }}<br>
                                                     @else
-                                                        {{ $order->getCreatedAt()->format('F j, Y') }}
+                                                        @if(!empty($payment))
+                                                            Receipt Date: {{ $payment->getCreatedAt()->format('F j, Y') }}<br>
+                                                        @else
+                                                            Order Date: {{ $order->getCreatedAt()->format('F j, Y') }}<br>
+                                                        @endif
                                                     @endif
 
                                                     @if(!empty($order->getUser()))
