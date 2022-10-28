@@ -326,7 +326,12 @@
                                             <tr>
                                                 <td>
                                                     <br>Invoice #{{$order->getId()}}<br>
-                                                    {{ $payment->getCreatedAt()->format('F j, Y') }}
+
+                                                    @if(!empty($payment))
+                                                        {{ $payment->getCreatedAt()->format('F j, Y') }}
+                                                    @else
+                                                        {{ $order->getCreatedAt()->format('F j, Y') }}
+                                                    @endif
 
                                                     @if(!empty($order->getUser()))
                                                         <br>{{ $order->getUser()->getEmail() }}
