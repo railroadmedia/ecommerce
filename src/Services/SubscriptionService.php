@@ -696,4 +696,27 @@ class SubscriptionService
 
         return $payment;
     }
+
+    /**
+     * @param $userId
+     * @return bool
+     * @throws \Doctrine\ORM\Exception\ORMException
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function cancelUserSubscriptions($userId)
+    {
+        $activeSubscriptions = $this->subscriptionRepository->getActiveSubscriptionsByUserId($userId);
+
+        foreach ($activeSubscriptions as $subscription)
+        {
+            $subscription->setIsActive(false);
+            $subscription->setCanceledOn(Carbon::now());
+            $subscription->setUpdatedAt(Carbon::now());
+
+            $this->entityManager->flush();
+        }
+
+        return true;
+    }
 }
