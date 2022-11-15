@@ -88,6 +88,16 @@ class AppleStoreKitController extends Controller
             $receipt->setLocalPrice($request->input('data.attributes.price'));
         }
 
+        if($request->has('data.attributes.app')){
+            $app = $request->input('data.attributes.app');
+            if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
+                config()->set(
+                    'ecommerce.payment_gateways.apple_store_kit.shared_secret',
+                    config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')
+                );
+            }
+        }
+
         $user = $this->appleStoreKitService->processReceipt($receipt); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
