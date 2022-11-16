@@ -121,14 +121,14 @@ class AccessCodeService
             /** @var $product Product */
             foreach ($accessCodeProducts as $product) {
 
-                if ($product->getType() != Product::TYPE_DIGITAL_SUBSCRIPTION) {
-                    // for subscription extending, only subscription products are processed in this block
+                // only extend their membership subscription if the code being claimed is for a membership product
+                if ($product->getDigitalAccessType() != Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
                     continue;
                 }
 
-                $intervalCount = $product->getSubscriptionIntervalCount();
+                $intervalCount = $product->getDigitalAccessTimeIntervalLength();
 
-                switch ($product->getSubscriptionIntervalType()) {
+                switch ($product->getDigitalAccessTimeIntervalType()) {
                     case config('ecommerce.interval_type_monthly'):
                         $subscriptionEndDate = $subscriptionEndDate->addMonths($intervalCount);
                         break;
@@ -143,7 +143,7 @@ class AccessCodeService
 
                     default:
                         $format = 'Unknown subscription interval type for product id %s: %s';
-                        $message = sprintf($format, $product->getId(), $product->getSubscriptionIntervalType());
+                        $message = sprintf($format, $product->getId(), $product->getDigitalAccessTimeIntervalType());
 
                         throw new UnprocessableEntityException($message);
                         break;
@@ -206,9 +206,7 @@ class AccessCodeService
 
                 $userProductSku = $userProduct->getProduct()->getSku();
 
-                $isMembershipProduct = in_array($userProductSku, $membershipProductSkus);
-
-                if($isMembershipProduct){
+                if($userProduct->getProduct()->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS){
 
                     $userProductExpirationDate = Carbon::parse($userProduct->getExpirationDate());
 
@@ -249,9 +247,9 @@ class AccessCodeService
                 $userProduct->setQuantity(1);
             }
 
-            $intervalCount = $accessCodeProduct->getSubscriptionIntervalCount();
+            $intervalCount = $accessCodeProduct->getDigitalAccessTimeIntervalLength();
 
-            switch ($accessCodeProduct->getSubscriptionIntervalType()) {
+            switch ($accessCodeProduct->getDigitalAccessTimeIntervalType()) {
                 case config('ecommerce.interval_type_monthly'):
                     $expirationDate = $expirationDate->addMonths($intervalCount)->startOfDay();
                     break;
@@ -270,7 +268,7 @@ class AccessCodeService
 
                 default:
                     $format = 'Unknown subscription interval type for product id %s: %s';
-                    $message = sprintf($format, $accessCodeProduct->getId(), $accessCodeProduct->getSubscriptionIntervalType());
+                    $message = sprintf($format, $accessCodeProduct->getId(), $accessCodeProduct->getDigitalAccessTimeIntervalType());
 
                     throw new UnprocessableEntityException($message);
                     break;

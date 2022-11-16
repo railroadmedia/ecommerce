@@ -299,8 +299,10 @@ class AccessCodeJsonControllerTest extends EcommerceTestCase
 
         $product = $this->fakeProduct([
             'type' => Product::TYPE_DIGITAL_SUBSCRIPTION,
-            'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
-            'subscription_interval_count' => 1,
+            'digital_access_type' => Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS,
+            'digital_access_time_type' => Product::DIGITAL_ACCESS_TIME_TYPE_RECURRING,
+            'digital_access_time_interval_type' => Product::DIGITAL_ACCESS_TIME_INTERVAL_TYPE_YEAR,
+            'digital_access_time_interval_length' => 1,
         ]);
 
         $accessCode = $this->fakeAccessCode([
