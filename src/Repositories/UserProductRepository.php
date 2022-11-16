@@ -206,4 +206,38 @@ class UserProductRepository extends RepositoryBase
         $result = $qb->getQuery()->getOneOrNullResult()['expirationDate'];
         return $result ? Carbon::parse($result) : null;
     }
+
+    /**
+     * @param array $userIds The identifier.
+     *
+     * @return UserProduct[]
+     *
+     */
+    public function findByUsersAndProduct(array $userIds, int $productId)
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q =
+            $qb->select('up')
+                ->from(UserProduct::class, 'up')
+                ->where($qb->expr()->in('up.user', ':userIds'))
+                ->andWhere($qb->expr()->eq('up.product', ':productId'))
+                ->setParameter('userIds', $userIds)
+                ->setParameter('productId', $productId)
+                ->getQuery()
+                ;
+
+        return $q->getResult();
+
+    }
+
+    /**
+     * @param UserProduct $userProduct
+     *
+     */
+    public function persist(UserProduct $userProduct)
+    {
+        $this->getEntityManager()->persist($userProduct);
+        $this->getEntityManager()->flush($userProduct);
+    }
 }
