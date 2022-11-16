@@ -300,14 +300,14 @@ class AccessCodeControllerTest extends EcommerceTestCase
             'claimed_on' => null
         ]);
 
-        $this->expectsEvents([AccessCodeClaimed::class]);
-
         $response = $this->call('POST', '/access-codes/redeem', [
             'access_code' => $accessCode['code'],
             'credentials_type' => 'existing',
             'user_email' => $user['email'],
             'user_password' => $this->faker->word,
         ]);
+
+        Event::assertDispatched(AccessCodeClaimed::class);
 
         $this->assertEquals(302, $response->getStatusCode());
 
@@ -352,6 +352,8 @@ class AccessCodeControllerTest extends EcommerceTestCase
 
     public function test_claim_extend_active_subscription_one_time_product_claim()
     {
+        Event::fake([AccessCodeClaimed::class]);
+
         $user  = $this->fakeUser();
 
         $product = $this->fakeProduct([
