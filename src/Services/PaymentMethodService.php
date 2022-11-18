@@ -167,6 +167,7 @@ class PaymentMethodService
         ?bool $setUserDefaultPaymentMethod = true
     ): PaymentMethod
     {
+        $brand = $gateway;
         $billingAgreement = new PaypalBillingAgreement();
 
         $billingAgreement->setExternalId($billingAgreementId);
@@ -192,6 +193,7 @@ class PaymentMethodService
             $userPaymentMethods = $this->createUserPaymentMethod(
                 $identifiable,
                 $paymentMethod,
+                $brand,
                 $setUserDefaultPaymentMethod
             );
 
