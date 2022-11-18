@@ -14,7 +14,7 @@ Route::group([
         Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@getPaypalUrl')
         ->name('payment-method.paypal.url');
 
-    Route::get('/payment-method/paypal-agreement',
+    Route::get('/payment-method/paypal-agreement/{gateway}',
         Railroad\Ecommerce\Controllers\PaymentMethodJsonController::class . '@paypalAgreement')
         ->name('payment-method.paypal.agreement');
 
