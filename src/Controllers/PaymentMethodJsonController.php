@@ -350,12 +350,12 @@ class PaymentMethodJsonController extends Controller
      *
      * @throws Throwable
      */
-    public function paypalAgreement(PaymentMethodCreatePaypalRequest $request)
+    public function paypalAgreement(PaymentMethodCreatePaypalRequest $request, $gateway)
     {
         if ($request->has('token')) {
 
             $billingAgreementId = $this->payPalPaymentGateway->createBillingAgreement(
-                config('ecommerce.brand'),
+                $gateway,
                 '',
                 '',
                 $request->get('token')
@@ -366,7 +366,7 @@ class PaymentMethodJsonController extends Controller
 
             $purchaser = new Purchaser();
 
-            $brand = $request->get('gateway', config('ecommerce.brand'));
+            $brand = $gateway;
 
             $purchaser->setId($user->getId());
             $purchaser->setEmail($user->getEmail());
@@ -387,7 +387,7 @@ class PaymentMethodJsonController extends Controller
                 $purchaser,
                 $billingAddress,
                 $billingAgreementId,
-                config('ecommerce.brand'),
+                $gateway,
                 $this->currencyService->get(),
                 false
             );
