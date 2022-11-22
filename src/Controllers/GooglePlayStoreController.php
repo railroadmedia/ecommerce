@@ -216,7 +216,21 @@ class GooglePlayStoreController extends Controller
         error_log(
             'Signup purchases request :: ' . print_r($request->all(), true)
         );
-
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.credentials',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')
+                );
+            }
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.application_name',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')
+                );
+            }
+        }
         $action = $this->googlePlayStoreService->checkSignup($request->get('purchases', []));
 
         error_log(
@@ -271,7 +285,21 @@ class GooglePlayStoreController extends Controller
                 500
             );
         }
-
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.credentials',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')
+                );
+            }
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.application_name',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')
+                );
+            }
+        }
         $results = $this->googlePlayStoreService->restoreAndSyncPurchasedItems($purchases);
 
         if ($results['shouldLogin'] == true) {
