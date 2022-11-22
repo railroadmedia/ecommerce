@@ -160,6 +160,16 @@ class AppleStoreKitController extends Controller
     {
         Log::info('Attempting to apple signup for receipt: ' . $request->get('receipt'));
 
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
+                config()->set(
+                    'ecommerce.payment_gateways.apple_store_kit.shared_secret',
+                    config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')
+                );
+            }
+        }
+
         $action = $this->appleStoreKitService->checkSignup($request->get('receipt'));
 
         switch ($action) {
@@ -207,6 +217,16 @@ class AppleStoreKitController extends Controller
                 ],
                 500
             );
+        }
+
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
+                config()->set(
+                    'ecommerce.payment_gateways.apple_store_kit.shared_secret',
+                    config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')
+                );
+            }
         }
 
         Log::info('Attempting to restore apple purchases for receipt: ' . $receipt);
