@@ -39,10 +39,12 @@ class ProcessAppleExpiredSubscriptions extends Command
             } catch (Exception $e) {
                 $this->error($e->getMessage());
             }
-            $id = $subscription->getId();
-            $this->info("$i Subscription $id processed");
+            if ($i % 100 == 0) {
+                $this->info("$i subscriptions processed");
+            }
             $i++;
         }
+        $this->info("$i subscriptions processed");
 
         $diff = microtime(true) - $timeStart;
         $sec = intval($diff);
