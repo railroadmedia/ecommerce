@@ -48,8 +48,7 @@ class SubscriptionRepository extends RepositoryBase
     public function __construct(
         EcommerceEntityManager $em,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         parent::__construct($em, $em->getClassMetadata(Subscription::class));
 
         $this->userProvider = $userProvider;
@@ -74,7 +73,6 @@ class SubscriptionRepository extends RepositoryBase
         $renewalAttemptsParams = [];
 
         foreach ($config as $renewalAttemptIndex => $renewalAttemptHoursDiff) {
-
             $renewalAttemptIndexParam = 'renewalAttempt' . $renewalAttemptIndex;
             $renewalAttemptDateParam = 'renewalAttemptDate' . $renewalAttemptIndex;
 
@@ -97,10 +95,6 @@ class SubscriptionRepository extends RepositoryBase
         $qb->select(['s', 'o', 'ar'])
             ->leftJoin('s.order', 'o')
             ->leftJoin('s.appleReceipt', 'ar')
-            ->where(
-                $qb->expr()
-                    ->eq('s.brand', ':brand')
-            )
             ->andWhere(
                 $qb->expr()
                     ->isNull('s.canceledOn')
@@ -156,8 +150,7 @@ class SubscriptionRepository extends RepositoryBase
         /** @var $q Query */
         $q = $qb->getQuery();
 
-        $q->setParameter('brand', config('ecommerce.brand'))
-            ->setParameter('active', true)
+        $q->setParameter('active', true)
             ->setParameter('notStopped', false)
             ->setParameter('notActive', false)
             ->setParameter('zero', 0)
@@ -286,7 +279,6 @@ class SubscriptionRepository extends RepositoryBase
         if ($this->getEntityManager()
             ->getFilters()
             ->isEnabled('soft-deleteable')) {
-
             $this->getEntityManager()
                 ->getFilters()
                 ->disable('soft-deleteable');
@@ -302,7 +294,6 @@ class SubscriptionRepository extends RepositoryBase
             ->restrictBrandsByRequest($request, $alias);
 
         if ($request->has('user_id')) {
-
             $user = $this->userProvider->getUserById($request->get('user_id'));
 
             $qb->andWhere(
@@ -352,7 +343,6 @@ class SubscriptionRepository extends RepositoryBase
         if (!$this->getEntityManager()
             ->getFilters()
             ->isEnabled('soft-deleteable')) {
-
             $this->getEntityManager()
                 ->getFilters()
                 ->enable('soft-deleteable');
@@ -440,8 +430,8 @@ class SubscriptionRepository extends RepositoryBase
      *
      * @return ResultsQueryBuilderComposite
      */
-    public function indexFailedBillingByRequest(FailedBillingSubscriptionsRequest $request): ResultsQueryBuilderComposite
-    {
+    public function indexFailedBillingByRequest(FailedBillingSubscriptionsRequest $request
+    ): ResultsQueryBuilderComposite {
         $smallDateTime =
             $request->get(
                 'small_date_time',
@@ -559,7 +549,7 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter('true', true);
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 
     /**
@@ -604,8 +594,7 @@ class SubscriptionRepository extends RepositoryBase
     public function getOrderProductSubscription(
         Order $order,
         Product $product
-    ): ?Subscription
-    {
+    ): ?Subscription {
         /** @var $qb QueryBuilder */
         $qb =
             $this->getEntityManager()
@@ -849,8 +838,7 @@ class SubscriptionRepository extends RepositoryBase
     public function getUserMembershipSubscriptionBeforeDate(
         int $userId,
         Carbon $date
-    ): array
-    {
+    ): array {
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -919,9 +907,9 @@ class SubscriptionRepository extends RepositoryBase
         $qb = $this->createQueryBuilder('s');
 
         $qb->andWhere(
-                $qb->expr()
-                    ->in('s.type', ':types')
-            )
+            $qb->expr()
+                ->in('s.type', ':types')
+        )
             ->andWhere(
                 $qb->expr()
                     ->eq('s.stopped', ':not')
