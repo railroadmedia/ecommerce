@@ -41,6 +41,7 @@ class RenewalDueSubscriptions extends Command
         SubscriptionService $subscriptionService
     ) {
         $this->info('------------------Renewal Due Subscriptions command------------------');
+        $entityManager->getFilters()->disable('soft-deleteable');
 
         $tStart = microtime(true);
         $dueSubscriptions = $subscriptionRepository->getSubscriptionsDueToRenew();
@@ -107,6 +108,7 @@ class RenewalDueSubscriptions extends Command
         }
 
         $entityManager->flush();
+        $entityManager->getFilters()->enable('soft-deleteable');
 
         $this->info('-----------------End Renewal Due Subscriptions command-----------------------');
     }

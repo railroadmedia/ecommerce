@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use DateTimeInterface;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\CreditCard;
 use Railroad\Ecommerce\Entities\OrderPayment;
@@ -95,8 +96,7 @@ class SubscriptionService
         TaxService $taxService,
         UserProductService $userProductService,
         PaymentService $paymentService
-    )
-    {
+    ) {
         $this->currencyService = $currencyService;
         $this->taxService = $taxService;
         $this->entityManager = $entityManager;
@@ -139,7 +139,6 @@ class SubscriptionService
                 $activeSubscriptionsMap = [];
 
                 foreach ($activeSubscriptions as $subscription) {
-
                     $userId = $subscription->getUser()->getId();
                     $brand = $subscription->getBrand();
 
@@ -194,7 +193,6 @@ class SubscriptionService
         $subs = [];
 
         foreach ($subscriptions as $subscription) {
-
             $brand = $subscription->getBrand();
             $userId = $subscription->getUser()->getId();
 
@@ -233,8 +231,7 @@ class SubscriptionService
     public function selectUserSubscription(
         Subscription $subscriptionOne,
         Subscription $subscriptionTwo
-    ): Subscription
-    {
+    ): Subscription {
         $subscriptionOneState = $subscriptionOne->getState();
         $subscriptionTwoState = $subscriptionTwo->getState();
 
@@ -332,9 +329,9 @@ class SubscriptionService
      */
     public function renew(Subscription $subscription): ?Payment
     {
+        $subscriptionId = $subscription->getId();
         if ($subscription->getType() == Subscription::TYPE_APPLE_SUBSCRIPTION ||
             $subscription->getType() == Subscription::TYPE_GOOGLE_SUBSCRIPTION) {
-
             throw new SubscriptionRenewException(
                 'Subscription made by mobile application may not be renewed by web application'
             );
@@ -344,15 +341,16 @@ class SubscriptionService
 
         // check for payment plan if the user have already paid all the cycles, or is malformed
         if (($subscription->getType() == config('ecommerce.type_payment_plan'))) {
-
-            if(is_null($subscription->getTotalCyclesDue())){
+            if (is_null($subscription->getTotalCyclesDue())) {
                 $msg = $subscription->getId() . " is a payment plan that does not have total_cycles_due value set.";
                 error_log($msg);
                 throw new Exception($msg);
             }
 
             if ((int)$subscription->getTotalCyclesPaid() >= (int)$subscription->getTotalCyclesDue()) {
-                throw new Exception("Cannot renew completed payment plan (total_cycles_paid is equal to or greater than total_cycles_due)");
+                throw new Exception(
+                    "Cannot renew completed payment plan (total_cycles_paid is equal to or greater than total_cycles_due)"
+                );
             }
         }
 
@@ -360,7 +358,8 @@ class SubscriptionService
         $paymentMethod = $subscription->getPaymentMethod();
 
         // if there is no payment method cancel the subscription
-        if (empty($paymentMethod)) {
+        if (empty($paymentMethod) || $paymentMethod->isDeleted()) {
+            Log::info("Subscription $subscriptionId Cancelled - payment missing or deleted");
             $subscription->setRenewalAttempt(($subscription->getRenewalAttempt() ?? 0) + 1);
 
             $subscription->setIsActive(false);
@@ -375,9 +374,12 @@ class SubscriptionService
                 new SubscriptionEvent($subscription->getId(), 'cancelled')
             );
 
-            throw new Exception(
-                "Subscription with ID: " . $subscription->getId() . " does not have an attached payment method."
-            );
+            if (empty($paymentMethod)) {
+                throw new Exception(
+                    "Subscription with ID: " . $subscription->getId() . " does not have an attached payment method."
+                );
+            }
+            return null;
         }
 
         $payment = new Payment();
@@ -419,9 +421,7 @@ class SubscriptionService
         $exceptionToThrow = null;
 
         if ($paymentMethod->getMethodType() == PaymentMethod::TYPE_CREDIT_CARD) {
-
             try {
-
                 /** @var $method CreditCard */
                 $method = $paymentMethod->getCreditCard();
 
@@ -480,9 +480,7 @@ class SubscriptionService
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
-
             } catch (Exception $exception) {
-
                 $payment->setTotalPaid(0);
                 $payment->setExternalProvider('stripe');
                 $payment->setExternalId($charge->id ?? null);
@@ -500,9 +498,7 @@ class SubscriptionService
                 $exceptionToThrow = $exception;
             }
         } elseif ($paymentMethod->getMethodType() == PaymentMethod::TYPE_PAYPAL) {
-
             try {
-
                 /** @var $method PaypalBillingAgreement */
                 $method = $paymentMethod->getMethod();
 
@@ -525,9 +521,7 @@ class SubscriptionService
                 $payment->setMessage('');
                 $payment->setCurrency($currency);
                 $payment->setConversionRate(config('ecommerce.default_currency_conversion_rates')[$currency]);
-
             } catch (Exception $exception) {
-
                 $payment->setTotalPaid(0);
                 $payment->setExternalProvider('paypal');
                 $payment->setExternalId($transactionId ?? null);
@@ -582,7 +576,6 @@ class SubscriptionService
         if ($subscription->getType() == Subscription::TYPE_PAYMENT_PLAN &&
             empty($subscription->getProduct()) &&
             !empty($subscription->getOrder())) {
-
             // link the payment to the order
             $orderPayment = new OrderPayment();
             $orderPayment->setOrder($subscription->getOrder());
@@ -601,7 +594,6 @@ class SubscriptionService
         $this->entityManager->flush();
 
         if ($payment->getTotalPaid() > 0) {
-
             $nextBillDate = null;
 
             switch ($subscription->getIntervalType()) {
@@ -668,9 +660,7 @@ class SubscriptionService
             event(new SubscriptionRenewed($subscription, $payment));
             event(new SubscriptionUpdated($oldSubscription, $subscription));
             event(new SubscriptionEvent($subscription->getId(), 'renewed'));
-
         } else {
-
             $subscription->setRenewalAttempt(($subscription->getRenewalAttempt() ?? 0) + 1);
 
             $subscription->setIsActive(false);
@@ -708,8 +698,7 @@ class SubscriptionService
     {
         $activeSubscriptions = $this->subscriptionRepository->getActiveSubscriptionsByUserId($userId);
 
-        foreach ($activeSubscriptions as $subscription)
-        {
+        foreach ($activeSubscriptions as $subscription) {
             $subscription->setIsActive(false);
             $subscription->setCanceledOn(Carbon::now());
             $subscription->setUpdatedAt(Carbon::now());
