@@ -4,6 +4,7 @@ namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewed;
@@ -16,31 +17,23 @@ use Throwable;
 
 class RenewalDueSubscriptions extends Command
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
-    protected $name = 'renewalDueSubscriptions';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $name = 'renewalDueSubscriptions';
     protected $description = 'Renewal of due subscriptions.';
 
-    /**
-     * Execute the console command.
-     *
-     * @throws Throwable
-     */
+    public function info($string, $verbosity = null)
+    {
+        Log::info($string); //also write info statements to log
+        $this->line($string, 'info', $verbosity);
+    }
+
     public function handle(
         EcommerceEntityManager $entityManager,
         SubscriptionRepository $subscriptionRepository,
         SubscriptionService $subscriptionService
     ) {
-        $this->info('------------------Renewal Due Subscriptions command------------------');
+        $this->info("Processing $this->name");
+        $timeStart = microtime(true);
         $entityManager->getFilters()->disable('soft-deleteable');
 
         $tStart = microtime(true);
@@ -110,6 +103,8 @@ class RenewalDueSubscriptions extends Command
         $entityManager->flush();
         $entityManager->getFilters()->enable('soft-deleteable');
 
-        $this->info('-----------------End Renewal Due Subscriptions command-----------------------');
+        $diff = microtime(true) - $timeStart;
+        $sec = intval($diff);
+        $this->info("Finished $this->name ($sec s)");
     }
 }
