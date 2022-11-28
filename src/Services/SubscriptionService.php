@@ -330,6 +330,8 @@ class SubscriptionService
     public function renew(Subscription $subscription): ?Payment
     {
         $subscriptionId = $subscription->getId();
+        Log::debug("Attempting to renew subscription $subscriptionId");
+
         if ($subscription->getType() == Subscription::TYPE_APPLE_SUBSCRIPTION ||
             $subscription->getType() == Subscription::TYPE_GOOGLE_SUBSCRIPTION) {
             throw new SubscriptionRenewException(
