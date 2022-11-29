@@ -106,6 +106,22 @@ class GooglePlayStoreController extends Controller
             $receipt->setLocalPrice($request->input('data.attributes.price'));
         }
 
+        if($request->has('data.attributes.app')){
+            $app = $request->input('data.attributes.app');
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.credentials',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')
+                );
+            }
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.application_name',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')
+                );
+            }
+        }
+
         $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
@@ -200,7 +216,21 @@ class GooglePlayStoreController extends Controller
         error_log(
             'Signup purchases request :: ' . print_r($request->all(), true)
         );
-
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.credentials',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')
+                );
+            }
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.application_name',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')
+                );
+            }
+        }
         $action = $this->googlePlayStoreService->checkSignup($request->get('purchases', []));
 
         error_log(
@@ -213,14 +243,14 @@ class GooglePlayStoreController extends Controller
                 return response()->json(
                     [
                         'shouldRenew' => true,
-                        'message' => 'You can not create multiple Drumeo accounts under the same google account. You already have an expired/cancelled membership. Please renew your membership.',
+                        'message' => 'You can not create multiple Musora accounts under the same google account. You already have an expired/cancelled membership. Please renew your membership.',
                     ]
                 );
             case GooglePlayStoreService::SHOULD_LOGIN:
                 return response()->json(
                     [
                         'shouldLogin' => true,
-                        'message' => 'You have an active Drumeo account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
+                        'message' => 'You have an active Musora account. Please login into your account. If you want to modify your payment plan please cancel your active subscription from device settings before.',
                     ]
                 );
             default:
@@ -255,7 +285,21 @@ class GooglePlayStoreController extends Controller
                 500
             );
         }
-
+        if($request->has('app')){
+            $app = $request->input('app');
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.credentials',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')
+                );
+            }
+            if(config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')) {
+                config()->set(
+                    'ecommerce.payment_gateways.google_play_store.application_name',
+                    config('ecommerce.payment_gateways.google_play_store.'.$app.'.application_name')
+                );
+            }
+        }
         $results = $this->googlePlayStoreService->restoreAndSyncPurchasedItems($purchases);
 
         if ($results['shouldLogin'] == true) {
