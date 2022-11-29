@@ -17,9 +17,19 @@ use Throwable;
 
 class RenewalDueSubscriptions extends Command
 {
-
-    protected $name = 'renewalDueSubscriptions';
+    protected $name = 'ecommerce:renewalDueSubscriptions';
     protected $description = 'Renewal of due subscriptions.';
+
+    private array $expectedPaymentFailures = [
+        'Payment failed: Your card number is incorrect',
+        'Payment failed: Your card has expired',
+        'Payment failed: Your card was declined',
+        'Payment failed: Your card has insufficient funds',
+        'Payment failed: Your card does not support this type of purchase',
+        'Payment failed: Agreement canceled',
+
+        'Payment failed: No such customer',
+    ];
 
     public function info($string, $verbosity = null)
     {
@@ -43,8 +53,6 @@ class RenewalDueSubscriptions extends Command
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));
 
         foreach ($dueSubscriptions as $dueSubscription) {
-            $this->info("Memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB");
-
             /** @var $dueSubscription Subscription */
 
             $oldSubscriptionState = clone($dueSubscription);
@@ -57,14 +65,22 @@ class RenewalDueSubscriptions extends Command
                     event(new CommandSubscriptionRenewed($dueSubscription, $payment));
                 }
             } catch (Throwable $throwable) {
-                error_log('---------------------------- RENEWAL ERROR ------------------------------------');
-                error_log($throwable);
+                $message = $throwable->getMessage();
 
-                $this->info($throwable->getMessage());
-                $this->info($throwable->getTraceAsString());
-                $this->info($throwable->getFile());
-                $this->info($throwable->getLine());
-                $this->info($throwable->getCode());
+                $logException = $this->shouldLogPaymentException($message);
+                $renewalAttempt = $dueSubscription->getRenewalAttempt();
+                $subscriptionId = $dueSubscription->getId();
+                $this->info("Failed to renew subscription: $subscriptionId (attempt #$renewalAttempt) - $message");
+
+                if ($logException) {
+                    error_log('---------------------------- RENEWAL ERROR ------------------------------------');
+                    error_log($throwable);
+
+                    $this->info($throwable->getTraceAsString());
+                    $this->info($throwable->getFile());
+                    $this->info($throwable->getLine());
+                    $this->info($throwable->getCode());
+                }
 
                 $payment = null;
 
@@ -93,10 +109,6 @@ class RenewalDueSubscriptions extends Command
                         ) . ' - ' . $throwable->getMessage()
                     );
                 }
-
-                $this->info(
-                    'Failed to renew subscription ID: ' . $dueSubscription->getId() . ' - ' . $throwable->getMessage()
-                );
             }
         }
 
@@ -106,5 +118,17 @@ class RenewalDueSubscriptions extends Command
         $diff = microtime(true) - $timeStart;
         $sec = intval($diff);
         $this->info("Finished $this->name ($sec s)");
+    }
+
+    public function shouldLogPaymentException(string $message): bool
+    {
+        $logException = true;
+        foreach ($this->expectedPaymentFailures as $expectedFailure) {
+            if (str_contains($message, $expectedFailure)) {
+                $logException = false;
+                break;
+            }
+        }
+        return $logException;
     }
 }

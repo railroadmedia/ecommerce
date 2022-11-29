@@ -8,25 +8,9 @@ use Throwable;
 
 class ListDueSubscriptions extends Command
 {
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
-    protected $name = 'listDueSubscriptions';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $name = 'ecommerce:listDueSubscriptions';
     protected $description = 'List the currently due subscriptions.';
 
-    /**
-     * Execute the console command.
-     *
-     * @throws Throwable
-     */
     public function handle(SubscriptionRepository $subscriptionRepository)
     {
         $this->info('------------------ Listing Due Subscriptions ------------------');
