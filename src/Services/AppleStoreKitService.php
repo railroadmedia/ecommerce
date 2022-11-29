@@ -337,6 +337,18 @@ class AppleStoreKitService
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
+            if($appleResponse->getResultCode() == 21004){
+                $app = $receipt->getBrand();
+                if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
+                    config()->set(
+                        'ecommerce.payment_gateways.apple_store_kit.shared_secret',
+                        config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')
+                    );
+
+                    $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
+                }
+            }
+
             $receipt->setRawReceiptResponse(base64_encode(serialize($appleResponse)));
 
             $this->entityManager->persist($receipt);
@@ -707,14 +719,47 @@ class AppleStoreKitService
             $subscription->setTotalCyclesPaid(1);
             $subscription->setStopped(false);
             $subscription->setRenewalAttempt(0);
-        }
 
-        $subscription->setBrand(config('ecommerce.brand'));
-        $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
-        $subscription->setProduct($product);
+            if ($receipt->getLocalCurrency() &&
+                $receipt->getLocalCurrency() != config('ecommerce.default_currency') &&
+                in_array($receipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
 
-        if ($user) {
-            $subscription->setUser($user);
+                try {
+                    $totalPaidUsd = $this->currencyConvertionHelper->convert(
+                        $receipt->getLocalPrice(),
+                        $receipt->getLocalCurrency(),
+                        config('ecommerce.default_currency')
+                    );
+                    if ($totalPaidUsd && $totalPaidUsd <= ($product->getPrice() + 40)) {
+                        $subscription->setTotalPrice($totalPaidUsd);
+                    } else {
+                        $subscription->setTotalPrice($product->getPrice());
+                        error_log(
+                            'Apple purchase(id='.$receipt->getId().'): user currency=' .
+                            $receipt->getLocalCurrency() .
+                            ' user local price=' .
+                            $receipt->getLocalPrice() .
+                            ' converted price=' .
+                            $totalPaidUsd .
+                            ' is greater with more the 40 USD that the product price. Store the product price=' .
+                            $product->getPrice() .
+                            ' in DB.'
+                        );
+                    }
+                }catch (Exception $e){
+                    $subscription->setTotalPrice($product->getPrice());
+                }
+            } else {
+                $subscription->setTotalPrice($product->getPrice());
+            }
+
+            $subscription->setBrand(config('ecommerce.brand'));
+            $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
+            $subscription->setProduct($product);
+
+            if ($user) {
+                $subscription->setUser($user);
+            }
         }
 
         if (!empty($appleResponse->getPendingRenewalInfo())) {
@@ -751,39 +796,6 @@ class AppleStoreKitService
             $latestPurchaseItem->getExpiresDate()
                 ->copy()
         );
-
-        if ($receipt->getLocalCurrency() &&
-            $receipt->getLocalCurrency() != config('ecommerce.default_currency') &&
-            in_array($receipt->getLocalCurrency(), config('ecommerce.allowable_currencies'))) {
-
-            try {
-                $totalPaidUsd = $this->currencyConvertionHelper->convert(
-                    $receipt->getLocalPrice(),
-                    $receipt->getLocalCurrency(),
-                    config('ecommerce.default_currency')
-                );
-                if ($totalPaidUsd && $totalPaidUsd <= ($product->getPrice() + 40)) {
-                    $subscription->setTotalPrice($totalPaidUsd);
-                } else {
-                    $subscription->setTotalPrice($product->getPrice());
-                    error_log(
-                        'Apple purchase(id='.$receipt->getId().'): user currency=' .
-                        $receipt->getLocalCurrency() .
-                        ' user local price=' .
-                        $receipt->getLocalPrice() .
-                        ' converted price=' .
-                        $totalPaidUsd .
-                        ' is greater with more the 40 USD that the product price. Store the product price=' .
-                        $product->getPrice() .
-                        ' in DB.'
-                    );
-                }
-            }catch (Exception $e){
-                $subscription->setTotalPrice($product->getPrice());
-            }
-        } else {
-            $subscription->setTotalPrice($product->getPrice());
-        }
 
         $subscription->setTax(0);
         $subscription->setCurrency(config('ecommerce.default_currency'));
