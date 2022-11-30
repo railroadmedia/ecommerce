@@ -27,8 +27,7 @@ class RenewalDueSubscriptions extends Command
         'Payment failed: Your card has insufficient funds',
         'Payment failed: Your card does not support this type of purchase',
         'Payment failed: Agreement canceled',
-
-        'Payment failed: No such customer',
+        'Payment failed: Transaction cannot complete',
     ];
 
     public function info($string, $verbosity = null)
