@@ -939,7 +939,6 @@ class PaymentRepository extends RepositoryBase
                     $returnArray[$orderItem->getProduct()->getId()]['sold'] += 1;
                 }
             }
-
         }
 
         return $returnArray;
@@ -1142,12 +1141,10 @@ class PaymentRepository extends RepositoryBase
         $userId,
         $paidOnly = false,
         $brand = null
-    )
-    {
+    ) {
         if ($this->getEntityManager()
             ->getFilters()
             ->isEnabled('soft-deleteable')) {
-
             $this->getEntityManager()
                 ->getFilters()
                 ->disable('soft-deleteable');
@@ -1234,7 +1231,6 @@ class PaymentRepository extends RepositoryBase
         if (!$this->getEntityManager()
             ->getFilters()
             ->isEnabled('soft-deleteable')) {
-
             $this->getEntityManager()
                 ->getFilters()
                 ->enable('soft-deleteable');
@@ -1265,5 +1261,29 @@ class PaymentRepository extends RepositoryBase
             ->setParameter('externalProvider', $externalProvider);
 
         return $qb->getQuery()->getOneOrNullResult();
+    }
+
+
+    public function getByExternalIdsAndProvider(array $externalIds, $externalProvider)
+    {
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['p'])
+            ->from(Payment::class, 'p')
+            ->where($qb->expr()->in('p.externalId', ':externalIds'))
+            ->andWhere($qb->expr()->eq('p.externalProvider', ':externalProvider'))
+            ->setParameter('externalIds', $externalIds)
+            ->setParameter('externalProvider', $externalProvider);
+
+        $payments = $qb->getQuery()->getResult();
+
+        $result = [];
+        foreach ($payments as $payment) {
+            /** @var Payment $payment */
+            $result[$payment->getExternalId()] = $payment;
+        }
+        return $result;
     }
 }

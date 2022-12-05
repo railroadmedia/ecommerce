@@ -55,4 +55,30 @@ class SubscriptionPaymentRepository extends RepositoryBase
 
         return $qb->getQuery()->getResult();
     }
+
+    public function getByPayments($payments): array
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb->select(['sp', 's'])
+            ->from(SubscriptionPayment::class, 'sp')
+            ->join('sp.subscription', 's')
+            ->where(
+                $qb->expr()
+                    ->in('sp.payment', ':payments')
+            )
+            ->setParameter('payments', $payments);
+
+        $subscriptionPayments = $qb->getQuery()->getResult();
+
+        $result = [];
+        foreach ($subscriptionPayments as $subscriptionPayment) {
+            /** @var SubscriptionPayment $subscriptionPayment */
+            $result[$subscriptionPayment->getPayment()->getId()] = $subscriptionPayment;
+        }
+        return $result;
+    }
 }
