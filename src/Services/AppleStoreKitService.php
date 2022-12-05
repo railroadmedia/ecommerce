@@ -851,6 +851,7 @@ class AppleStoreKitService
                 !empty($purchasedItem->getPurchaseDate()) ? $purchasedItem->getPurchaseDate() : Carbon::now()
             );
 
+            $this->entityManager->persist($subscription);
             $this->entityManager->persist($existingPayment);
             $this->entityManager->flush();
 
