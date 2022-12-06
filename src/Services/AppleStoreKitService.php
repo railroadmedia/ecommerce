@@ -367,7 +367,7 @@ class AppleStoreKitService
         $this->entityManager->flush();
 
         if ($appleResponse) {
-            $subscription = $this->syncPurchasedItems($appleResponse, $receipt);
+            $subscription = $this->syncPurchasedItems($appleResponse, $receipt, subscription: $subscription);
 
             if (!empty($subscription)) {
                 $this->userProductService->updateSubscriptionProductsApp($subscription);
@@ -451,12 +451,12 @@ class AppleStoreKitService
         ResponseInterface $appleResponse,
         AppleReceipt $receipt,
         ?User $user = null,
-        $syncAll = false
+        $syncAll = false,
+        ?Subscription $subscription = null,
     ) {
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
         $allActivePurchasedItems = [];
-        $subscription = null;
 
         if (!$latestPurchaseItem && !empty($appleResponse->getPurchases())) {
             $latestPurchaseItem = $appleResponse->getPurchases()[0];
@@ -501,7 +501,8 @@ class AppleStoreKitService
                         $user,
                         $firstPurchaseItem,
                         $product,
-                        $latestPurchaseItem
+                        $latestPurchaseItem,
+                        subscription: $subscription,
                     );
                 } elseif ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
                     $this->syncPack($user, $latestPurchaseItem, $membershipIncludeFreePack, $product, $receipt);
@@ -701,13 +702,16 @@ class AppleStoreKitService
         ?User $user,
         ?PurchaseItem $firstPurchaseItem,
         $product,
-        ?PurchaseItem $latestPurchaseItem
+        ?PurchaseItem $latestPurchaseItem,
+        ?Subscription $subscription = null
     ) {
         // if a subscription with this external id already exists, just update it
         // the subscription external ID should always be set to the first purchase item web order line item ID
-        $subscription = $this->subscriptionRepository->getByExternalAppStoreId(
-            $firstPurchaseItem->getWebOrderLineItemId()
-        );
+        if (!$subscription) {
+            $subscription = $this->subscriptionRepository->getByExternalAppStoreId(
+                $firstPurchaseItem->getWebOrderLineItemId()
+            );
+        }
 
         if (empty($subscription)) {
             $subscription = new Subscription();
@@ -810,8 +814,13 @@ class AppleStoreKitService
         $receipt->setSubscription($subscription);
 
         $purchasedItems = $this->getPurchasedItems($appleResponse, $latestPurchaseItem);
-        $transactionIds = array_map(function($item){ return $item->getTransactionId();}, $purchasedItems);
-        $existingPayments = $this->paymentRepository->getByExternalIdsAndProvider($transactionIds, Payment::EXTERNAL_PROVIDER_APPLE);
+        $transactionIds = array_map(function ($item) {
+            return $item->getTransactionId();
+        }, $purchasedItems);
+        $existingPayments = $this->paymentRepository->getByExternalIdsAndProvider(
+            $transactionIds,
+            Payment::EXTERNAL_PROVIDER_APPLE
+        );
         $subscriptionPayments = $this->subscriptionPaymentRepository->getByPayments($existingPayments);
 
         // sync payments
