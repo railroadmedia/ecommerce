@@ -325,6 +325,16 @@
                                         <table class="invoice">
                                             <tr>
                                                 <td>
+                                                    @if(!empty($hasPhysicalItemsThatNeedToShip))
+                                                        <b>Your order has been successfully placed.</b> Processing times for packages may vary.
+                                                        We'll send you a shipping confirmation email and tracking link as soon as we send it off.<br><br>
+                                                        For more information, please visit our
+                                                        <a href="https://help.{{ $order->getBrand() }}.com/">Help Center</a>
+                                                        or email us at <a href="mailto:support@musora.com">support@musora.com</a>.<br><br>
+
+                                                        <hr>
+                                                    @endif
+
                                                     <br>Invoice #{{$order->getId()}}<br>
 
                                                     @if(!empty($paymentPlan) && $paymentPlan->getType() == \Railroad\Ecommerce\Entities\Subscription::TYPE_PAYMENT_PLAN)
