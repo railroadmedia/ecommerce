@@ -187,6 +187,8 @@ class UserProductRepository extends RepositoryBase
             ->setParameter('max', !empty($maxOverride) ? $maxOverride : (integer)$discountCriteria->getMax());
 
         return (integer)$qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getSingleScalarResult();
     }
 
