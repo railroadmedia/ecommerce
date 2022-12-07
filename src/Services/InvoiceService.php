@@ -67,6 +67,14 @@ class InvoiceService
 
         $paymentPlan = $this->subscriptionRepository->findOneBy(['order' => $order]);
 
+        $hasPhysicalItemsThatNeedToShip = false;
+
+        foreach ($order->getOrderItems() as $orderItem) {
+            if ($orderItem->getProduct()->getIsPhysical()) {
+                $hasPhysicalItemsThatNeedToShip = true;
+            }
+        }
+
         return [
             'order' => $order,
             'subscription' => $paymentPlan,
@@ -75,6 +83,7 @@ class InvoiceService
             'payment' => $payment,
             'currencySymbol' => $currencySymbol,
             'taxesPerType' => $taxesPerType,
+            'hasPhysicalItemsThatNeedToShip' => $hasPhysicalItemsThatNeedToShip,
             'invoiceSenderEmail' => config(
                 'ecommerce.invoice_email_details.' . $payment->getGatewayName() . '.order_invoice.invoice_sender'
             ),
