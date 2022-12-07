@@ -129,6 +129,8 @@ class AppleStoreKitController extends Controller
         }
 
         Log::info(var_export($request->get('unified_receipt')['latest_receipt_info'], true));
+        Log::info(var_export($request->get('unified_receipt'), true));
+        Log::info(var_export($request->get('latest_receipt'), true));
 
         $notificationType = $request->get('notification_type');
 
