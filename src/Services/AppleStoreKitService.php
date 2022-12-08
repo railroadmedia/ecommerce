@@ -8,6 +8,7 @@ use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
 use Railroad\Ecommerce\Entities\Order;
@@ -230,7 +231,7 @@ class AppleStoreKitService
     public function processNotification(AppleReceipt $receipt)
     {
         $appleResponse = null;
-
+        $receiptId = null;
         try {
             $appleResponse = $this->appleStoreKitGateway->getResponse($receipt->getReceipt());
 
@@ -238,11 +239,14 @@ class AppleStoreKitService
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
+            $receiptId = $receipt->getId();
 
+            Log::debug("Processing Apple Receipt $receiptId");
             $currentPurchasedItem = $this->getLatestPurchasedItem($appleResponse);
 
             if ($currentPurchasedItem) {
                 $transactionId = $currentPurchasedItem->getTransactionId();
+                $originalTransactionId = $currentPurchasedItem->getOriginalTransactionId();
 
                 $receipt->setTransactionId($transactionId);
                 $receipt->setValid($currentPurchasedItem->getExpiresDate() > Carbon::now());
@@ -251,7 +255,7 @@ class AppleStoreKitService
                     $this->appleReceiptRepository->createQueryBuilder('ap')
                         ->where('ap.transactionId  = :transactionId')
                         ->andWhere('ap.email is not null')
-                        ->setParameter('transactionId', $transactionId)
+                        ->setParameter('transactionId', $originalTransactionId)
                         ->getQuery()
                         ->getResult();
 
@@ -279,7 +283,7 @@ class AppleStoreKitService
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
-
+            Log::info("Failed Processing Apple Receipt $receiptId");
             throw $exception;
         }
 
@@ -289,21 +293,25 @@ class AppleStoreKitService
         $user = $this->userProvider->getUserByEmail($receipt->getEmail());
 
         $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
+        Log::debug("Apple Receipt Synced $receiptId");
 
         if (!is_null($subscription)) {
             if ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE) {
+                Log::debug("Apple Receipt Successfully Renewed $receiptId");
                 event(
                     new MobileSubscriptionRenewed(
                         $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                     )
                 );
             } elseif (!empty($subscription->getCanceledOn())) {
+                Log::debug("Apple Receipt Successfully Canceled $receiptId");
                 event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
             }
 
             $this->userProductService->updateSubscriptionProductsApp($subscription);
         }
         $this->entityManager->flush();
+        Log::debug("Apple Receipt Success $receiptId");
     }
 
     /**
