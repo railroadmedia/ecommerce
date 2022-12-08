@@ -115,11 +115,11 @@ class AppleStoreKitController extends Controller
      */
     public function processNotification(Request $request)
     {
-        Log::info('Processing AppleStoreKitController processNotification');
-        Log::info(var_export($request->all(), true));
+        Log::debug('Processing AppleStoreKitController processNotification');
+        Log::debug(var_export($request->all(), true));
 
         if (!$request->has('unified_receipt') && !$request->has('latest_receipt')) {
-            Log::info(
+            Log::debug(
                 'AppleStoreKitController processNotification -------- Missing unified_receipt and latest_receipt in Apple request'
             );
 

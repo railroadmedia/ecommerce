@@ -283,7 +283,7 @@ class AppleStoreKitService
 
             $this->entityManager->persist($receipt);
             $this->entityManager->flush();
-            Log::info("Failed Processing Apple Receipt $receiptId");
+            Log::debug("Failed Processing Apple Receipt $receiptId");
             throw $exception;
         }
 
