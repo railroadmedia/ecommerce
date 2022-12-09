@@ -49,8 +49,6 @@ class Address implements AddressInterface, Serializable
      */
     protected $city;
 
-    protected $inflector;
-
     const PROPS_MAP = [
         'country' => true,
         'region' => true,
@@ -69,8 +67,6 @@ class Address implements AddressInterface, Serializable
     {
         $this->country = $country;
         $this->region = $region;
-
-        $this->inflector = app('DoctrineInflector');
     }
 
     /**
@@ -208,9 +204,11 @@ class Address implements AddressInterface, Serializable
      */
     public function merge(Address $address)
     {
+        $inflector = app('DoctrineInflector');
+
         foreach (self::PROPS_MAP as $key => $nil) {
-            $setterName = $this->inflector->camelize('set' . ucwords($key));
-            $getterName = $this->inflector->camelize('get' . ucwords($key));
+            $setterName = $inflector->camelize('set' . ucwords($key));
+            $getterName = $inflector->camelize('get' . ucwords($key));
 
             $currentValue = call_user_func([$this, $getterName]);
             $newValue = call_user_func([$address, $getterName]);
