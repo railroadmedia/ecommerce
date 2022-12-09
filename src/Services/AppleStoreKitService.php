@@ -267,6 +267,10 @@ class AppleStoreKitService
                     if ($oldReceipts[0]->getLocalCurrency()) {
                         $receipt->setLocalCurrency($oldReceipts[0]->getLocalCurrency());
                     }
+                } else {
+                    Log::warning("No receipt exists for original Apple transaction $originalTransactionId");
+                    Log::debug("Failed Processing Apple Receipt $receiptId");
+                    return;
                 }
             } else {
                 $receipt->setValid(false);
