@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Railroad\Ecommerce\Controllers\SubscriptionUpgradeController;
 
 Route::group([
     'prefix' => config('ecommerce.route_prefix'),
@@ -32,4 +33,13 @@ Route::group([
 
     Route::get('/failed-billing', Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@failedBilling')
         ->name('subscriptions.failed-billing');
+
+    Route::get('/subscription/upgrade', SubscriptionUpgradeController::class . '@upgrade')
+        ->name('subscription.upgrade');
+
+    Route::get('/subscription/upgrade/rate',SubscriptionUpgradeController::class . '@upgradeRate')
+        ->name('subscription.upgrade.rate');
+
+    Route::get('/subscription/downgrade', SubscriptionUpgradeController::class . '@downgrade')
+        ->name('subscription.upgrade');
 });
