@@ -391,4 +391,25 @@ class SubscriptionJsonController extends Controller
         return ResponseService::subscription($subscriptionsAndBuilder->getResults(), $subscriptionsAndBuilder->getQueryBuilder())
             ->respond(200);
     }
+
+
+    public function upgrade()
+    {
+
+
+        return $response;
+    }
+
+    public function upgradeRate()
+    {
+
+        return $response;
+    }
+
+    public function downgrade()
+    {
+
+
+        return $response;
+    }
 }

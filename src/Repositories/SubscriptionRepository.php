@@ -1010,7 +1010,7 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter('true', true);
 
         return $qb->getQuery()
-            ->getResult()[0] ?? null;
+            ->getFirstResult();
     }
 
     public function getDailyTotalExpectedRenewalValue(Carbon $day, $brand)
