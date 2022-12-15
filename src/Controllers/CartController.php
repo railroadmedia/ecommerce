@@ -127,7 +127,7 @@ class CartController extends Controller
 
         /** @var RedirectResponse $redirectResponse */
         $redirectResponse =
-            $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->back();
+            $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->to(config('ecommerce.post_add_to_cart_redirect', '/order'));
 
         $redirectResponse->with('cart', $cartArray);
 

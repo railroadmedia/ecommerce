@@ -635,6 +635,7 @@ return [
     // redirects
     'post_purchase_redirect_digital_items' => '/members',
     'post_purchase_redirect_customer_order' => '/thankyou',
+    'post_add_to_cart_redirect' => '/order/musora',
 
     // constants
     'billing_address' => 'billing',
