@@ -11,28 +11,42 @@ use Railroad\Ecommerce\Services\SubscriptionUpgradeService;
 
 class SubscriptionUpgradeController extends Controller
 {
-    private $subscriptionUpgradeService;
+    private SubscriptionUpgradeService $subscriptionUpgradeService;
+    private OrderFormJsonController $orderFormJsonController;
 
-    public function __construct(SubscriptionUpgradeService $subscriptionUpgradeService, UserService)
-    {
+    public function __construct(
+        SubscriptionUpgradeService $subscriptionUpgradeService,
+        OrderFormJsonController $orderFormJsonController
+    ) {
         $this->subscriptionUpgradeService = $subscriptionUpgradeService;
+        $this->orderFormJsonController = $orderFormJsonController;
     }
 
     public function upgrade()
     {
-        $user = auth()->id();
-        $this->subscriptionUpgradeService->upgrade($user);
+        $userId = auth()->id();
+        try {
+            $message = $this->subscriptionUpgradeService->upgrade($userId);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        }
+        return $message;
     }
 
     public function upgradeRate()
     {
-        $user = auth()->id();
-        return $this->subscriptionUpgradeService->getUpgradeRate($user);
+        $userId = auth()->id();
+        return $this->subscriptionUpgradeService->getUpgradeRate($userId);
     }
 
     public function downgrade()
     {
-        $user = auth()->id();
-        $this->subscriptionUpgradeService->downgrade($user);
+        $userId = auth()->id();
+        try {
+            $message = $this->subscriptionUpgradeService->downgrade($userId);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        }
+        return $message;
     }
 }
