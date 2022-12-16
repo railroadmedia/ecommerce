@@ -63,6 +63,11 @@ class CartService
      */
     private $userProvider;
 
+    /**
+     * @var SubscriptionUpgradeService
+     */
+    private $subscriptionUpgradeService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -80,7 +85,7 @@ class CartService
      * @param ShippingService $shippingService
      * @param LocationService $locationService
      * @param UserProductService $userProductService
-     * @param UserProviderInterface $userProvider
+     * @param SubscriptionUpgradeService $subscriptionUpgradeService
      */
     public function __construct(
         DiscountService $discountService,
@@ -89,9 +94,9 @@ class CartService
         ShippingService $shippingService,
         LocationService $locationService,
         UserProductService $userProductService,
-        UserProviderInterface $userProvider
-    )
-    {
+        UserProviderInterface $userProvider,
+        SubscriptionUpgradeService $subscriptionUpgradeService
+    ) {
         $this->discountService = $discountService;
         $this->productRepository = $productRepository;
         $this->taxService = $taxService;
@@ -99,6 +104,7 @@ class CartService
         $this->locationService = $locationService;
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
+        $this->subscriptionUpgradeService = $subscriptionUpgradeService;
     }
 
     /**
@@ -122,15 +128,13 @@ class CartService
         int $quantity,
         bool $lock = false,
         string $promoCode = ''
-    ): Product
-    {
+    ): Product {
         $this->refreshCart();
 
         // cart locking
         if ($lock) {
             $this->cart->setLocked(true);
         } elseif ($this->cart->getLocked()) {
-
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
             $this->cart->toSession();
@@ -282,7 +286,6 @@ class CartService
 
         if (!$this->isPaymentPlanEligible() ||
             !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
-
             throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
         }
 
@@ -599,8 +602,7 @@ class CartService
     public function getDueForPaymentPlanPayments(
         $taxRate,
         $numberOfPaymentsOverride = null
-    )
-    {
+    ) {
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
@@ -848,7 +850,6 @@ class CartService
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
         if ($this->isPaymentPlanEligible()) {
-
             if ($numberOfPayments > 1) {
                 $totals['financing_cost_per_payment'] = round($financeCost / $numberOfPayments, 2);
 
@@ -967,7 +968,6 @@ class CartService
         $result = [];
 
         foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
-
             $sku = $recommendedProductData['sku'];
 
             if (!$count) {
@@ -1003,13 +1003,13 @@ class CartService
 
             $result[$sku] = [
                 'name_override' => isset($recommendedProductData['name_override']) ?
-                                    $recommendedProductData['name_override'] : null,
+                    $recommendedProductData['name_override'] : null,
                 'sales_page_url_override' => isset($recommendedProductData['sales_page_url_override']) ?
-                                    $recommendedProductData['sales_page_url_override'] : null,
+                    $recommendedProductData['sales_page_url_override'] : null,
                 'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
-                                    $recommendedProductData['add_directly_to_cart'] : true,
+                    $recommendedProductData['add_directly_to_cart'] : true,
                 'cta' => isset($recommendedProductData['cta']) ?
-                                    $recommendedProductData['cta'] : null,
+                    $recommendedProductData['cta'] : null,
             ];
 
             $count--;
@@ -1041,6 +1041,17 @@ class CartService
         $addDirectlyToCart = null,
         $callToActionLabel = null
     ) {
+        $discountedAmount = $this->discountService->getItemDiscountedAmount(
+            $this->cart,
+            $product,
+            $totalItemCostDue,
+            $shippingDue
+        );
+        $discountedPrice = max(round(($product->getPrice() * $quantity) - $discountedAmount, 2), 0);
+        if ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+            $discountedPrice = $this->subscriptionUpgradeService->getAdjustedPrice($product, $discountedPrice);
+        }
+
         $serialization = [
             'id' => $product->getId(),
             'sku' => $product->getSku(),
@@ -1067,19 +1078,7 @@ class CartService
                     2
                 ) : null,
             'price_before_discounts' => round($product->getPrice() * $quantity, 2),
-            'price_after_discounts' => max(
-                round(
-                    ($product->getPrice() * $quantity) -
-                    $this->discountService->getItemDiscountedAmount(
-                        $this->cart,
-                        $product,
-                        $totalItemCostDue,
-                        $shippingDue
-                    ),
-                    2
-                ),
-                0
-            ),
+            'price_after_discounts' => $discountedPrice,
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
                 $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),

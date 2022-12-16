@@ -997,6 +997,6 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter('true', true);
 
         return $qb->getQuery()
-            ->getFirstResult();
+            ->getResult()[0] ?? null;
     }
 }
