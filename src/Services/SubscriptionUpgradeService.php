@@ -125,21 +125,27 @@ class SubscriptionUpgradeService
     public function upgrade(int $userId): string
     {
         $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
-        $isLifeTime = $this->isLifeTimeMember($userId);
         $accessLevel = $this->getAccessLevel($userProducts);
         switch ($accessLevel) {
             case AccessLevel::None:
                 return "Unable to upgrade user $userId, no active subscription";
             case AccessLevel::Basic:
-                if ($isLifeTime) {
-                    $result = $this->orderBySku(SubscriptionUpgradeService::LifetimeSongAddOnSKUs, $userId);
-                } else {
-                    $result = $this->orderBySku(SubscriptionUpgradeService::FullTierSKUs[0], $userId);
-                }
+                $sku = $this->getUpgradeSKU($userId);
+                $result = $this->orderBySku($sku, $userId);
                 //cancel subscription handled through order
                 return "upgrade successful";
             case AccessLevel::Full:
                 return "Unable to upgrade user $userId, already has full access";
+        }
+    }
+
+    private function getUpgradeSKU(int $userId)
+    {
+        $isLifeTime = $this->isLifeTimeMember($userId);
+        if ($isLifeTime) {
+            return SubscriptionUpgradeService::LifetimeSongAddOnSKU;
+        } else {
+            return SubscriptionUpgradeService::FullTierSKUs[0];
         }
     }
 
@@ -168,26 +174,27 @@ class SubscriptionUpgradeService
 
     public function getUpgradeRate(int $userId): ?float
     {
-        $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($user->getId());
-        return $this->getUpgradeRateFromSubscription($subscription, $userId);
-    }
-
-    private function getUpgradeRateFromSubscription(?Subscription $subscription, int $userId)
-    {
-        if ($this->isBasicTier($subscription)) {
-            if ($this->isLifeTimeMember($userId)) {
-                $product = $this->productRepository->bySku(SubscriptionUpgradeService::LifetimeSongAddOnSKUs);
-                return $product->getPrice();
-            }
+        $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
+        $accessLevel = $this->getAccessLevel($userProducts);
+        switch ($accessLevel) {
+            case AccessLevel::None:
+                return null;
+            case AccessLevel::Basic:
+                $sku = $this->getUpgradeSKU($userId);
+                $product = $this->productRepository->bySku($sku);
+                //Todo:  Should this include tax or discounts
+                $price = $product->getPrice();
+                return $this->getAdjustedPrice($product, $price);
+            case AccessLevel::Full:
+                return 0;
         }
-        return null;
+        return $this->getAdjustedPrice($product, $price);
     }
 
     public function downgrade(int $userId): string
     {
         $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
         $isLifeTime = $this->isLifeTimeMember($userId);
-        $accessLevel = $this->getAccessLevel($userProducts);
         switch ($accessLevel) {
             case AccessLevel::None:
                 return "Unable to downgrade user $userId, no active subscription";
@@ -196,15 +203,16 @@ class SubscriptionUpgradeService
             case AccessLevel::Full:
                 if ($this->isLifeTimeMember($userId)) {
                     $subscriptions = $this->subscriptionRepository->getActiveSubscriptionsByUserId($userId);
-                    foreach($subscriptions as $subscription){
+                    foreach ($subscriptions as $subscription) {
                         /** @var Subscription $subscription */
-                        if($subscription->getProduct()->getSku() == SubscriptionUpgradeService::LifetimeSongAddOnSKU){
-                            $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
+                        if ($subscription->getProduct()->getSku() == SubscriptionUpgradeService::LifetimeSongAddOnSKU) {
+                            $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
+                                $userId
+                            );
                             $this->cancelSubscription($subscription, "Cancelled for downgrade");
                         }
                     }
-                }
-                else{
+                } else {
                     $result = $this->orderBySku(SubscriptionUpgradeService::BasicTierSKUs[0], $userId);
                     //cancel handled through order
                 }
