@@ -151,11 +151,10 @@ class PaymentMethodRepository extends RepositoryBase
             ->where('upm.user = :userId')
             ->andWhere('pmj.id = pm.id')
             ->andWhere('upm.isPrimary = true')
+            ->orderBy('pm.id', 'desc')
             ->setParameter('userId', $userId);
-
         return $qb->getQuery()
-            ->useResultCache($this->arrayCache)
-            ->getOneOrNullResult();
+            ->getResult()[0] ?? null;
     }
 
     /**
@@ -205,12 +204,12 @@ class PaymentMethodRepository extends RepositoryBase
                             )
                     )
             )
-            ->setParameter('ccBrand', $brand)
-            ->setParameter('ppbaBrand', $brand);
+                ->setParameter('ccBrand', $brand)
+                ->setParameter('ppbaBrand', $brand);
         }
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 
     /**
@@ -258,11 +257,11 @@ class PaymentMethodRepository extends RepositoryBase
                             )
                     )
             )
-            ->setParameter('ccBrand', $brand)
-            ->setParameter('ppbaBrand', $brand);
+                ->setParameter('ccBrand', $brand)
+                ->setParameter('ppbaBrand', $brand);
         }
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 }
