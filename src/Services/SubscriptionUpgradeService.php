@@ -5,7 +5,6 @@ namespace Railroad\Ecommerce\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Product;
-use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -30,7 +29,6 @@ class SubscriptionUpgradeService
 {
     protected SubscriptionRepository $subscriptionRepository;
     protected UserProductRepository $userProductRepository;
-    protected EcommerceEntityManager $ecommerceEntityManager;
     protected ProductRepository $productRepository;
     protected CartService $cartService;
     protected OrderFormService $orderFormService;
@@ -45,7 +43,6 @@ class SubscriptionUpgradeService
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         UserProductRepository $userProductRepository,
-        EcommerceEntityManager $ecommerceEntityManager,
         ProductRepository $productRepository,
         CartService $cartService,
         OrderFormService $orderFormService,
@@ -59,7 +56,6 @@ class SubscriptionUpgradeService
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductRepository = $userProductRepository;
-        $this->ecommerceEntityManager = $ecommerceEntityManager;
         $this->productRepository = $productRepository;
         $this->cartService = $cartService;
         $this->orderFormService = $orderFormService;
@@ -87,8 +83,8 @@ class SubscriptionUpgradeService
                     return implode(',', $result['errors']);
                 }
                 return "upgrade successful";
-            case MembershipTier::Full:
-                return "Unable to upgrade user $userId, already has full access";
+            case MembershipTier::Plus:
+                return "Unable to upgrade user $userId, already has plus access";
         }
     }
 
@@ -100,29 +96,20 @@ class SubscriptionUpgradeService
                 return "Unable to downgrade user $userId, no membership access";
             case MembershipTier::Basic:
                 return "Unable to downgrade user $userId, already has basic access";
-            case MembershipTier::Full:
+            case MembershipTier::Plus:
+                $subscription = $this->upgradeService->getCurrentSubscription($userId);
                 if ($this->upgradeService->isLifeTimeMember($userId)) {
-                    $subscriptions = $this->subscriptionRepository->getActiveSubscriptionsByUserId($userId);
-                    foreach ($subscriptions as $subscription) {
-                        /** @var Subscription $subscription */
-                        if ($subscription->getProduct()->getSku() == UpgradeService::LifetimeSongAddOnSKU) {
-                            $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
-                                $userId
-                            );
-                            $this->cancelSubscription($subscription, "Cancelled for downgrade");
-                        }
-                    }
+                    $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
                     return "downgrade successful";
                 } else {
-                    $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
-
                     $sku = $this->upgradeService->getDowngradeSKU($userId);
                     $result = $this->orderBySku($sku, $userId);
                     $success = count($result['errors'] ?? []) == 0;
                     if (!$success) {
                         return implode(',', $result['errors']);
                     }
-                    $this->cancelSubscription($subscription, "Cancelled for downgrade");
+                    //TODO:  Can we remove this?
+                    $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
                     return "downgrade successful";
                 }
         }
@@ -162,18 +149,9 @@ class SubscriptionUpgradeService
                 //Todo:  Should this include tax or discounts
                 $price = $product->getPrice();
                 return $this->upgradeService->getAdjustedPrice($product, $price);
-            case MembershipTier::Full:
+            case MembershipTier::Plus:
                 return 0;
         }
         return $this->getAdjustedPrice($product, $price);
-    }
-
-    private function cancelSubscription(Subscription $subscription, string $cancellationReason)
-    {
-        $subscription->setIsActive(false);
-        $subscription->setCanceledOn(Carbon::now());
-        $subscription->setCancellationReason($cancellationReason);
-        $this->ecommerceEntityManager->persist($subscription);
-        $this->ecommerceEntityManager->flush();
     }
 }

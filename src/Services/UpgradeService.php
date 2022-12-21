@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Google\Service\SecurityCommandCenter\Access;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
@@ -22,30 +23,28 @@ enum MembershipTier: int
 {
     case None = 0;
     case Basic = 1;
-    case Full = 2;
+    case Plus = 2;
 }
 
 class UpgradeService
 {
     public const LifetimeSongAddOnSKU = '12345';
-    public const FullTierSKUs = [
-        'singeo-monthly-recurring-membership',
-        UpgradeService::LifetimeSongAddOnSKU
-    ];
-    public const BasicTierSKUs = ['GUITAREO-1-YEAR-MEMBERSHIP'];
 
     protected SubscriptionRepository $subscriptionRepository;
     protected UserProductRepository $userProductRepository;
     protected ProductRepository $productRepository;
+    protected EcommerceEntityManager $ecommerceEntityManager;
 
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         UserProductRepository $userProductRepository,
         ProductRepository $productRepository,
+        EcommerceEntityManager $ecommerceEntityManager,
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductRepository = $userProductRepository;
         $this->productRepository = $productRepository;
+        $this->ecommerceEntityManager = $ecommerceEntityManager;
     }
 
     public function getCurrentMembershipTier(int $userId): MembershipTier
@@ -58,8 +57,8 @@ class UpgradeService
             $sku = $userProduct->getProduct()->getSku();
             if (!$userProduct->isValid()) {
                 continue;
-            } elseif ($this->isFullTier($userProduct->getProduct())) {
-                $membershipTier = MembershipTier::Full;
+            } elseif ($this->isPlusTier($userProduct->getProduct())) {
+                $membershipTier = MembershipTier::Plus;
                 break;
             } elseif ($this->isBasicTier($userProduct->getProduct())) {
                 $membershipTier = MembershipTier::Basic;
@@ -71,23 +70,23 @@ class UpgradeService
     public function getNextRenewalMembershipTier(int $userId): MembershipTier
     {
         /** @var Subscription $subscription */
-        $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
+        $subscription = $this->getCurrentSubscription($userId);
         $isLifeTime = $this->isLifetimeMember($userId);
 
         if ($isLifeTime) {
             return $subscription->getProduct()->getSku() == UpgradeService::LifetimeSongAddOnSKU
-                ? MembershipTier::Full : MembershipTier::Basic;
+                ? MembershipTier::Plus : MembershipTier::Basic;
         }
         if (!$subscription) {
             return MembershipTier::None;
         }
-        if ($this->isFullTier($subscription->getProduct())) {
-            return MembershipTier::Full;
+        if ($this->isPlusTier($subscription->getProduct())) {
+            return MembershipTier::Plus;
         }
         return MembershipTier::Basic;
     }
 
-    private function isFullTier(Product $product)
+    private function isPlusTier(Product $product)
     {
         return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
     }
@@ -131,13 +130,29 @@ class UpgradeService
         if ($isLifeTime) {
             return UpgradeService::LifetimeSongAddOnSKU;
         } else {
-            return UpgradeService::FullTierSKUs[0];
+            $subscription = $this->getCurrentSubscription($userId);
+            if (!$subscription) {
+                return null;
+            }
+            $product = $this->productRepository->getPlusMembershipSKU(
+                $subscription->getProduct()->getBrand(),
+                $subscription->getProduct()->getDigitalAccessTimeIntervalType()
+            );
+            return $product?->getSku();
         }
     }
 
     public function getDowngradeSKU(int $userId): ?string
     {
-        return UpgradeService::BasicTierSKUs[0];
+        $subscription = $this->getCurrentSubscription($userId);
+        if (!$subscription) {
+            return null;
+        }
+        $product = $this->productRepository->getBasicMembershipSKU(
+            $subscription->getBrand(),
+            $subscription->getIntervalType()
+        );
+        return $product?->getSku();
     }
 
     public function getDiscountAmount(Product $newProduct)
@@ -150,12 +165,12 @@ class UpgradeService
             case MembershipTier::None:
                 return 0; //No access, no discounts
             case MembershipTier::Basic:
-                if ($this->isFullTier($newProduct)) {
+                if ($this->isPlusTier($newProduct)) {
                     return $this->getProratedUpgradeDiscount($newProduct, $price, $userId);
                 }
                 return $price; //Already have basic access, crossgrade should be free
-            case MembershipTier::Full:
-                return $price; //Already have full access, downgrade or crossgrades should be free
+            case MembershipTier::Plus:
+                return $price; //Already have plus access, downgrade or crossgrades should be free
         }
     }
 
@@ -167,7 +182,7 @@ class UpgradeService
             case MembershipTier::None:
                 return false;
             case MembershipTier::Basic:
-            case MembershipTier::Full:
+            case MembershipTier::Plus:
                 return true;
         }
     }
@@ -182,7 +197,7 @@ class UpgradeService
                 if ($product->getSku() == UpgradeService::LifetimeSongAddOnSKU) {
                     return 0; //no discount since this is an add on for lifetime
                 }
-                $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
+                $subscription = $this->getCurrentSubscription($userId);
                 if ($subscription) {
                     $monthsUntilRenewal = $subscription->getPaidUntil()->diffInMonths(Carbon::now());
                     $finalPrice = max(($price - $subscription->getTotalPrice()) * $monthsUntilRenewal / 12, 0);
@@ -197,5 +212,20 @@ class UpgradeService
                     "DigitalAccessTimeIntervalType '$product->getDigitalAccessTimeIntervalType()' not handled"
                 );
         }
+    }
+
+    public function getCurrentSubscription(int $userId): ?Subscription
+    {
+        $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
+        return $subscription;
+    }
+
+    public function cancelSubscription(Subscription $subscription, string $cancellationReason)
+    {
+        $subscription->setIsActive(false);
+        $subscription->setCanceledOn(Carbon::now());
+        $subscription->setCancellationReason($cancellationReason);
+        $this->ecommerceEntityManager->persist($subscription);
+        $this->ecommerceEntityManager->flush();
     }
 }

@@ -223,4 +223,46 @@ class ProductRepository extends RepositoryBase
     {
         return $this->bySkus($cart->listSkus());
     }
+
+    public function getPlusMembershipSKU(string $brand, string $digitalAccessTimeIntervalType): ?Product
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q = $qb->select('p')
+            ->from(Product::class, 'p')
+            ->where($qb->expr()->eq('p.type', ':type'))
+            ->andWhere($qb->expr()->eq('p.brand', ':brand'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessType', ':digitalAccessType'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessTimeIntervalType', ':digitalAccessTimeIntervalType'))
+            //->andWhere($qb->expr()->notLike('p.sku', '%trial%'))
+            ->orderBy('p.id', 'desc')
+            ->getQuery()
+            ->setParameter('type', Product::TYPE_DIGITAL_SUBSCRIPTION)
+            ->setParameter('brand', $brand)
+            ->setParameter('digitalAccessType', Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS)
+            ->setParameter('digitalAccessTimeIntervalType', $digitalAccessTimeIntervalType);
+
+        return $q->getResult()[0] ?? null;
+    }
+
+    public function getBasicMembershipSKU(string $brand, string $digitalAccessTimeIntervalType): ?Product
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q = $qb->select('p')
+            ->from(Product::class, 'p')
+            ->where($qb->expr()->eq('p.type', ':type'))
+            ->andWhere($qb->expr()->eq('p.brand', ':brand'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessType', ':digitalAccessType'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessTimeIntervalType', ':digitalAccessTimeIntervalType'))
+            //->andWhere($qb->expr()->notLike('p.sku', '%trial%'))
+            ->orderBy('p.id', 'desc')
+            ->getQuery()
+            ->setParameter('type', Product::TYPE_DIGITAL_SUBSCRIPTION)
+            ->setParameter('brand', $brand)
+            ->setParameter('digitalAccessType', Product::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS)
+            ->setParameter('digitalAccessTimeIntervalType', $digitalAccessTimeIntervalType);
+
+        return $q->getResult()[0] ?? null;
+    }
 }

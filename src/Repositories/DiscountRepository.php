@@ -141,11 +141,9 @@ class DiscountRepository extends RepositoryBase
 
         $upgradeDiscount = new Discount();
         $upgradeDiscount->setType(DiscountService::MEMBERSHIP_UPGRADE_TYPE);
-        foreach (UpgradeService::FullTierSKUs as $upgradeSKU) {
-            $discountCriteria = new DiscountCriteria();
-            $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_UPGRADE);
-            $upgradeDiscount->addDiscountCriteria($discountCriteria);
-        }
+        $discountCriteria = new DiscountCriteria();
+        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_UPGRADE);
+        $upgradeDiscount->addDiscountCriteria($discountCriteria);
 
         $results[] = $upgradeDiscount;
 
