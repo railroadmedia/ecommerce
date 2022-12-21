@@ -523,7 +523,8 @@ return [
     // paypal
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',
-        'agreement_fulfilled_path' => '/test'
+        'agreement_fulfilled_path' => '/test',
+        'order_form_post_purchase_redirect_path' => '/members',
     ],
 
     // membership subscription duplicate syncing

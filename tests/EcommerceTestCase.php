@@ -299,6 +299,10 @@ class EcommerceTestCase extends BaseTestCase
             'ecommerce.paypal.agreement_fulfilled_path',
             $defaultConfig['paypal']['agreement_fulfilled_path']
         );
+        $app['config']->set(
+            'ecommerce.paypal.order_form_post_purchase_redirect_path',
+            $defaultConfig['paypal']['order_form_post_purchase_redirect_path']
+        );
 
         $app['config']->set('ecommerce.subscription_renewal_date', $defaultConfig['subscription_renewal_date']);
         $app['config']->set('ecommerce.subscriptions_renew_cycles', $defaultConfig['subscriptions_renew_cycles']);

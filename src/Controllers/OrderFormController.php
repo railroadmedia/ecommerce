@@ -59,7 +59,7 @@ class OrderFormController extends Controller
         else {
 
             $redirectResponse = redirect()->to(
-                config('ecommerce.paypal.agreement_fulfilled_path')
+                config('ecommerce.paypal.order_form_post_purchase_redirect_path')
             );
 
             $redirectResponse->with('success', true);

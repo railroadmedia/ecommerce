@@ -207,8 +207,6 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
-
         $paypalToken = $this->faker->word;
 
         $this->entityManager->clear();
@@ -218,6 +216,8 @@ class OrderFormControllerTest extends EcommerceTestCase
             '/order-form/submit-paypal',
             ['token' => $paypalToken]
         );
+
+        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -475,8 +475,6 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
-
         $paypalToken = $this->faker->word;
 
         $this->entityManager->clear();
@@ -486,6 +484,8 @@ class OrderFormControllerTest extends EcommerceTestCase
             '/order-form/submit-paypal',
             ['token' => $paypalToken]
         );
+
+        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -637,8 +637,6 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
-
         $paypalToken = $this->faker->word;
 
         $this->entityManager->clear();
@@ -648,6 +646,8 @@ class OrderFormControllerTest extends EcommerceTestCase
             '/order-form/submit-paypal',
             ['token' => $paypalToken]
         );
+
+        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -833,8 +833,6 @@ class OrderFormControllerTest extends EcommerceTestCase
         $this->paypalExternalHelperMock->method('createReferenceTransaction')
             ->willReturn($transactionId);
 
-        config()->set('ecommerce.paypal.agreement_fulfilled_path', 'order.submit.paypal');
-
         $paypalToken = $this->faker->word;
 
         $this->entityManager->clear();
@@ -844,6 +842,8 @@ class OrderFormControllerTest extends EcommerceTestCase
             '/order-form/submit-paypal',
             ['token' => $paypalToken]
         );
+
+        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
