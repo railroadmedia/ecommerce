@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use App\Modules\Ecommerce\Models\UserPaymentMethod;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
