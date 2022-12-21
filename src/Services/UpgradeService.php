@@ -61,7 +61,7 @@ class UpgradeService
             } elseif ($this->isFullTier($userProduct->getProduct())) {
                 $membershipTier = MembershipTier::Full;
                 break;
-            } elseif ($userProduct->getProduct()->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
+            } elseif ($this->isBasicTier($userProduct->getProduct())) {
                 $membershipTier = MembershipTier::Basic;
             }
         }
@@ -89,7 +89,12 @@ class UpgradeService
 
     private function isFullTier(Product $product)
     {
-        return in_array($product->getSku(), UpgradeService::FullTierSKUs);
+        return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
+    }
+
+    private function isBasicTier(Product $product)
+    {
+        return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
     }
 
     public function isLifetimeMember(int $userId): bool
@@ -146,7 +151,7 @@ class UpgradeService
                 return 0; //No access, no discounts
             case MembershipTier::Basic:
                 if ($this->isFullTier($newProduct)) {
-                    return max($price - $this->getProratedUpgradeRate($newProduct, $price, $userId), 0);
+                    return $this->getProratedUpgradeDiscount($newProduct, $price, $userId);
                 }
                 return $price; //Already have basic access, crossgrade should be free
             case MembershipTier::Full:
@@ -180,7 +185,7 @@ class UpgradeService
                 $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
                 if ($subscription) {
                     $monthsUntilRenewal = $subscription->getPaidUntil()->diffInMonths(Carbon::now());
-                    $finalPrice = max($price - $subscription->getTotalPrice() * $monthsUntilRenewal / 12, 0);
+                    $finalPrice = max(($price - $subscription->getTotalPrice()) * $monthsUntilRenewal / 12, 0);
                     return $price - $finalPrice;
                 }
                 //todo: not sure about this case
