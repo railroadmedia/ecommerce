@@ -37,6 +37,7 @@ class Product
     const TYPE_PHYSICAL_ONE_TIME = 'physical one time';
 
     const DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS = 'all content access';
+    const DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS = 'basic content access';
     const DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS = 'specific content access';
 
     const DIGITAL_ACCESS_TIME_TYPE_RECURRING = 'recurring';
