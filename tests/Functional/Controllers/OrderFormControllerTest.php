@@ -217,7 +217,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ['token' => $paypalToken]
         );
 
-        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
+        $response->assertRedirectContains(config('ecommerce.paypal.order_form_post_purchase_redirect_path_without_brand') . $orderData['gateway']);
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -485,7 +485,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ['token' => $paypalToken]
         );
 
-        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
+        $response->assertRedirectContains(config('ecommerce.paypal.order_form_post_purchase_redirect_path_without_brand') . $orderData['gateway']);
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -647,7 +647,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ['token' => $paypalToken]
         );
 
-        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
+        $response->assertRedirectContains(config('ecommerce.paypal.order_form_post_purchase_redirect_path_without_brand') . $orderData['gateway']);
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
@@ -843,7 +843,7 @@ class OrderFormControllerTest extends EcommerceTestCase
             ['token' => $paypalToken]
         );
 
-        $response->assertRedirect(config('ecommerce.paypal.order_form_post_purchase_redirect_path'));
+        $response->assertRedirectContains(config('ecommerce.paypal.order_form_post_purchase_redirect_path_without_brand') . $orderData['gateway']);
 
         // assert response code
         $this->assertEquals(302, $response->getStatusCode());
