@@ -59,7 +59,7 @@ class OrderFormController extends Controller
         else {
 
             $redirectResponse = redirect()->to(
-                config('ecommerce.paypal.order_form_post_purchase_redirect_path_without_brand', '/') . $result['order']->getBrand()
+                config('ecommerce.order_form_post_purchase_redirect_path_without_brand', '/') . $result['order']->getBrand()
             );
 
             $redirectResponse->with('success', true);

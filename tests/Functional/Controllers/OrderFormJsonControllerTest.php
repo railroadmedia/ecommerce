@@ -4455,6 +4455,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                         ]
                     ]
                 ],
+                'meta' => [
+                    'redirect' => '/' . $brand,
+                ],
             ],
             $response->json()
         );
@@ -9128,7 +9131,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             ]
                         ]
                     ]
-                ]
+                ],
             ]
         );
 
@@ -9162,6 +9165,9 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
                             'data' => ['type' => 'address']
                         ]
                     ]
+                ],
+                'meta' => [
+                    'redirect' => '/' . $brand,
                 ],
             ],
             $decodedResponse

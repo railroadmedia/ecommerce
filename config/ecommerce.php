@@ -524,7 +524,6 @@ return [
     'paypal' => [
         'agreement_route' => 'payment-method.paypal.agreement',
         'agreement_fulfilled_path' => '/test',
-        'order_form_post_purchase_redirect_path_without_brand' => '/',
     ],
 
     // membership subscription duplicate syncing
@@ -635,6 +634,7 @@ return [
 
     // redirects
     'post_purchase_redirect_digital_items' => '/members',
+    'order_form_post_purchase_redirect_path_without_brand' => '/',
     'post_purchase_redirect_customer_order' => '/thankyou',
     'post_add_to_cart_redirect' => '/order/musora',
 

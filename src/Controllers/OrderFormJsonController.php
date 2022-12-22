@@ -92,7 +92,7 @@ class OrderFormJsonController extends Controller
                     ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_customer_order')]);
             } else {
                 return ResponseService::order($result['order'])
-                    ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_digital_items')]);
+                    ->addMeta(['redirect' => config('ecommerce.order_form_post_purchase_redirect_path_without_brand') . $result['order']->getBrand()]);
             }
         }
         elseif (isset($result['errors'])) {
