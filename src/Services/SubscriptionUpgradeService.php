@@ -108,8 +108,6 @@ class SubscriptionUpgradeService
                     if (!$success) {
                         return implode(',', $result['errors']);
                     }
-                    //TODO:  Can we remove this?
-                    $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
                     return "downgrade successful";
                 }
         }

@@ -149,8 +149,8 @@ class UpgradeService
             return null;
         }
         $product = $this->productRepository->getBasicMembershipSKU(
-            $subscription->getBrand(),
-            $subscription->getIntervalType()
+            $subscription->getProduct()->getBrand(),
+            $subscription->getProduct()->getDigitalAccessTimeIntervalType()
         );
         return $product?->getSku();
     }
