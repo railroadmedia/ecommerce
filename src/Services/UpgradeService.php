@@ -29,6 +29,7 @@ enum MembershipTier: int
 class UpgradeService
 {
     public const LifetimeSongAddOnSKU = '12345';
+    public const MusoraProductBrand = 'musora';
 
     protected SubscriptionRepository $subscriptionRepository;
     protected UserProductRepository $userProductRepository;
@@ -135,7 +136,7 @@ class UpgradeService
                 return null;
             }
             $product = $this->productRepository->getPlusMembershipSKU(
-                $subscription->getProduct()->getBrand(),
+                UpgradeService::MusoraProductBrand,
                 $subscription->getProduct()->getDigitalAccessTimeIntervalType()
             );
             return $product?->getSku();
@@ -149,7 +150,7 @@ class UpgradeService
             return null;
         }
         $product = $this->productRepository->getBasicMembershipSKU(
-            $subscription->getProduct()->getBrand(),
+            UpgradeService::MusoraProductBrand,
             $subscription->getProduct()->getDigitalAccessTimeIntervalType()
         );
         return $product?->getSku();
