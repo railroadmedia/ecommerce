@@ -154,13 +154,14 @@ class GooglePlayStoreController extends Controller
                 $notificationType = strtolower($subscriptionNotification->notificationType) == self::SUBSCRIPTION_RENEWED ?
                     GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE:
                     GoogleReceipt::GOOGLE_CANCEL_NOTIFICATION_TYPE;
+                $brand = ($data->packageName == 'com.pianote2')?'pianote':'drumeo';
 
                 $receipt->setPurchaseToken($subscriptionNotification->purchaseToken);
                 $receipt->setPackageName($data->packageName);
                 $receipt->setProductId($subscriptionNotification->subscriptionId);
                 $receipt->setRequestType(GoogleReceipt::GOOGLE_NOTIFICATION_REQUEST_TYPE);
                 $receipt->setNotificationType($notificationType);
-                $receipt->setBrand(config('ecommerce.brand'));
+                $receipt->setBrand($brand);
 
                 if (!empty($oldReceipt)) {
                     if($oldReceipt[0]->getLocalCurrency()){

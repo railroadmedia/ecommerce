@@ -41,6 +41,7 @@ use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
 use Railroad\Ecommerce\Commands\UpdateLastDigits;
 use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
+use Railroad\Ecommerce\Commands\VerifyGoogleNotifications;
 use Railroad\Ecommerce\Commands\VerifyLocalPriceConversion;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
@@ -151,7 +152,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
                 PopulatePermissionNamesColumnInEcommerceProducts::class,
-                GetOneTimeProductSubscriptionIssues::class
+                GetOneTimeProductSubscriptionIssues::class,
+                VerifyGoogleNotifications::class,
             ]
         );
 
