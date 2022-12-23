@@ -74,6 +74,28 @@ class Cart implements Serializable
     private $shippingOverride;
 
     /**
+     * @var bool
+     */
+    private $enableMembershipChangeDiscounts;
+
+    /**
+     * @return bool
+     */
+    public function getMembershipChangeDiscountsEnabled()
+    {
+        return $this->enableMembershipChangeDiscounts;
+    }
+
+    /**
+     * @param bool $enabled
+     * @return void
+     */
+    public function setMembershipChangeDiscountsEnabled(bool $enabled)
+    {
+        $this->enableMembershipChangeDiscounts = $enabled;
+    }
+
+    /**
      * Get cart items
      *
      * @return CartItem[]

@@ -81,21 +81,25 @@ class SubscriptionUpgradeService
             if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
                 $product = $this->upgradeService->getLifetimeSongsProduct();
                 if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
-                    throw new \Exception(SubscriptionNotChangedErrorMessage);
+                    throw new \Exception(self::SubscriptionNotChangedErrorMessage);
                 }
                 $this->orderBySku($product->getSku(), $userId);
             } else {
                 if (!$subscription) {
-                    throw new \Exception(SubscriptionNotChangedErrorMessage);
+                    throw new \Exception(self::SubscriptionNotChangedErrorMessage);
                 }
                 $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
             }
         } else {
             $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
+            if (!$product) {
+                Log::error("changeSubscription: Product does not exist: '$accessType' '$interval'");
+                throw new \Exception("Product does not exist");
+            }
             if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
                 && $currentProduct->getDigitalAccessTimeIntervalType() == $product->getDigitalAccessTimeIntervalType(
                 )) {
-                throw new \Exception(SubscriptionNotChangedErrorMessage);
+                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
             }
             $this->orderBySku($product->getSku(), $userId);
         }
@@ -107,7 +111,7 @@ class SubscriptionUpgradeService
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)->getId();
         $this->cartService->clearCart();
         $this->cartService->addToCart($sku, 1);
-
+        $this->cartService->allowMembershipChangeDiscounts();
 
         $request = new OrderFormSubmitRequest(
             $this->cartService,
@@ -117,7 +121,6 @@ class SubscriptionUpgradeService
             $this->addressRepository,
             $this->customerRepository
         );
-
         $request["payment_method_id"] = $paymentMethodId;
 
         $result = $this->orderFormService->processOrderFormSubmit($request);
