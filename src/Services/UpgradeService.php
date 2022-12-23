@@ -115,7 +115,7 @@ class UpgradeService
     public function getMembershipProduct(string $digitalAccessType, string $interval): ?Product
     {
         $product = $this->productRepository
-            ->getMembershipProduct(UpgradeService::MusoraProductBrand, $digitalAccessType, $interval);
+            ->getMembershipProduct(self::MusoraProductBrand, $digitalAccessType, $interval);
         return $product;
     }
 
@@ -129,6 +129,9 @@ class UpgradeService
 
     public function getDiscountAmount(Product $newProduct)
     {
+        if ($newProduct->getType() != Product::TYPE_DIGITAL_SUBSCRIPTION) {
+            return 0;  //no discount
+        }
         $userId = auth()->id();
         $membershipTier = $this->getCurrentMembershipTier($userId);
         $price = $newProduct->getPrice();
@@ -138,7 +141,14 @@ class UpgradeService
                 return 0; //No access, no discounts
             case MembershipTier::Basic:
                 if ($this->isPlusTier($newProduct)) {
-                    return $this->getProratedUpgradeDiscount($newProduct, $price, $userId);
+                    if ($newProduct->getSku() == UpgradeService::LifetimeSongAddOnSKU) {
+                        return 0; //no discount
+                    }
+                    $upgradePrice = $this->getProratedUpgradeCost($userId);
+                    if (!is_null($upgradePrice)) {
+                        return $price - $upgradePrice;
+                    }
+                    return 0; //no discount
                 }
                 return $price; //Already have basic access, crossgrade should be free
             case MembershipTier::Plus:
@@ -146,26 +156,34 @@ class UpgradeService
         }
     }
 
-    private function getProratedUpgradeDiscount(Product $product, float $price, int $userId)
+    public function getProratedUpgradeCost(int $userId): ?float
     {
+        $subscription = $this->getCurrentSubscription($userId);
+        $product = $subscription->getProduct();
+        if (!$product || $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
+            return null;
+        }
+
         switch ($product->getDigitalAccessTimeIntervalType()) {
             case Product::DIGITAL_ACCESS_TIME_INTERVAL_TYPE_DAY:
             case Product::DIGITAL_ACCESS_TIME_INTERVAL_TYPE_MONTH:
-                return $price; //not charging upgrade rate to interval types less than year
+                return 0; //not charging upgrade rate to interval types less than year
             case Product::DIGITAL_ACCESS_TIME_INTERVAL_TYPE_YEAR:
-                if ($product->getSku() == UpgradeService::LifetimeSongAddOnSKU) {
-                    return 0; //no discount since this is an add on for lifetime
-                }
-                $subscription = $this->getCurrentSubscription($userId);
-                if ($subscription) {
-                    $monthsUntilRenewal = $subscription->getPaidUntil()->diffInMonths(Carbon::now());
-                    $finalPrice = max(($price - $subscription->getTotalPrice()) * $monthsUntilRenewal / 12, 0);
-                    return $price - $finalPrice;
-                }
-                //todo: not sure about this case
-                //user with access but no active subscription orders an upgraded membership
-                //could be lifetime access, but for some reason purchases a membership?
-                return 0; //no discount to be safe
+                $yearPlusMembershipProduct = $this->getMembershipProduct(
+                    Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS,
+                    Product::DIGITAL_ACCESS_TIME_INTERVAL_TYPE_YEAR
+                );
+                $monthsUntilRenewal = $subscription->getPaidUntil()->diffInMonths(Carbon::now());
+                $price = round(
+                    max(
+                        ($yearPlusMembershipProduct->getPrice() - $subscription->getTotalPrice(
+                            )) * $monthsUntilRenewal / 12,
+                        0
+                    ),
+                    2
+                );
+
+                return $price;
             default:
                 throw new \Exception(
                     "DigitalAccessTimeIntervalType '$product->getDigitalAccessTimeIntervalType()' not handled"
