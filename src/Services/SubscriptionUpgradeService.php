@@ -128,21 +128,14 @@ class SubscriptionUpgradeService
         return "upgrade successful";
     }
 
-    public function getUpgradeRate(int $userId): ?float
+    public function getInfo(int $userId): array
     {
-        $membershipTier = $this->upgradeService->getCurrentMembershipTier($userId);
-        switch ($membershipTier) {
-            case MembershipTier::None:
-                return null;
-            case MembershipTier::Basic:
-                $sku = $this->upgradeService->getUpgradeSKU($userId);
-                $product = $this->productRepository->bySku($sku);
-                //Todo:  Should this include tax or discounts
-                $price = $product->getPrice();
-                return $this->upgradeService->getAdjustedPrice($product, $price);
-            case MembershipTier::Plus:
-                return 0;
-        }
-        return $this->getAdjustedPrice($product, $price);
+        $currentMembershipTier = $this->upgradeService->getCurrentMembershipTier($userId);
+        $yearUpgradeCost = $this->upgradeService->getProratedUpgradeCost($userId);
+        $data = [
+            "currentTier" => $currentMembershipTier->value,
+            "yearUpgradeCost" => $yearUpgradeCost
+        ];
+        return $data;
     }
 }
