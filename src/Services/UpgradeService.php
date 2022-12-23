@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use App\Enums\Interval;
 use Carbon\Carbon;
 use Google\Service\SecurityCommandCenter\Access;
 use Illuminate\Support\Facades\Log;
@@ -68,25 +69,6 @@ class UpgradeService
         return $membershipTier;
     }
 
-    public function getNextRenewalMembershipTier(int $userId): MembershipTier
-    {
-        /** @var Subscription $subscription */
-        $subscription = $this->getCurrentSubscription($userId);
-        $isLifeTime = $this->isLifetimeMember($userId);
-
-        if ($isLifeTime) {
-            return $subscription->getProduct()->getSku() == UpgradeService::LifetimeSongAddOnSKU
-                ? MembershipTier::Plus : MembershipTier::Basic;
-        }
-        if (!$subscription) {
-            return MembershipTier::None;
-        }
-        if ($this->isPlusTier($subscription->getProduct())) {
-            return MembershipTier::Plus;
-        }
-        return MembershipTier::Basic;
-    }
-
     private function isPlusTier(Product $product)
     {
         return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
@@ -125,35 +107,24 @@ class UpgradeService
         return $userIsLifetimeMember;
     }
 
-    public function getUpgradeSKU(int $userId): ?string
+    public function getLifetimeSongsProduct(): ?Product
     {
-        $isLifeTime = $this->isLifeTimeMember($userId);
-        if ($isLifeTime) {
-            return UpgradeService::LifetimeSongAddOnSKU;
-        } else {
-            $subscription = $this->getCurrentSubscription($userId);
-            if (!$subscription) {
-                return null;
-            }
-            $product = $this->productRepository->getPlusMembershipSKU(
-                UpgradeService::MusoraProductBrand,
-                $subscription->getProduct()->getDigitalAccessTimeIntervalType()
-            );
-            return $product?->getSku();
-        }
+        return $this->productRepository->bySku(UpgradeService::LifetimeSongAddOnSKU);
     }
 
-    public function getDowngradeSKU(int $userId): ?string
+    public function getMembershipProduct(string $digitalAccessType, string $interval): ?Product
     {
-        $subscription = $this->getCurrentSubscription($userId);
-        if (!$subscription) {
-            return null;
+        $product = $this->productRepository
+            ->getMembershipProduct(UpgradeService::MusoraProductBrand, $digitalAccessType, $interval);
+        return $product;
+    }
+
+    public function isMembershipChanging(Product $product, ?Subscription $subscription)
+    {
+        if (!$subscription || !$product->isMembershipProduct()) {
+            return false;
         }
-        $product = $this->productRepository->getBasicMembershipSKU(
-            UpgradeService::MusoraProductBrand,
-            $subscription->getProduct()->getDigitalAccessTimeIntervalType()
-        );
-        return $product?->getSku();
+        return $subscription->getProduct()->getSku() != $product->getSku();
     }
 
     public function getDiscountAmount(Product $newProduct)
@@ -172,19 +143,6 @@ class UpgradeService
                 return $price; //Already have basic access, crossgrade should be free
             case MembershipTier::Plus:
                 return $price; //Already have plus access, downgrade or crossgrades should be free
-        }
-    }
-
-    public function isSubscriptionChanging(Product $product)
-    {
-        $userId = auth()->id();
-        $membershipTier = $this->getCurrentMembershipTier($userId);
-        switch ($membershipTier) {
-            case MembershipTier::None:
-                return false;
-            case MembershipTier::Basic:
-            case MembershipTier::Plus:
-                return true;
         }
     }
 

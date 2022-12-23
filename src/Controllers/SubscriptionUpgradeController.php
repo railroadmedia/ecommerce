@@ -3,10 +3,13 @@
 namespace Railroad\Ecommerce\Controllers;
 
 
+use App\Modules\Ecommerce\Enums\DigitalAccessType;
+use App\Modules\Ecommerce\Models\Product;
 use App\Modules\UserManagementSystem\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Services\MembershipTier;
 use Railroad\Ecommerce\Services\SubscriptionUpgradeService;
 
 class SubscriptionUpgradeController extends Controller
@@ -22,31 +25,26 @@ class SubscriptionUpgradeController extends Controller
         $this->orderFormJsonController = $orderFormJsonController;
     }
 
-    public function upgrade()
+    public function change($tier, $interval)
     {
         $userId = auth()->id();
         try {
-            $message = $this->subscriptionUpgradeService->upgrade($userId);
+            switch ($tier) {
+                case "plus":
+                    $accessType = Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
+                case "basic":
+                    $accessType = Product::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
+            }
+            $message = $this->subscriptionUpgradeService->changeSubscription($accessType, $interval, $userId);
         } catch (\Exception $e) {
             $message = $e->getMessage();
         }
         return $message;
     }
 
-    public function upgradeRate()
+    public function info()
     {
         $userId = auth()->id();
         return $this->subscriptionUpgradeService->getUpgradeRate($userId);
-    }
-
-    public function downgrade()
-    {
-        $userId = auth()->id();
-        try {
-            $message = $this->subscriptionUpgradeService->downgrade($userId);
-        } catch (\Exception $e) {
-            $message = $e->getMessage();
-        }
-        return $message;
     }
 }

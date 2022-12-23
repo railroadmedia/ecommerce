@@ -538,7 +538,6 @@ class Product
     public function getPublicStockCount(): ?int
     {
         return $this->publicStockCount;
-
     }
 
     /**
@@ -622,7 +621,9 @@ class Product
             return [];
         }
 
-        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode($this->digitalAccessPermissionNames);
+        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode(
+            $this->digitalAccessPermissionNames
+        );
     }
 
     /**
@@ -665,6 +666,12 @@ class Product
     public function isProductSoldOut()
     {
         return intval($this->getStock()) <= intval($this->getMinStockLevel());
+    }
+
+    public function isMembershipProduct(): bool
+    {
+        return $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS
+            || $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
     }
 
 }

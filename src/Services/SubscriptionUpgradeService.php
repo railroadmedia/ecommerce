@@ -2,6 +2,8 @@
 
 namespace Railroad\Ecommerce\Services;
 
+use App\Enums\Interval;
+use App\Modules\Ecommerce\Enums\DigitalAccessType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Product;
@@ -27,6 +29,8 @@ use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 
 class SubscriptionUpgradeService
 {
+    private const SubscriptionNotChangedErrorMessage = "Subscription not changed:  User already has this membership type.";
+
     protected SubscriptionRepository $subscriptionRepository;
     protected UserProductRepository $userProductRepository;
     protected ProductRepository $productRepository;
@@ -68,48 +72,32 @@ class SubscriptionUpgradeService
         $this->paymentMethodRepository = $paymentMethodRepository;
     }
 
-    public function upgrade(int $userId): string
+    public function changeSubscription(string $accessType, string $interval, int $userId)
     {
-        $membershipTier = $this->upgradeService->getNextRenewalMembershipTier($userId);
-        switch ($membershipTier) {
-            case MembershipTier::None:
-                return "Unable to upgrade user $userId, no membership access";
-            case MembershipTier::Basic:
-                $sku = $this->upgradeService->getUpgradeSKU($userId);
-                $result = $this->orderBySku($sku, $userId);
-                //cancel subscription handled through order
-                $success = count($result['errors'] ?? []) == 0;
-                if (!$success) {
-                    return implode(',', $result['errors']);
+        $isLifeTime = $this->upgradeService->isLifetimeMember($userId);
+        $subscription = $this->upgradeService->getCurrentSubscription($userId);
+        $currentProduct = $subscription?->getProduct();
+        if ($isLifeTime) {
+            if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
+                $product = $this->upgradeService->getLifetimeSongsProduct();
+                if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
+                    throw new \Exception(SubscriptionNotChangedErrorMessage);
                 }
-                return "upgrade successful";
-            case MembershipTier::Plus:
-                return "Unable to upgrade user $userId, already has plus access";
-        }
-    }
-
-    public function downgrade(int $userId): string
-    {
-        $membershipTier = $this->upgradeService->getNextRenewalMembershipTier($userId);
-        switch ($membershipTier) {
-            case MembershipTier::None:
-                return "Unable to downgrade user $userId, no membership access";
-            case MembershipTier::Basic:
-                return "Unable to downgrade user $userId, already has basic access";
-            case MembershipTier::Plus:
-                $subscription = $this->upgradeService->getCurrentSubscription($userId);
-                if ($this->upgradeService->isLifeTimeMember($userId)) {
-                    $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
-                    return "downgrade successful";
-                } else {
-                    $sku = $this->upgradeService->getDowngradeSKU($userId);
-                    $result = $this->orderBySku($sku, $userId);
-                    $success = count($result['errors'] ?? []) == 0;
-                    if (!$success) {
-                        return implode(',', $result['errors']);
-                    }
-                    return "downgrade successful";
+                $this->orderBySku($product->getSku(), $userId);
+            } else {
+                if (!$subscription) {
+                    throw new \Exception(SubscriptionNotChangedErrorMessage);
                 }
+                $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
+            }
+        } else {
+            $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
+            if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
+                && $currentProduct->getDigitalAccessTimeIntervalType() == $product->getDigitalAccessTimeIntervalType(
+                )) {
+                throw new \Exception(SubscriptionNotChangedErrorMessage);
+            }
+            $this->orderBySku($product->getSku(), $userId);
         }
     }
 
@@ -132,7 +120,12 @@ class SubscriptionUpgradeService
 
         $request["payment_method_id"] = $paymentMethodId;
 
-        return $this->orderFormService->processOrderFormSubmit($request);
+        $result = $this->orderFormService->processOrderFormSubmit($request);
+        $success = count($result['errors'] ?? []) == 0;
+        if (!$success) {
+            return implode(',', $result['errors']);
+        }
+        return "upgrade successful";
     }
 
     public function getUpgradeRate(int $userId): ?float

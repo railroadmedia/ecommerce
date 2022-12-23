@@ -47,7 +47,7 @@ class DiscountCriteriaService
     const PRODUCT_OWN_TYPE = 'product own requirement';
     const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'total cart items requirement';
     const IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE = 'is member of brand requirement';
-    const IS_MEMBERSHIP_UPGRADE = 'is membership upgrade requirement';
+    const IS_MEMBERSHIP_CHANGING = 'is membership upgrade requirement';
 
     /**
      * DiscountCriteriaService constructor.
@@ -113,8 +113,8 @@ class DiscountCriteriaService
                 return $this->cartItemsTotalRequirement($discountCriteria, $cart);
             case self::IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE:
                 return $this->isMemberOfBrandRequirement($discountCriteria);
-            case self::IS_MEMBERSHIP_UPGRADE:
-                return $this->isMembershipUpgradeRequirementMet($discountCriteria, $cart);
+            case self::IS_MEMBERSHIP_CHANGING:
+                return $this->isMembershipChangingRequirementMet($discountCriteria, $cart);
             default:
                 return false;
         }
@@ -367,16 +367,17 @@ class DiscountCriteriaService
         return self::$purchaser ?: $this->userProvider->getCurrentUser();
     }
 
-    private function isMembershipUpgradeRequirementMet(DiscountCriteria $discountCriteria, Cart $cart)
+    private function isMembershipChangingRequirementMet(DiscountCriteria $discountCriteria, Cart $cart)
     {
-        
-       // $adjustedPrice = $this->upgradeService->getAdjustedPrice($product, $price);
-
-
-
-
-
-
-        return true;
+        $userId = auth()->id();
+        $currentSubscription = $this->upgradeService->getCurrentSubscription($userId);
+        $products = $this->productRepository->bySkus($cart->listSkus());
+        foreach ($products as $product) {
+            $isMembershipChanging = $this->upgradeService->isMembershipChanging($product, $currentSubscription);
+            if ($isMembershipChanging) {
+                return true;
+            }
+        }
+        return false;
     }
 }
