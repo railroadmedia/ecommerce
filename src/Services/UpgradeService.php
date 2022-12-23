@@ -158,9 +158,14 @@ class UpgradeService
 
     public function getProratedUpgradeCost(int $userId): ?float
     {
+        $membershipTier = $this->getCurrentMembershipTier($userId);
+        if ($membershipTier != MembershipTier::Basic) {
+            return null;
+        }
+
         $subscription = $this->getCurrentSubscription($userId);
         $product = $subscription->getProduct();
-        if (!$product || $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
+        if (!$product) {
             return null;
         }
 
