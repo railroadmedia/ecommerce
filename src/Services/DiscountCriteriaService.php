@@ -369,6 +369,9 @@ class DiscountCriteriaService
 
     private function isMembershipChangingRequirementMet(DiscountCriteria $discountCriteria, Cart $cart)
     {
+        if (!$cart->getMembershipChangeDiscountsEnabled()) {
+            return false;
+        }
         $userId = auth()->id();
         $currentSubscription = $this->upgradeService->getCurrentSubscription($userId);
         $products = $this->productRepository->bySkus($cart->listSkus());
