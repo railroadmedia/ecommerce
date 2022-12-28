@@ -31,9 +31,6 @@ class SubscriptionUpgradeService
 {
     private const SubscriptionNotChangedErrorMessage = "Subscription not changed:  User already has this membership type.";
 
-    protected SubscriptionRepository $subscriptionRepository;
-    protected UserProductRepository $userProductRepository;
-    protected ProductRepository $productRepository;
     protected CartService $cartService;
     protected OrderFormService $orderFormService;
     protected ShippingService $shippingService;
@@ -45,9 +42,6 @@ class SubscriptionUpgradeService
     protected PaymentMethodRepository $paymentMethodRepository;
 
     public function __construct(
-        SubscriptionRepository $subscriptionRepository,
-        UserProductRepository $userProductRepository,
-        ProductRepository $productRepository,
         CartService $cartService,
         OrderFormService $orderFormService,
         ShippingService $shippingService,
@@ -58,9 +52,6 @@ class SubscriptionUpgradeService
         UpgradeService $upgradeService,
         PaymentMethodRepository $paymentMethodRepository,
     ) {
-        $this->subscriptionRepository = $subscriptionRepository;
-        $this->userProductRepository = $userProductRepository;
-        $this->productRepository = $productRepository;
         $this->cartService = $cartService;
         $this->orderFormService = $orderFormService;
         $this->shippingService = $shippingService;
@@ -110,7 +101,6 @@ class SubscriptionUpgradeService
 
     private function orderBySku(string $sku, int $userId)
     {
-        //todo: where to get default payment method?
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
         if ($paymentMethodId) {
             throw new \Exception("Unable to get primary payment method for user $userId");
