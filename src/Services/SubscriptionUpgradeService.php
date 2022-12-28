@@ -83,7 +83,7 @@ class SubscriptionUpgradeService
                 if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
                     throw new \Exception(self::SubscriptionNotChangedErrorMessage);
                 }
-                $this->orderBySku($product->getSku(), $userId);
+                return $this->orderBySku($product->getSku(), $userId);
             } else {
                 if (!$subscription) {
                     throw new \Exception(self::SubscriptionNotChangedErrorMessage);
@@ -91,6 +91,9 @@ class SubscriptionUpgradeService
                 $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
             }
         } else {
+            if (!$subscription) {
+                throw new \Exception("Active subscription does not exist");
+            }
             $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
             if (!$product) {
                 Log::error("changeSubscription: Product does not exist: '$accessType' '$interval'");
@@ -101,14 +104,17 @@ class SubscriptionUpgradeService
                 )) {
                 throw new \Exception(self::SubscriptionNotChangedErrorMessage);
             }
-            $this->orderBySku($product->getSku(), $userId);
+            return $this->orderBySku($product->getSku(), $userId);
         }
     }
 
     private function orderBySku(string $sku, int $userId)
     {
         //todo: where to get default payment method?
-        $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)->getId();
+        $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
+        if ($paymentMethodId) {
+            throw new \Exception("Unable to get primary payment method for user $userId");
+        }
         $this->cartService->clearCart();
         $this->cartService->addToCart($sku, 1);
         $this->cartService->allowMembershipChangeDiscounts();
