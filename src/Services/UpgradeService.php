@@ -29,7 +29,7 @@ enum MembershipTier: int
 
 class UpgradeService
 {
-    public const LifetimeSongAddOnSKU = '12345';
+    public const LifetimeSongAddOnSKU = '12345'; //todo: Need to add lifetime song addon sku here once available
     public const MusoraProductBrand = 'musora';
 
     protected SubscriptionRepository $subscriptionRepository;
@@ -81,10 +81,8 @@ class UpgradeService
 
     public function isLifetimeMember(int $userId): bool
     {
-        return false;
         //todo:  Pulled from DuplicateSubscriptionHandler, should be generalized or user User.is_lifetime_member somehow;
         // get all membership product skus
-
 
         $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
         // check if they are a lifetime member
