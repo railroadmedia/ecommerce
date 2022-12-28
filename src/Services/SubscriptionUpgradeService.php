@@ -102,7 +102,7 @@ class SubscriptionUpgradeService
     private function orderBySku(string $sku, int $userId)
     {
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
-        if ($paymentMethodId) {
+        if (!$paymentMethodId) {
             throw new \Exception("Unable to get primary payment method for user $userId");
         }
         $this->cartService->clearCart();
