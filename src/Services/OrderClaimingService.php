@@ -322,7 +322,7 @@ class OrderClaimingService
 
             if ($this->upgradeService->isMembershipChanging($product, $currentSubscription)) {
                 $nextBillDate = $currentSubscription->getPaidUntil();
-                $this->upgradeService->cancelSubscription($currentSubscription, 'Cancelled due to upgrade');
+                $this->upgradeService->cancelSubscription($currentSubscription, 'Cancelled due to membership change');
             } elseif (!empty($product->getSubscriptionIntervalType())) {
                 if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                     $nextBillDate =
