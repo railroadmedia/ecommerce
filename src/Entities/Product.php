@@ -655,7 +655,7 @@ class Product
      */
     public function getStockAvailability()
     {
-        if ($this->getMinStockLevel() === null || $this->getStock === null) {
+        if ($this->getMinStockLevel() === null || $this->getStock() === null) {
             return 1000000;
         }
 
@@ -667,7 +667,7 @@ class Product
      */
     public function isProductSoldOut()
     {
-        if ($this->getMinStockLevel() === null || $this->getStock === null) {
+        if ($this->getMinStockLevel() === null || $this->getStock() === null) {
             return false;
         }
 
