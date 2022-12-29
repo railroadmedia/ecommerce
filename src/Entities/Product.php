@@ -663,7 +663,10 @@ class Product
      */
     public function isProductSoldOut()
     {
+        if ($this->getMinStockLevel() === null) {
+            return false;
+        }
+
         return intval($this->getStock()) <= intval($this->getMinStockLevel());
     }
-
 }
