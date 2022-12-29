@@ -122,7 +122,8 @@ class SubscriptionUpgradeService
         $result = $this->orderFormService->processOrderFormSubmit($request);
         $success = count($result['errors'] ?? []) == 0;
         if (!$success) {
-            return implode(',', $result['errors']);
+            $errorMessage = implode(',', $result['errors']);
+            throw new \Exception($errorMessage);
         }
         return "upgrade successful";
     }
