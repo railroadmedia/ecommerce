@@ -66,36 +66,10 @@ class SubscriptionUpgradeService
     public function changeSubscription(string $accessType, string $interval, int $userId)
     {
         $isLifeTime = $this->upgradeService->isLifetimeMember($userId);
-        $subscription = $this->upgradeService->getCurrentSubscription($userId);
-        $currentProduct = $subscription?->getProduct();
         if ($isLifeTime) {
-            if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
-                $product = $this->upgradeService->getLifetimeSongsProduct();
-                if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
-                    throw new \Exception(self::SubscriptionNotChangedErrorMessage);
-                }
-                return $this->orderBySku($product->getSku(), $userId);
-            } else {
-                if (!$subscription) {
-                    throw new \Exception(self::SubscriptionNotChangedErrorMessage);
-                }
-                $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
-            }
+            return $this->handleChangeLifeTimeSubscription($accessType, $userId);
         } else {
-            if (!$subscription) {
-                throw new \Exception("Active subscription does not exist");
-            }
-            $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
-            if (!$product) {
-                Log::error("changeSubscription: Product does not exist: '$accessType' '$interval'");
-                throw new \Exception("Product does not exist");
-            }
-            if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
-                && $currentProduct->getDigitalAccessTimeIntervalType() == $product->getDigitalAccessTimeIntervalType(
-                )) {
-                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
-            }
-            return $this->orderBySku($product->getSku(), $userId);
+            return $this->handleChangeNormalSubscription($accessType, $interval, $userId);
         }
     }
 
@@ -137,5 +111,42 @@ class SubscriptionUpgradeService
             "yearUpgradeCost" => $yearUpgradeCost
         ];
         return $data;
+    }
+
+    public function handleChangeLifeTimeSubscription(string $accessType, int $userId,)
+    {
+        $subscription = $this->upgradeService->getCurrentSubscription($userId);
+        $currentProduct = $subscription?->getProduct();
+        if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
+            $product = $this->upgradeService->getLifetimeSongsProduct();
+            if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
+                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+            }
+            return $this->orderBySku($product->getSku(), $userId);
+        } else {
+            if (!$subscription) {
+                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+            }
+            $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
+        }
+    }
+
+    private function handleChangeNormalSubscription(string $accessType, string $interval, int $userId): string
+    {
+        $subscription = $this->upgradeService->getCurrentSubscription($userId);
+        $currentProduct = $subscription?->getProduct();
+        if (!$subscription) {
+            throw new \Exception("Active subscription does not exist");
+        }
+        $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
+        if (!$product) {
+            Log::error("changeSubscription: Product does not exist: '$accessType' '$interval'");
+            throw new \Exception("Product does not exist");
+        }
+        if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
+            && $currentProduct->getDigitalAccessTimeIntervalType() == $product->getDigitalAccessTimeIntervalType()) {
+            throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+        }
+        return $this->orderBySku($product->getSku(), $userId);
     }
 }
