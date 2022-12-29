@@ -176,6 +176,13 @@ class Product
     protected $stock;
 
     /**
+     * @ORM\Column(type="integer", name="min_stock_level", nullable=true)
+     *
+     * @var int
+     */
+    protected $minStockLevel;
+
+    /**
      * @ORM\Column(type="boolean", name="auto_decrement_stock")
      *
      * @var bool
@@ -623,6 +630,40 @@ class Product
     public function setDigitalAccessPermissionNames(array $digitalAccessPermissionNames): void
     {
         $this->digitalAccessPermissionNames = json_encode($digitalAccessPermissionNames);
+    }
+
+
+    /**
+     * @return int|null
+     */
+    public function getMinStockLevel(): ?int
+    {
+        return $this->minStockLevel;
+    }
+
+    /**
+     * @param int $minStockLevel
+     */
+    public function setMinStockLevel(int $minStockLevel): void
+    {
+        $this->minStockLevel = $minStockLevel;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getStockAvailability()
+    {
+        return intval($this->getStock()) - intval($this->getMinStockLevel());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isProductSoldOut()
+    {
+        return intval($this->getStock()) <= intval($this->getMinStockLevel());
     }
 
 }

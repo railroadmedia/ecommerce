@@ -390,6 +390,7 @@ class OrderFormControllerTest extends EcommerceTestCase
     public function test_existing_active_subs_get_cancelled_on_lifetime_purchase()
     {
         $userId = $this->createAndLogInNewUser();
+
         $currency = $this->getCurrency();
 
         $country = 'Canada';
@@ -544,7 +545,7 @@ class OrderFormControllerTest extends EcommerceTestCase
                 'product_id' => $subscriptionProduct['id'],
                 'is_active' => false,
                 'canceled_on' => Carbon::now()->toDateTimeString(),
-                'user_id' => $userId,
+                'user_id' => (string)$userId,
             ]
         );
     }

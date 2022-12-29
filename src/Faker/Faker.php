@@ -66,6 +66,7 @@ class Faker extends Generator
                 ),
                 'subscription_interval_count' => $this->numberBetween(0, 12),
                 'stock' => $this->numberBetween(100, 1000),
+                'min_stock_level' => $this->numberBetween(0, 50),
                 'auto_decrement_stock' => $this->randomElement([0, 1]),
                 'brand' => config('ecommerce.brand'),
                 'note' => $this->text,

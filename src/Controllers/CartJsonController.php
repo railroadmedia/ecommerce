@@ -118,6 +118,7 @@ class CartJsonController extends Controller
                     $request->get('locked', false) == 'true',
                     $request->get('promo-code', '')
                 );
+
             } catch (AddToCartException $addToCartException) {
                 $errors[] = $addToCartException->getMessage();
                 continue;
@@ -204,6 +205,9 @@ class CartJsonController extends Controller
 
         if (!empty($errors)) {
             $cartArray['errors'] = $errors;
+
+            return ResponseService::cart($cartArray)
+                ->respond(403);
         }
 
         return ResponseService::cart($cartArray)
