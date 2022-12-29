@@ -56,6 +56,7 @@ class CartControllerTest extends EcommerceTestCase
             'subscription_interval_count' => null,
             'weight' => 0,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => 0,
             'price' => 92.22,
         ]);
 

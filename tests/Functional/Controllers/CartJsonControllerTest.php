@@ -1223,6 +1223,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productOne = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1232,6 +1233,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $productTwo = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(5, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1833,6 +1835,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -1917,6 +1920,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(10, 100),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
@@ -2278,6 +2282,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             'subscription_interval_type' => null,
             'subscription_interval_count' => null,
             'stock' => $this->faker->numberBetween(3, 5),
+            'min_stock_level' => 0,
         ]);
 
         $cartService = $this->app->make(CartService::class);
@@ -2592,6 +2597,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             [
                 'active' => 1,
                 'stock' => $this->faker->numberBetween(15, 100),
+                'min_stock_level' => 0,
                 'is_physical' => true,
                 'type' => Product::TYPE_PHYSICAL_ONE_TIME,
                 'subscription_interval_type' => null,
@@ -2972,6 +2978,7 @@ class CartJsonControllerTest extends EcommerceTestCase
             'weight' => 0,
             'subscription_interval_type' => config('ecommerce.interval_type_yearly'),
             'subscription_interval_count' => 1,
+            'min_stock_level' => null,
         ]);
 
         $discountDaysAmount = 10;
