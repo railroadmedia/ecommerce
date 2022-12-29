@@ -53,7 +53,7 @@ class DiscountService
         DiscountCriteriaService $discountCriteriaService,
         DiscountRepository $discountRepository,
         ProductRepository $productRepository,
-        UpgradeService $upgradeService,
+        UpgradeService $upgradeService
     ) {
         $this->discountCriteriaService = $discountCriteriaService;
         $this->discountRepository = $discountRepository;

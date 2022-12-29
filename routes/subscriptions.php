@@ -34,11 +34,11 @@ Route::group([
     Route::get('/failed-billing', Railroad\Ecommerce\Controllers\SubscriptionJsonController::class . '@failedBilling')
         ->name('subscriptions.failed-billing');
 
-    Route::get('/subscription/change/{tier}/{interval}', SubscriptionUpgradeController::class . '@change')
-        //->whereIn('tier', ['plus', 'basic'])
-        //->whereIn('interval', ['month', 'year'])
-        ->name('subscription.change');
-
-    Route::get('/subscription/change/info',SubscriptionUpgradeController::class . '@info')
-        ->name('subscription.change.info');
+//    Route::get('/subscription/change/{tier}/{interval}', SubscriptionUpgradeController::class . '@change')
+//        ->whereIn('tier', ['plus', 'basic'])
+//        ->whereIn('interval', ['month', 'year'])
+//        ->name('subscription.change');
+//
+//    Route::get('/subscription/change/info',SubscriptionUpgradeController::class . '@info')
+//        ->name('subscription.change.info');
 });

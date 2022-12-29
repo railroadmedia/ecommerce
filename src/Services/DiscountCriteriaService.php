@@ -60,7 +60,7 @@ class DiscountCriteriaService
         ProductRepository $productRepository,
         UserProductRepository $userProductRepository,
         UserProviderInterface $userProvider,
-        UpgradeService $upgradeService,
+        UpgradeService $upgradeService
     ) {
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;

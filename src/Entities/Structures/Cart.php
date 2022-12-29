@@ -83,7 +83,7 @@ class Cart implements Serializable
      */
     public function getMembershipChangeDiscountsEnabled()
     {
-        return $this->enableMembershipChangeDiscounts;
+        return true;// $this->enableMembershipChangeDiscounts;
     }
 
     /**

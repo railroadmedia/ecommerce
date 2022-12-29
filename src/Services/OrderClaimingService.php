@@ -88,7 +88,7 @@ class OrderClaimingService
         PermissionService $permissionService,
         TaxService $taxService,
         UserProviderInterface $userProvider,
-        UpgradeService $upgradeService,
+        UpgradeService $upgradeService
     ) {
         $this->cartService = $cartService;
         $this->discountService = $discountService;

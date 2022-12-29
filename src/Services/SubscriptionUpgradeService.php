@@ -50,7 +50,7 @@ class SubscriptionUpgradeService
         AddressRepository $addressRepository,
         CustomerRepository $customerRepository,
         UpgradeService $upgradeService,
-        PaymentMethodRepository $paymentMethodRepository,
+        PaymentMethodRepository $paymentMethodRepository
     ) {
         $this->cartService = $cartService;
         $this->orderFormService = $orderFormService;

@@ -706,7 +706,8 @@ class CartService
     }
 
 
-    public function checkProductsStock($cart) {
+    public function checkProductsStock($cart)
+    {
         $productsBySku = $this->productRepository->bySkus($cart->listSkus());
         $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
 

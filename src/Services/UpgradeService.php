@@ -20,11 +20,11 @@ use Stripe\Service\ProductService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 
-enum MembershipTier: int
+abstract class MembershipTier
 {
-    case None = 0;
-    case Basic = 1;
-    case Plus = 2;
+    const None = 0;
+    const Basic = 1;
+    const Plus = 2;
 }
 
 class UpgradeService
@@ -32,16 +32,16 @@ class UpgradeService
     public const LifetimeSongAddOnSKU = '12345'; //todo: Need to add lifetime song addon sku here once available
     public const MusoraProductBrand = 'musora';
 
-    protected SubscriptionRepository $subscriptionRepository;
-    protected UserProductRepository $userProductRepository;
-    protected ProductRepository $productRepository;
-    protected EcommerceEntityManager $ecommerceEntityManager;
+    protected $subscriptionRepository;
+    protected $userProductRepository;
+    protected $productRepository;
+    protected $ecommerceEntityManager;
 
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
         UserProductRepository $userProductRepository,
         ProductRepository $productRepository,
-        EcommerceEntityManager $ecommerceEntityManager,
+        EcommerceEntityManager $ecommerceEntityManager
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductRepository = $userProductRepository;
@@ -49,7 +49,7 @@ class UpgradeService
         $this->ecommerceEntityManager = $ecommerceEntityManager;
     }
 
-    public function getCurrentMembershipTier(int $userId): MembershipTier
+    public function getCurrentMembershipTier(int $userId)
     {
         $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
         $membershipTier = MembershipTier::None;
