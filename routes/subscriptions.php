@@ -35,8 +35,8 @@ Route::group([
         ->name('subscriptions.failed-billing');
 
     Route::get('/subscription/change/{tier}/{interval}', SubscriptionUpgradeController::class . '@change')
-        ->whereIn('tier', ['plus', 'basic'])
-        ->whereIn('interval', ['month', 'year'])
+        //->whereIn('tier', ['plus', 'basic'])
+        //->whereIn('interval', ['month', 'year'])
         ->name('subscription.change');
 
     Route::get('/subscription/change/info',SubscriptionUpgradeController::class . '@info')
