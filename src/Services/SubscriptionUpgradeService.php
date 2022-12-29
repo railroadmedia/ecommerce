@@ -102,10 +102,10 @@ class SubscriptionUpgradeService
         return "upgrade successful";
     }
 
-    public function getInfo(int $userId): array
+    public function getInfo(): array
     {
-        $currentMembershipTier = $this->upgradeService->getCurrentMembershipTier($userId);
-        $yearUpgradeCost = $this->upgradeService->getProratedUpgradeCost($userId);
+        $currentMembershipTier = $this->upgradeService->getCurrentMembershipTier();
+        $yearUpgradeCost = $this->upgradeService->getProratedUpgradeCost();
         $data = [
             "currentTier" => $currentMembershipTier->value,
             "yearUpgradeCost" => $yearUpgradeCost
@@ -113,9 +113,9 @@ class SubscriptionUpgradeService
         return $data;
     }
 
-    public function handleChangeLifeTimeSubscription(string $accessType, int $userId,)
+    public function handleChangeLifeTimeSubscription(string $accessType, int $userId)
     {
-        $subscription = $this->upgradeService->getCurrentSubscription($userId);
+        $subscription = $this->upgradeService->getCurrentSubscription();
         $currentProduct = $subscription?->getProduct();
         if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
             $product = $this->upgradeService->getLifetimeSongsProduct();
@@ -133,7 +133,7 @@ class SubscriptionUpgradeService
 
     private function handleChangeNormalSubscription(string $accessType, string $interval, int $userId): string
     {
-        $subscription = $this->upgradeService->getCurrentSubscription($userId);
+        $subscription = $this->upgradeService->getCurrentSubscription();
         $currentProduct = $subscription?->getProduct();
         if (!$subscription) {
             throw new \Exception("Active subscription does not exist");

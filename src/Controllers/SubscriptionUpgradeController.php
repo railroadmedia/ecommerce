@@ -46,7 +46,6 @@ class SubscriptionUpgradeController extends Controller
 
     public function info()
     {
-        $userId = auth()->id();
-        return $this->subscriptionUpgradeService->getInfo($userId);
+        return $this->subscriptionUpgradeService->getInfo();
     }
 }
