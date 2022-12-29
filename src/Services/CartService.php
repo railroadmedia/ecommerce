@@ -1105,4 +1105,9 @@ class CartService
     {
         $this->cart->setMembershipChangeDiscountsEnabled(true);
     }
+
+    public function getMembershipChangeDiscountsEnabled(): bool
+    {
+        return $this->cart->getMembershipChangeDiscountsEnabled();
+    }
 }

@@ -16,9 +16,9 @@ use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Entities\UserProduct;
 
 use Railroad\Ecommerce\Repositories\UserProductRepository;
-use Stripe\Service\ProductService;
 use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
+use Railroad\Permissions\Services\PermissionService;
 
 enum MembershipTier: int
 {
@@ -42,15 +42,18 @@ class UpgradeService
         UserProductRepository $userProductRepository,
         ProductRepository $productRepository,
         EcommerceEntityManager $ecommerceEntityManager,
+        PermissionService $permissionService
     ) {
         $this->subscriptionRepository = $subscriptionRepository;
         $this->userProductRepository = $userProductRepository;
         $this->productRepository = $productRepository;
         $this->ecommerceEntityManager = $ecommerceEntityManager;
+        $this->permissionService = $permissionService;
     }
 
-    public function getCurrentMembershipTier(int $userId): MembershipTier
+    public function getCurrentMembershipTier()
     {
+        $userId = $this->getUserId();
         $userProducts = $this->userProductRepository->getAllUsersProducts($userId);
         $membershipTier = MembershipTier::None;
 
@@ -122,7 +125,7 @@ class UpgradeService
         if (!$subscription || !$product->isMembershipProduct()) {
             return false;
         }
-        return $subscription->getProduct()->getSku() != $product->getSku();
+        return $this;
     }
 
     public function getDiscountAmount(Product $newProduct)
@@ -130,8 +133,7 @@ class UpgradeService
         if ($newProduct->getType() != Product::TYPE_DIGITAL_SUBSCRIPTION) {
             return 0;  //no discount
         }
-        $userId = auth()->id();
-        $membershipTier = $this->getCurrentMembershipTier($userId);
+        $membershipTier = $this->getCurrentMembershipTier();
         $price = $newProduct->getPrice();
 
         switch ($membershipTier) {
@@ -142,7 +144,7 @@ class UpgradeService
                     if ($newProduct->getSku() == UpgradeService::LifetimeSongAddOnSKU) {
                         return 0; //no discount
                     }
-                    $upgradePrice = $this->getProratedUpgradeCost($userId);
+                    $upgradePrice = $this->getProratedUpgradeCost();
                     if (!is_null($upgradePrice)) {
                         return $price - $upgradePrice;
                     }
@@ -154,14 +156,14 @@ class UpgradeService
         }
     }
 
-    public function getProratedUpgradeCost(int $userId): ?float
+    public function getProratedUpgradeCost(): ?float
     {
-        $membershipTier = $this->getCurrentMembershipTier($userId);
+        $membershipTier = $this->getCurrentMembershipTier();
         if ($membershipTier != MembershipTier::Basic) {
             return null;
         }
 
-        $subscription = $this->getCurrentSubscription($userId);
+        $subscription = $this->getCurrentSubscription();
         $product = $subscription->getProduct();
         if (!$product) {
             return null;
@@ -194,8 +196,9 @@ class UpgradeService
         }
     }
 
-    public function getCurrentSubscription(int $userId): ?Subscription
+    public function getCurrentSubscription(): ?Subscription
     {
+        $userId = $this->getUserId();
         $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
         return $subscription;
     }
@@ -207,5 +210,16 @@ class UpgradeService
         $subscription->setCancellationReason($cancellationReason);
         $this->ecommerceEntityManager->persist($subscription);
         $this->ecommerceEntityManager->flush();
+    }
+
+    public function getUserId()
+    {
+//        $test = request();
+//        // user with special permissions can place orders for other users
+//        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+//            !empty(request()->get('user_id'))) {
+//            return request()->get('user_id');
+//        }
+        return auth()->id();
     }
 }

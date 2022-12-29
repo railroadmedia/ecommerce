@@ -372,8 +372,7 @@ class DiscountCriteriaService
         if (!$cart->getMembershipChangeDiscountsEnabled()) {
             return false;
         }
-        $userId = auth()->id();
-        $currentSubscription = $this->upgradeService->getCurrentSubscription($userId);
+        $currentSubscription = $this->upgradeService->getCurrentSubscription();
         $products = $this->productRepository->bySkus($cart->listSkus());
         foreach ($products as $product) {
             $isMembershipChanging = $this->upgradeService->isMembershipChanging($product, $currentSubscription);
