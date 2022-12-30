@@ -22,9 +22,9 @@ use Railroad\Permissions\Services\PermissionService;
 
 abstract class MembershipTier
 {
-    const None = 0;
-    const Basic = 1;
-    const Plus = 2;
+    const None = "";
+    const Basic = "basic";
+    const Plus = "plus";
 }
 
 class UpgradeService
