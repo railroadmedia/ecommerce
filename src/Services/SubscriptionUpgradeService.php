@@ -99,7 +99,7 @@ class SubscriptionUpgradeService
             $errorMessage = implode(',', $result['errors']);
             throw new \Exception($errorMessage);
         }
-        return "upgrade successful";
+        return "membership change successful";
     }
 
     public function getInfo(): array
