@@ -28,19 +28,15 @@ class SubscriptionUpgradeController extends Controller
     public function change($tier, $interval)
     {
         $userId = auth()->id();
-        try {
-            switch ($tier) {
-                case "plus":
-                    $accessType = Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
-                    break;
-                case "basic":
-                    $accessType = Product::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
-                    break;
-            }
-            $message = $this->subscriptionUpgradeService->changeSubscription($accessType, $interval, $userId);
-        } catch (\Exception $e) {
-            $message = $e->getMessage();
+        switch ($tier) {
+            case "plus":
+                $accessType = Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
+                break;
+            case "basic":
+                $accessType = Product::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
+                break;
         }
+        $message = $this->subscriptionUpgradeService->changeSubscription($accessType, $interval, $userId);
         return $message;
     }
 
