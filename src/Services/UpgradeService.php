@@ -20,11 +20,11 @@ use Railroad\Ecommerce\Services\OrderFormService;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Permissions\Services\PermissionService;
 
-enum MembershipTier: int
+enum MembershipTier: string
 {
-    case None = 0;
-    case Basic = 1;
-    case Plus = 2;
+    case None = "";
+    case Basic = "basic";
+    case Plus = "plus";
 }
 
 class UpgradeService
