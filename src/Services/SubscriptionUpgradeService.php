@@ -107,7 +107,7 @@ class SubscriptionUpgradeService
         $currentMembershipTier = $this->upgradeService->getCurrentMembershipTier();
         $yearUpgradeCost = $this->upgradeService->getProratedUpgradeCost();
         $data = [
-            "currentTier" => $currentMembershipTier->value,
+            "currentTier" => $currentMembershipTier->name,
             "yearUpgradeCost" => $yearUpgradeCost
         ];
         return $data;
