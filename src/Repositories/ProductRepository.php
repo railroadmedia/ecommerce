@@ -240,7 +240,7 @@ class ProductRepository extends RepositoryBase
             ->andWhere($qb->expr()->eq('p.brand', ':brand'))
             ->andWhere($qb->expr()->eq('p.digitalAccessType', ':digitalAccessType'))
             ->andWhere($qb->expr()->eq('p.digitalAccessTimeIntervalType', ':digitalAccessTimeIntervalType'))
-            //->andWhere($qb->expr()->notLike('p.sku', '%trial%'))
+            ->andWhere("p.sku NOT LIKE '%trial%'")
             ->orderBy('p.id', 'desc')
             ->getQuery()
             ->setParameter('type', Product::TYPE_DIGITAL_SUBSCRIPTION)
