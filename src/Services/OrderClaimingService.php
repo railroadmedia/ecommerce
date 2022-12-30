@@ -316,6 +316,7 @@ class OrderClaimingService
 
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         } else {
+            $product = $orderItem->getProduct();
             $currentSubscription = $this->upgradeService->getCurrentSubscription();
 
             if ($this->cartService->getMembershipChangeDiscountsEnabled()

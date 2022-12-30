@@ -29,7 +29,7 @@ abstract class MembershipTier
 
 class UpgradeService
 {
-    public const LifetimeSongAddOnSKU = '12345'; //todo: Need to add lifetime song addon sku here once available
+    public const LifetimeSongAddOnSKU = 'LTM-songs-upgrade-recurring-membership';
     public const MusoraProductBrand = 'musora';
 
     protected $subscriptionRepository;
