@@ -19,6 +19,8 @@ class DiscountRepository extends RepositoryBase
 {
     use UseFormRequestQueryBuilder;
 
+    protected $localArrayCache = [];
+
     /**
      * CreditCardRepository constructor.
      *
@@ -70,6 +72,12 @@ class DiscountRepository extends RepositoryBase
      */
     public function find(int $id): ?Discount
     {
+        $key = md5('find-' . $id);
+
+        if (isset($this->localArrayCache[$key])) {
+            return $this->localArrayCache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select(['d', 'p', 'dc'])
@@ -83,8 +91,10 @@ class DiscountRepository extends RepositoryBase
             )
             ->setParameter('id', $id);
 
-        return $qb->getQuery()
+        $this->localArrayCache[$key] = $qb->getQuery()
             ->getOneOrNullResult();
+
+        return $this->localArrayCache[$key];
     }
 
     /**
@@ -95,6 +105,12 @@ class DiscountRepository extends RepositoryBase
      */
     public function getActiveDiscounts()
     {
+        $key = md5('getActiveDiscounts-');
+
+        if (isset($this->localArrayCache[$key])) {
+            return $this->localArrayCache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select(['d', 'dc', 'p', 'dcp'])
@@ -117,8 +133,10 @@ class DiscountRepository extends RepositoryBase
             )
             ->setParameter('active', true);
 
-        return $qb->getQuery()
+        $this->localArrayCache[$key] = $qb->getQuery()
             ->getResult();
+
+        return $this->localArrayCache[$key];
     }
 
     /**
@@ -129,6 +147,12 @@ class DiscountRepository extends RepositoryBase
      */
     public function getActiveShippingDiscounts()
     {
+        $key = md5('getActiveShippingDiscounts-');
+
+        if (isset($this->localArrayCache[$key])) {
+            return $this->localArrayCache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select(['d', 'dc', 'p'])
@@ -163,8 +187,10 @@ class DiscountRepository extends RepositoryBase
                 ]
             );
 
-        return $qb->getQuery()
+        $this->localArrayCache[$key] = $qb->getQuery()
             ->getResult();
+
+        return $this->localArrayCache[$key];
     }
 
     /**
@@ -175,6 +201,12 @@ class DiscountRepository extends RepositoryBase
      */
     public function getActiveCartItemDiscounts()
     {
+        $key = md5('getActiveCartItemDiscounts-');
+
+        if (isset($this->localArrayCache[$key])) {
+            return $this->localArrayCache[$key];
+        }
+
         $qb = $this->entityManager->createQueryBuilder();
 
         $qb->select(['d', 'dc', 'p'])
@@ -210,7 +242,9 @@ class DiscountRepository extends RepositoryBase
                 ]
             );
 
-        return $qb->getQuery()
+        $this->localArrayCache[$key] = $qb->getQuery()
             ->getResult();
+
+        return $this->localArrayCache[$key];
     }
 }

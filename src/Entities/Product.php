@@ -642,13 +642,12 @@ class Product
     }
 
     /**
-     * @param int $minStockLevel
+     * @param int|null $minStockLevel
      */
-    public function setMinStockLevel(int $minStockLevel): void
+    public function setMinStockLevel(?int $minStockLevel): void
     {
         $this->minStockLevel = $minStockLevel;
     }
-
 
     /**
      * @return int

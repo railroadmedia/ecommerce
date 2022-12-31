@@ -1360,6 +1360,7 @@ class CartJsonControllerTest extends EcommerceTestCase
         $product = $this->fakeProduct([
             'active' => 1,
             'stock' => $this->faker->numberBetween(1, 3),
+            'min_stock_level' => 0,
             'is_physical' => true,
             'type' => Product::TYPE_PHYSICAL_ONE_TIME,
             'subscription_interval_type' => null,
