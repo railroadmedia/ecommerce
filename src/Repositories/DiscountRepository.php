@@ -140,9 +140,9 @@ class DiscountRepository extends RepositoryBase
             ->getResult();
 
         $upgradeDiscount = new Discount();
-        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_UPGRADE_TYPE);
+        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_CHANGING_TYPE);
         $discountCriteria = new DiscountCriteria();
-        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_UPGRADE);
+        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_CHANGING);
         $upgradeDiscount->addDiscountCriteria($discountCriteria);
 
         $results[] = $upgradeDiscount;
@@ -254,10 +254,18 @@ class DiscountRepository extends RepositoryBase
                     DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE
                 ]
             );
-
-        $this->localArrayCache[$key] = $qb->getQuery()
+        $results = $qb->getQuery()
             ->getResult();
+        $upgradeDiscount = new Discount();
+        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_CHANGING_TYPE);
+        $discountCriteria = new DiscountCriteria();
+        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_CHANGING);
+        $upgradeDiscount->addDiscountCriteria($discountCriteria);
 
-        return $this->localArrayCache[$key];
+        $results[] = $upgradeDiscount;
+
+        $this->localArrayCache[$key] = $results;
+
+        return $results;
     }
 }

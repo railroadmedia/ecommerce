@@ -23,7 +23,7 @@ class DiscountService
     const ORDER_TOTAL_SHIPPING_AMOUNT_OFF_TYPE = 'order total shipping amount off';
     const ORDER_TOTAL_SHIPPING_PERCENT_OFF_TYPE = 'order total shipping percent off';
     const ORDER_TOTAL_SHIPPING_OVERWRITE_TYPE = 'order total shipping overwrite';
-    const MEMBERSHIP_UPGRADE_TYPE = 'membership upgrade';
+    const MEMBERSHIP_CHANGING_TYPE = 'membership changing';
 
     /**
      * @var DiscountCriteriaService
@@ -116,7 +116,7 @@ class DiscountService
             } elseif ($applicableDiscount->getType() == DiscountService::ORDER_TOTAL_PERCENT_OFF_TYPE) {
                 $amountDiscounted = $applicableDiscount->getAmount() / 100 * $totalDueInItems;
                 $orderDiscounts += $amountDiscounted;
-            }elseif ($applicableDiscount->getType() == DiscountService::MEMBERSHIP_UPGRADE_TYPE) {
+            } elseif ($applicableDiscount->getType() == DiscountService::MEMBERSHIP_CHANGING_TYPE) {
                 $products = $this->productRepository->bySkus($cart->listSkus());
                 foreach ($products as $product) {
                     /** @var Product $product */
@@ -164,7 +164,7 @@ class DiscountService
                         $discountAmount = 0;
                         if ($applicableDiscount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                             $discountAmount = $applicableDiscount->getAmount() * $productCartItem->getQuantity();
-                        }  elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
+                        } elseif ($applicableDiscount->getType() == DiscountService::PRODUCT_PERCENT_OFF_TYPE) {
                             $discountAmount =
                                 $productCartItem->getQuantity() *
                                 $product->getPrice() *
@@ -413,7 +413,11 @@ class DiscountService
                 /** @var Product $discountProduct */
                 $discountProduct = $discount->getProduct();
 
-                if (($discountProduct && $product->getId() == $discountProduct->getId()) ||
+                if ($product->isMembershipProduct()
+                    && $discount->getType() == DiscountService::MEMBERSHIP_CHANGING_TYPE) {
+                    $discountAmount = $this->upgradeService->getDiscountAmount($product);
+                    $discountedAmount = round($discountedAmount + $discountAmount, 2);
+                } elseif (($discountProduct && $product->getId() == $discountProduct->getId()) ||
                     ($discount->getProductCategory() && $product->getCategory() == $discount->getProductCategory())) {
                     if ($discount->getType() == DiscountService::PRODUCT_AMOUNT_OFF_TYPE) {
                         $discountAmount = $discount->getAmount() * $productCartItem->getQuantity();
