@@ -6,9 +6,12 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
+use Railroad\Ecommerce\Services\UpgradeService;
 
 /**
  * Class DiscountRepository
@@ -133,10 +136,22 @@ class DiscountRepository extends RepositoryBase
             )
             ->setParameter('active', true);
 
-        $this->localArrayCache[$key] = $qb->getQuery()
+        $results = $qb->getQuery()
             ->getResult();
 
-        return $this->localArrayCache[$key];
+        $upgradeDiscount = new Discount();
+        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_UPGRADE_TYPE);
+        foreach (UpgradeService::FullTierSKUs as $upgradeSKU) {
+            $discountCriteria = new DiscountCriteria();
+            $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_UPGRADE);
+            $upgradeDiscount->addDiscountCriteria($discountCriteria);
+        }
+
+        $results[] = $upgradeDiscount;
+
+        $this->localArrayCache[$key] = $results;
+
+        return $results;
     }
 
     /**
