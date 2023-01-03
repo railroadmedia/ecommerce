@@ -65,6 +65,7 @@ class SubscriptionUpgradeService
 
     public function changeSubscription(string $accessType, string $interval, int $userId)
     {
+        Log::debug("changeSubscription $userId $accessType $interval");
         $isLifeTime = $this->upgradeService->isLifetimeMember($userId);
         if ($isLifeTime) {
             return $this->handleChangeLifeTimeSubscription($accessType, $userId);
@@ -140,7 +141,6 @@ class SubscriptionUpgradeService
         }
         $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
         if (!$product) {
-            Log::error("changeSubscription: Product does not exist: '$accessType' '$interval'");
             throw new \Exception("Product does not exist");
         }
         if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
