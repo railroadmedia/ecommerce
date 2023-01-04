@@ -37,6 +37,7 @@ class UpgradeService
     protected $productRepository;
     protected $ecommerceEntityManager;
     protected $permissionService;
+    private $userRequestUser = false;
 
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
@@ -213,14 +214,23 @@ class UpgradeService
         $this->ecommerceEntityManager->flush();
     }
 
-    public function getUserId()
+    public function useRequestUserAsPurchaser()
     {
-//        $test = request();
-//        // user with special permissions can place orders for other users
-//        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
-//            !empty(request()->get('user_id'))) {
-//            return request()->get('user_id');
-//        }
+        $this->useRequestUser = true;
+    }
+
+    private function getUserId(): int
+    {
+        if ($this->useRequestUser) {
+            $test = request();
+            // user with special permissions can place orders for other users
+            if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
+                !empty(request()->get('userid'))) {
+                return request()->get('userid');
+            }
+            throw new Exception("Unable to get userId from request");
+        }
+
         return auth()->id();
     }
 }

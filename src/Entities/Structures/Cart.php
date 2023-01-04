@@ -87,6 +87,16 @@ class Cart implements Serializable
     }
 
     /**
+     * @return bool
+     */
+    public function useRequestUserAsPurchaser()
+    {
+        return true;// $this->enableMembershipChangeDiscounts;
+    }
+
+
+
+    /**
      * @param bool $enabled
      * @return void
      */

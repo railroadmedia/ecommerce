@@ -372,6 +372,10 @@ class DiscountCriteriaService
         if (!$cart->getMembershipChangeDiscountsEnabled()) {
             return false;
         }
+
+        if ($cart->useRequestUserAsPurchaser()) {
+            $this->upgradeService->useRequestUserAsPurchaser();
+        }
         $currentSubscription = $this->upgradeService->getCurrentSubscription();
         $products = $this->productRepository->bySkus($cart->listSkus());
         foreach ($products as $product) {
