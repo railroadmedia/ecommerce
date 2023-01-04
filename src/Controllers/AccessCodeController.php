@@ -86,7 +86,7 @@ class AccessCodeController extends Controller
                 ->away($request->get('redirect'))
                 ->with($message) :
             redirect()
-                ->back()
+                ->to('/' . $accessCode->getBrand())
                 ->with($message);
     }
 }
