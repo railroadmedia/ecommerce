@@ -31,13 +31,14 @@ class UpgradeService
 {
     public const LifetimeSongAddOnSKU = 'LTM-songs-upgrade-recurring-membership';
     public const MusoraProductBrand = 'musora';
+    const USER_SESSION_KEY = 'railroad-ecommerce-shopping-cart-user-id';
 
     protected $subscriptionRepository;
     protected $userProductRepository;
     protected $productRepository;
     protected $ecommerceEntityManager;
     protected $permissionService;
-    private $userRequestUser = false;
+    private $userId;
 
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
@@ -214,23 +215,30 @@ class UpgradeService
         $this->ecommerceEntityManager->flush();
     }
 
-    public function useRequestUserAsPurchaser()
+    private function getUserId()
     {
-        $this->useRequestUser = true;
-    }
+        if ($this->userId) {
+            return $this->userId;
+        }
 
-    private function getUserId(): int
-    {
-        if ($this->useRequestUser) {
-            $test = request();
+        //Some discounts require the userId to calculate the discount properly
+        //This injects the userId into the cart if its in the request
+        $requestUserId = (int)request()->get('user-id');
+        if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') && $requestUserId > 0) {
             // user with special permissions can place orders for other users
-            if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
-                !empty(request()->get('userid'))) {
-                return request()->get('userid');
-            }
-            throw new Exception("Unable to get userId from request");
+            $this->userId = $requestUserId;
+            session()->put(self::USER_SESSION_KEY, $requestUserId);
+            return $requestUserId;
+        }
+
+        $sessionUserId = (int)session()->get(self::USER_SESSION_KEY);
+
+        if ($sessionUserId > 0) {
+            $this->userId = $sessionUserId;
+            return $sessionUserId;
         }
 
         return auth()->id();
     }
+
 }

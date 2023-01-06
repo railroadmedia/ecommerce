@@ -36,6 +36,9 @@ class DiscountCriteriaService
      */
     private $userProvider;
 
+    /**
+     * @var UpgradeService
+     */
     private $upgradeService;
 
     const PRODUCT_QUANTITY_REQUIREMENT_TYPE = 'product quantity requirement';
@@ -371,10 +374,6 @@ class DiscountCriteriaService
     {
         if (!$cart->getMembershipChangeDiscountsEnabled()) {
             return false;
-        }
-
-        if ($cart->useRequestUserAsPurchaser()) {
-            $this->upgradeService->useRequestUserAsPurchaser();
         }
         $currentSubscription = $this->upgradeService->getCurrentSubscription();
         $products = $this->productRepository->bySkus($cart->listSkus());
