@@ -78,7 +78,7 @@ class SubscriptionUpgradeService
     {
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
         if (!$paymentMethodId) {
-            throw new \Exception("Unable to get primary payment method for user $userId");
+            throw new \Exception("Unable to get primary payment method");
         }
         $this->cartService->clearCart();
         $this->cartService->addToCart($sku, 1);
