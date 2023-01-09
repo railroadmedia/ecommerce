@@ -164,7 +164,7 @@ class UpgradeService
         }
 
         $subscription = $this->getCurrentSubscription();
-        $product = $subscription->getProduct();
+        $product = $subscription?->getProduct();
         if (!$product) {
             return null;
         }
