@@ -15,4 +15,17 @@ class UserFriendlyException extends Exception
     {
         return false;
     }
+
+    /**
+     * Render the exception into an HTTP response.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function render($request)
+    {
+        return response()->json([
+            'friendly-message' => $this->getMessage()
+        ], 500);
+    }
 }
