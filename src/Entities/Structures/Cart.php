@@ -76,7 +76,7 @@ class Cart implements Serializable
     /**
      * @var bool
      */
-    private $enableMembershipChangeDiscounts;
+    private $enableMembershipChangeDiscounts = false;
 
     /**
      * @return bool
