@@ -5,8 +5,10 @@ namespace Railroad\Ecommerce\Services;
 use App\Enums\Interval;
 use App\Modules\Ecommerce\Enums\DigitalAccessType;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Product;
+use Railroad\Ecommerce\Exceptions\UserFriendlyException;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
@@ -78,7 +80,7 @@ class SubscriptionUpgradeService
     {
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
         if (!$paymentMethodId) {
-            throw new \Exception("Unable to get primary payment method");
+            throw new UserFriendlyException("Unable to get primary payment method");
         }
         $this->cartService->clearCart();
         $this->cartService->addToCart($sku, 1);
@@ -98,7 +100,7 @@ class SubscriptionUpgradeService
         $success = count($result['errors'] ?? []) == 0;
         if (!$success) {
             $errorMessage = implode(',', $result['errors']);
-            throw new \Exception($errorMessage);
+            throw new Exception($errorMessage);
         }
         return "membership change successful";
     }
@@ -121,12 +123,12 @@ class SubscriptionUpgradeService
         if ($accessType == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
             $product = $this->upgradeService->getLifetimeSongsProduct();
             if ($currentProduct && $currentProduct->getSku() == $product->getSku()) {
-                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+                throw new UserFriendlyException(self::SubscriptionNotChangedErrorMessage);
             }
             return $this->orderBySku($product->getSku(), $userId);
         } else {
             if (!$subscription) {
-                throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+                throw new UserFriendlyException(self::SubscriptionNotChangedErrorMessage);
             }
             $this->upgradeService->cancelSubscription($subscription, "Cancelled for downgrade");
         }
@@ -137,15 +139,15 @@ class SubscriptionUpgradeService
         $subscription = $this->upgradeService->getCurrentSubscription();
         $currentProduct = $subscription?->getProduct();
         if (!$subscription) {
-            throw new \Exception("Active subscription does not exist");
+            throw new Exception("Active subscription does not exist");
         }
         $product = $this->upgradeService->getMembershipProduct($accessType, $interval);
         if (!$product) {
-            throw new \Exception("Product does not exist");
+            throw new Exception("Product does not exist");
         }
         if ($currentProduct->getDigitalAccessType() == $product->getDigitalAccessType()
             && $currentProduct->getDigitalAccessTimeIntervalType() == $product->getDigitalAccessTimeIntervalType()) {
-            throw new \Exception(self::SubscriptionNotChangedErrorMessage);
+            throw new UserFriendlyException(self::SubscriptionNotChangedErrorMessage);
         }
         return $this->orderBySku($product->getSku(), $userId);
     }
