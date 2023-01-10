@@ -25,7 +25,7 @@ class UserFriendlyException extends Exception
     public function render($request)
     {
         return response()->json([
-            'friendly-message' => $this->getMessage()
+            'friendlyMessage' => $this->getMessage()
         ], 500);
     }
 }

@@ -31,7 +31,7 @@ use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 
 class SubscriptionUpgradeService
 {
-    private const SubscriptionNotChangedErrorMessage = "Subscription not changed:  User already has this membership type.";
+    private const SubscriptionNotChangedErrorMessage = "You already have this membership type, no changes were made.";
 
     protected CartService $cartService;
     protected OrderFormService $orderFormService;
@@ -80,7 +80,7 @@ class SubscriptionUpgradeService
     {
         $paymentMethodId = $this->paymentMethodRepository->getUsersPrimaryPaymentMethod($userId)?->getId();
         if (!$paymentMethodId) {
-            throw new UserFriendlyException("Unable to get primary payment method");
+            throw new UserFriendlyException("No default payment method found.");
         }
         $this->cartService->clearCart();
         $this->cartService->addToCart($sku, 1);
