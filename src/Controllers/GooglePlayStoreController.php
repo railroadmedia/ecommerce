@@ -101,7 +101,7 @@ class GooglePlayStoreController extends Controller
             $receipt->setLocalCurrency($request->input('data.attributes.currency'));
         }
 
-        if($request->has('data.attributes.price'))
+        if($request->has('data.attributes.price') && !is_null($request->input('data.attributes.price')))
         {
             $receipt->setLocalPrice($request->input('data.attributes.price'));
         }
