@@ -69,6 +69,11 @@ class CartService
      */
     private $permissionService;
 
+    /**
+     * @var UpgradeService
+     */
+    private $upgradeService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -107,6 +112,7 @@ class CartService
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
         $this->permissionService = $permissionService;
+        $this->upgradeService = $upgradeService;
     }
 
     /**
@@ -1086,6 +1092,7 @@ class CartService
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
                 $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
+            'is_membership_change' => $this->upgradeService->isMembershipChanging($product),
         ];
 
         if ($nameOverride !== null) {
