@@ -122,6 +122,9 @@ class DiscountService
                     /** @var Product $product */
                     /** @var CartItem $productCartItem */
                     $productCartItem = $cart->getItemBySku($product->getSku());
+                    if (!is_null($productCartItem->getDueOverride())) {
+                        continue;
+                    }
                     $discountAmount = $this->upgradeService->getDiscountAmount($product);
 
                     $sku = $product->getSku();
