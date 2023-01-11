@@ -205,6 +205,11 @@ class UpgradeService
     {
         if (!$this->currentSubscription) {
             $userId = $this->getUserId();
+            
+            if (empty($userId)) {
+                return null;
+            }
+
             $this->currentSubscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
                 $userId
             );
