@@ -3,6 +3,7 @@
 namespace Railroad\Ecommerce\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Railroad\Ecommerce\Entities\Order;
 use Railroad\Ecommerce\Entities\Payment;
@@ -101,6 +102,10 @@ class InvoiceService
     public function sendOrderInvoiceEmail(Order $order, Payment $payment)
     {
         try {
+            $orderId = $order->getId();
+            $customerId = $order->getCustomer()?->getId() ?? 0;
+            $userId = $order->getUser()?->getId() ?? 0;
+            Log::debug("sendOrderInvoiceEmail orderId=$orderId userId=$userId customerId=$customerId");
             $orderInvoiceEmail = new OrderInvoice(
                 $this->getViewDataForOrderInvoice($order, $payment), $payment->getGatewayName()
             );
