@@ -79,11 +79,6 @@ class Cart implements Serializable
     private $enableMembershipChangeDiscounts = false;
 
     /**
-     * @var int|null
-     */
-    private $userId;
-
-    /**
      * @return bool
      */
     public function getMembershipChangeDiscountsEnabled()
@@ -323,25 +318,6 @@ class Cart implements Serializable
     {
         $this->shippingOverride = $shippingOverride;
     }
-
-
-    /**
-     * @return int|null
-     */
-    public function getUserId()
-    {
-        return $this->userId;
-    }
-
-    /**
-     * @param int|null $userId
-     */
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-    }
-
-
 
     /**
      * @return string
