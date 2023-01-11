@@ -317,10 +317,10 @@ class OrderClaimingService
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
         } else {
             $product = $orderItem->getProduct();
-            $currentSubscription = $this->upgradeService->getCurrentSubscription();
 
             if ($this->cartService->getMembershipChangeDiscountsEnabled()
-                && $this->upgradeService->isMembershipChanging($product, $currentSubscription)) {
+                && $this->upgradeService->isMembershipChanging($product)) {
+                $currentSubscription = $this->upgradeService->getCurrentSubscription();
                 $nextBillDate = $currentSubscription->getPaidUntil();
                 $this->upgradeService->cancelSubscription($currentSubscription, 'Cancelled due to membership change');
             } elseif (!empty($product->getSubscriptionIntervalType())) {

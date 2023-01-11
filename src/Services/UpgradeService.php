@@ -39,6 +39,7 @@ class UpgradeService
     protected $ecommerceEntityManager;
     protected $permissionService;
     private $userId;
+    private $currentSubscription;
 
     public function __construct(
         SubscriptionRepository $subscriptionRepository,
@@ -123,8 +124,9 @@ class UpgradeService
         return $product;
     }
 
-    public function isMembershipChanging(Product $product, ?Subscription $subscription)
+    public function isMembershipChanging(Product $product)
     {
+        $subscription = $this->getCurrentSubscription();
         if (!$subscription || !$product->isMembershipProduct()) {
             return false;
         }
@@ -201,9 +203,13 @@ class UpgradeService
 
     public function getCurrentSubscription(): ?Subscription
     {
-        $userId = $this->getUserId();
-        $subscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile($userId);
-        return $subscription;
+        if (!$this->currentSubscription) {
+            $userId = $this->getUserId();
+            $this->currentSubscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
+                $userId
+            );
+        }
+        return $this->currentSubscription;
     }
 
     public function cancelSubscription(Subscription $subscription, string $cancellationReason)
@@ -223,7 +229,7 @@ class UpgradeService
 
         //Some discounts require the userId to calculate the discount properly
         //This injects the userId into the cart if its in the request
-        $requestUserId = (int)request()->get('user-id');
+        $requestUserId = (int)request()->get('userid');
         if ($this->permissionService->can(auth()->id(), 'place-orders-for-other-users') && $requestUserId > 0) {
             // user with special permissions can place orders for other users
             $this->userId = $requestUserId;
