@@ -318,8 +318,9 @@ class OrderClaimingService
         } else {
             $product = $orderItem->getProduct();
 
-            if ($this->cartService->getMembershipChangeDiscountsEnabled()
-                && $this->upgradeService->isMembershipChanging($product)) {
+            $isMembershipChange = $this->cartService->getMembershipChangeDiscountsEnabled()
+                && $this->upgradeService->isMembershipChanging($product);
+            if ($isMembershipChange) {
                 $currentSubscription = $this->upgradeService->getCurrentSubscription();
                 $nextBillDate = $currentSubscription->getPaidUntil();
                 $this->upgradeService->cancelSubscription($currentSubscription, 'Cancelled due to membership change');
@@ -343,7 +344,7 @@ class OrderClaimingService
             $subscriptionPricePerPayment = $orderItem->getProduct()->getPrice();
             $cartItem = $cart ? $cart->getItemBySku($product->getSku()) : null;
 
-            if ($cart && $cartItem && $cartItem->getDueOverride()) {
+            if ($cart && $cartItem && $cartItem->getDueOverride() && !$isMembershipChange) {
                 $subscriptionPricePerPayment = $cartItem->getDueOverride();
                 $productPriceOverride = true;
             }
