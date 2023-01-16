@@ -34,6 +34,11 @@ class ProductStatistic
      */
     private $totalRenewals;
 
+    /**
+     * @var float
+     */
+    private $totalExpectedRenewalValue;
+
     public function __construct(string $id, string $sku)
     {
         $this->id = $id;
@@ -42,6 +47,7 @@ class ProductStatistic
         $this->totalSales = 0;
         $this->totalRenewalSales = 0;
         $this->totalRenewals = 0;
+        $this->totalExpectedRenewalValue = 0;
     }
 
     /**
@@ -138,5 +144,21 @@ class ProductStatistic
     public function setTotalRenewals(float $totalRenewals): void
     {
         $this->totalRenewals = $totalRenewals;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalExpectedRenewalValue()
+    {
+        return $this->totalExpectedRenewalValue;
+    }
+
+    /**
+     * @param float|int $totalExpectedRenewalValue
+     */
+    public function setTotalExpectedRenewalValue($totalExpectedRenewalValue)
+    {
+        $this->totalExpectedRenewalValue = $totalExpectedRenewalValue;
     }
 }

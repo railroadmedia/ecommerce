@@ -852,17 +852,16 @@ class PaymentRepository extends RepositoryBase
             $this->getEntityManager()
                 ->createQueryBuilder();
 
-        $qb = $qb->select(['p', 'op', 'o', 'oi', 'pr'])
-            ->from(Payment::class, 'p')
-            ->join('p.orderPayment', 'op')
-            ->join('op.order', 'o')
+        $qb = $qb->select(['p', 'o', 'oi', 'pr'])
+            ->from(Order::class, 'o')
+            ->leftJoin('o.payments', 'p')
             ->leftJoin('o.orderItems', 'oi')
             ->leftJoin('oi.product', 'pr')
             ->where(
                 $qb->expr()
-                    ->between('p.createdAt', ':smallDateTime', ':bigDateTime')
+                    ->between('o.createdAt', ':smallDateTime', ':bigDateTime')
             )
-            ->andWhere($qb->expr()->neq('p.status', ':failed'))
+            ->andWhere($qb->expr()->orX($qb->expr()->neq('p.status', ':failed'), $qb->expr()->isNull('p.status')))
             ->setParameter('smallDateTime', $day)
             ->setParameter('bigDateTime', $day->copy()->addDay())
             ->setParameter('failed', Payment::STATUS_FAILED);
@@ -876,7 +875,7 @@ class PaymentRepository extends RepositoryBase
         }
 
         /**
-         * @var $results Payment[]
+         * @var $results Order[]
          */
         $results = $qb->getQuery()->getResult();
 
@@ -910,11 +909,11 @@ class PaymentRepository extends RepositoryBase
             // spread the total paid across each order item based on their ratio
             $sumOfAllOrderItemsFinalPrice = 0;
 
-            foreach ($result->getOrder()->getOrderItems() as $orderItem) {
+            foreach ($result->getOrderItems() as $orderItem) {
                 $sumOfAllOrderItemsFinalPrice += $orderItem->getFinalPrice();
             }
 
-            foreach ($result->getOrder()->getOrderItems() as $orderItem) {
+            foreach ($result->getOrderItems() as $orderItem) {
                 if ($sumOfAllOrderItemsFinalPrice * $totalPaid > 0) {
                     $paidForThisOrderItem =
                         round($orderItem->getFinalPrice() / $sumOfAllOrderItemsFinalPrice * $totalPaid, 2);
@@ -925,18 +924,16 @@ class PaymentRepository extends RepositoryBase
                 $returnArray[$orderItem->getProduct()->getId()]['id'] = $orderItem->getProduct()->getId();
                 $returnArray[$orderItem->getProduct()->getId()]['sku'] = $orderItem->getProduct()->getSku();
 
-                if (empty($returnArray[$orderItem->getProduct()->getId()]['sales'])) {
+                if (!isset($returnArray[$orderItem->getProduct()->getId()]['sales'])) {
                     $returnArray[$orderItem->getProduct()->getId()]['sales'] = 0;
                 }
 
                 $returnArray[$orderItem->getProduct()->getId()]['sales'] += $paidForThisOrderItem;
 
-                if (empty($returnArray[$orderItem->getProduct()->getId()]['sold'])) {
+                if (!isset($returnArray[$orderItem->getProduct()->getId()]['sold'])) {
                     $returnArray[$orderItem->getProduct()->getId()]['sold'] = 0;
-                }
-
-                if ($result->getType() == Payment::TYPE_INITIAL_ORDER) {
-                    $returnArray[$orderItem->getProduct()->getId()]['sold'] += 1;
+                } else {
+                    $returnArray[$orderItem->getProduct()->getId()]['sold'] += $orderItem->getQuantity();
                 }
             }
 

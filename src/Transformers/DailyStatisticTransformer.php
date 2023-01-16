@@ -32,6 +32,7 @@ class DailyStatisticTransformer extends TransformerAbstract
             'total_number_of_orders_placed' => $dailyStatistic->getTotalOrders(),
             'total_number_of_successful_subscription_renewal_payments' => $dailyStatistic->getTotalSuccessfulRenewals(),
             'total_number_of_failed_subscription_renewal_payments' => $dailyStatistic->getTotalFailedRenewals(),
+            'total_expected_subscription_renewal_value' => $dailyStatistic->getTotalExpectedRenewalValue(),
             'day' => $dailyStatistic->getDay(),
         ];
     }

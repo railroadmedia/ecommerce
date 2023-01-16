@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -962,5 +963,135 @@ class SubscriptionRepository extends RepositoryBase
 
         return $qb->getQuery()
             ->getResult();
+    }
+
+    public function getLatestActiveSubscriptionExcludingMobile(int $userId): ?Subscription
+    {
+        $qb = $this->createQueryBuilder('s');
+
+        $qb->andWhere(
+            $qb->expr()
+                ->in('s.type', ':types')
+        )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.stopped', ':not')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.isActive', ':true')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->gt('s.paidUntil', ':now')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('s.canceledOn')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('s.user', ':userId')
+            )
+            ->orderBy('s.id', 'desc')
+            ->setParameter(
+                'now',
+                Carbon::now()
+                    ->toDateTimeString()
+            )
+            ->setParameter('not', false)
+            ->setParameter(
+                'types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION
+                ]
+            )
+            ->setParameter('userId', $userId)
+            ->setParameter('true', true);
+
+        return $qb->getQuery()
+            ->getResult()[0] ?? null;
+    }
+
+    public function getDailyTotalExpectedRenewalValue(Carbon $day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select('SUM(s.totalPrice) as totalExpectedRenewalValue')
+            ->from(Subscription::class, 's')
+            ->where(
+                $qb->expr()
+                    ->between('s.startDate', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->in('s.type', ':types'))
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->addDay())
+            ->setParameter('types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION
+                ]
+            );
+
+        if ($brand) {
+            $qb->andWhere($qb->expr()->eq('s.brand', ':brand'))->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * @param Carbon $day
+     * @param string $brand
+     *
+     * @return array
+     */
+    public function getDailyPerProductExpectedRenewalValue(Carbon $day, $brand)
+    {
+        /** @var $qb QueryBuilder */
+        $qb =
+            $this->getEntityManager()
+                ->createQueryBuilder();
+
+        $qb = $qb->select(['pr.id', 'pr.sku', 'SUM(s.totalPrice) AS totalExpectedRenewalValue',])
+            ->from(Subscription::class, 's')
+            ->join('s.product', 'pr')
+            ->where(
+                $qb->expr()
+                    ->between('s.startDate', ':smallDateTime', ':bigDateTime')
+            )
+            ->andWhere($qb->expr()->in('s.type', ':types'))
+            ->groupBy('pr.id')
+            ->setParameter('smallDateTime', $day)
+            ->setParameter('bigDateTime', $day->copy()->addDay())
+            ->setParameter('types',
+                [
+                    Subscription::TYPE_SUBSCRIPTION,
+                    Subscription::TYPE_APPLE_SUBSCRIPTION,
+                    Subscription::TYPE_GOOGLE_SUBSCRIPTION
+                ]
+            );
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('s.brand', ':brand')
+            )
+                ->setParameter('brand', $brand);
+        }
+
+        $results = $qb->getQuery()->getResult();
+
+        $resultsByProductId = [];
+
+        foreach ($results as $result) {
+            $resultsByProductId[$result['id']] = $result;
+        }
+
+        return $resultsByProductId;
     }
 }

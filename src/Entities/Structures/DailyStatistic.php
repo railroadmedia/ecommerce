@@ -40,6 +40,11 @@ class DailyStatistic
     private $totalFailedRenewals;
 
     /**
+     * @var float
+     */
+    private $totalExpectedRenewalValue;
+
+    /**
      * @var ProductStatistic[]
      */
     private $productStatistics;
@@ -53,6 +58,7 @@ class DailyStatistic
         $this->totalOrders = 0;
         $this->totalSuccessfulRenewals = 0;
         $this->totalFailedRenewals = 0;
+        $this->totalExpectedRenewalValue = 0;
         $this->productStatistics = [];
     }
 
@@ -174,6 +180,22 @@ class DailyStatistic
     public function setTotalFailedRenewals(int $totalFailedRenewals)
     {
         $this->totalFailedRenewals = $totalFailedRenewals;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalExpectedRenewalValue()
+    {
+        return $this->totalExpectedRenewalValue;
+    }
+
+    /**
+     * @param float|int $totalExpectedRenewalValue
+     */
+    public function setTotalExpectedRenewalValue($totalExpectedRenewalValue)
+    {
+        $this->totalExpectedRenewalValue = $totalExpectedRenewalValue;
     }
 
     /**

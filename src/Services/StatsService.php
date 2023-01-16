@@ -12,6 +12,7 @@ use Railroad\Ecommerce\Entities\Structures\ProductStatistic;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Repositories\RefundRepository;
+use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 
 class StatsService
 {
@@ -31,6 +32,11 @@ class StatsService
     protected $refundRepository;
 
     /**
+     * @var SubscriptionRepository
+     */
+    protected $subscriptionRepository;
+
+    /**
      * @param EcommerceEntityManager $entityManager
      * @param PaymentRepository $paymentRepository
      * @param RefundRepository $refundRepository
@@ -38,12 +44,14 @@ class StatsService
     public function __construct(
         EcommerceEntityManager $entityManager,
         PaymentRepository $paymentRepository,
-        RefundRepository $refundRepository
+        RefundRepository $refundRepository,
+        SubscriptionRepository $subscriptionRepository
     )
     {
         $this->entityManager = $entityManager;
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
+        $this->subscriptionRepository = $subscriptionRepository;
     }
 
     /**
@@ -161,9 +169,26 @@ class StatsService
 
             $dailyStatistic->setTotalRefunded($totalRefunds ?? 0);
 
+            $totalExpectedRenewalValue = (float) $this->subscriptionRepository->getDailyTotalExpectedRenewalValue($currentDay, $brand);
+
+            if ($totalExpectedRenewalValue) {
+                $add = true;
+            }
+
+            $dailyStatistic->setTotalExpectedRenewalValue($totalExpectedRenewalValue ?? 0);
+
             $dailyOrdersProductsData = $this->paymentRepository->getDailyOrdersProductStatistic($currentDay, $brand);
 
             if (!empty($dailyOrdersProductsData)) {
+                $add = true;
+            }
+
+            $dailySubscriptionsProductsExpectedRevenueData = $this->subscriptionRepository->getDailyPerProductExpectedRenewalValue(
+                $currentDay,
+                $brand
+            );
+
+            if (!empty($dailySubscriptionsProductsExpectedRevenueData)) {
                 $add = true;
             }
 
@@ -197,6 +222,11 @@ class StatsService
                         $currentProductStatistic->getTotalSales() + $productData['sales'],
                         2
                     )
+                );
+
+                $currentProductStatistic->setTotalExpectedRenewalValue(
+                    $currentProductStatistic->getTotalExpectedRenewalValue(
+                    ) + ($dailySubscriptionsProductsExpectedRevenueData[$productData['id']]['totalExpectedRenewalValue'] ?? 0)
                 );
             }
 
@@ -273,7 +303,8 @@ class StatsService
             $productStats = $dailyStatistic->getProductStatistics();
 
             usort($productStats, function ($a, $b) {
-                return ($a->getTotalSales() + $a->getTotalRenewalSales()) < ($b->getTotalSales() + $b->getTotalRenewalSales()) ? 1 : -1;
+                return ($a->getTotalSales() + $a->getTotalRenewalSales() + $a->getTotalExpectedRenewalValue()) <
+                ($b->getTotalSales() + $b->getTotalRenewalSales() + $b->getTotalExpectedRenewalValue()) ? 1 : -1;
             });
 
             $dailyStatistic->setProductStatistics($productStats);
