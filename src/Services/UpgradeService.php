@@ -76,15 +76,19 @@ class UpgradeService
         return $membershipTier;
     }
 
-    public function getSubscriptionMembershipTier()
+    public function getSubscriptionMembershipTier(bool $isLifetime)
     {
         $product = $this->getCurrentSubscription()?->getProduct();
+
         if ($product) {
             if ($this->isPlusTier($product)) {
                 return MembershipTier::Plus;
             } elseif ($this->isBasicTier($product)) {
                 return MembershipTier::Basic;
             }
+        }
+        elseif($isLifetime){
+            return MembershipTier::Basic;
         }
         return MembershipTier::None;
     }
