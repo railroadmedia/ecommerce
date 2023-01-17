@@ -86,8 +86,7 @@ class UpgradeService
             } elseif ($this->isBasicTier($product)) {
                 return MembershipTier::Basic;
             }
-        }
-        elseif($isLifetime){
+        } elseif ($isLifetime) {
             return MembershipTier::Basic;
         }
         return MembershipTier::None;
