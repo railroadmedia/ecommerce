@@ -76,6 +76,19 @@ class UpgradeService
         return $membershipTier;
     }
 
+    public function getSubscriptionMembershipTier()
+    {
+        $product = $this->getCurrentSubscription()?->getProduct();
+        if ($product) {
+            if ($this->isPlusTier($product)) {
+                return MembershipTier::Plus;
+            } elseif ($this->isBasicTier($product)) {
+                return MembershipTier::Basic;
+            }
+        }
+        return MembershipTier::None;
+    }
+
     private function isPlusTier(Product $product)
     {
         return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
@@ -205,7 +218,7 @@ class UpgradeService
     {
         if (!$this->currentSubscription) {
             $userId = $this->getUserId();
-            
+
             if (empty($userId)) {
                 return null;
             }
