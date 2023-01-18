@@ -229,6 +229,8 @@ class UpgradeService
             $this->currentSubscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
                 $userId
             );
+            $id = $this->currentSubscription?->getId() ?? 0;
+            Log::debug("getCurrentSubscription id=$id");
         }
         return $this->currentSubscription;
     }
