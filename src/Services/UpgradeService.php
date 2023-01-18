@@ -94,7 +94,8 @@ class UpgradeService
 
     private function isPlusTier(Product $product)
     {
-        return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS;
+        return $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS
+            || $product->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_SONGS_CONTENT_ACCESS ;
     }
 
     private function isBasicTier(Product $product)
@@ -229,8 +230,6 @@ class UpgradeService
             $this->currentSubscription = $this->subscriptionRepository->getLatestActiveSubscriptionExcludingMobile(
                 $userId
             );
-            $id = $this->currentSubscription?->getId() ?? 0;
-            Log::debug("getCurrentSubscription id=$id");
         }
         return $this->currentSubscription;
     }
