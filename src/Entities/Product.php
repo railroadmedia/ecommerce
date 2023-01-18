@@ -39,6 +39,7 @@ class Product
     const DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS = 'all content access';
     const DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS = 'basic content access';
     const DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS = 'specific content access';
+    const DIGITAL_ACCESS_TYPE_SONGS_CONTENT_ACCESS = 'songs content access';
 
     const DIGITAL_ACCESS_TIME_TYPE_RECURRING = 'recurring';
     const DIGITAL_ACCESS_TIME_TYPE_ONE_TIME = 'one time';
