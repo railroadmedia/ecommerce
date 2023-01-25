@@ -36,6 +36,11 @@ class DiscountCriteriaService
      */
     private $userProvider;
 
+    /**
+     * @var UpgradeService
+     */
+    private $upgradeService;
+
     const PRODUCT_QUANTITY_REQUIREMENT_TYPE = 'product quantity requirement';
     const DATE_REQUIREMENT_TYPE = 'date requirement';
     const ORDER_TOTAL_REQUIREMENT_TYPE = 'order total requirement';
@@ -45,6 +50,7 @@ class DiscountCriteriaService
     const PRODUCT_OWN_TYPE = 'product own requirement';
     const CART_ITEMS_TOTAL_REQUIREMENT_TYPE = 'total cart items requirement';
     const IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE = 'is member of brand requirement';
+    const IS_MEMBERSHIP_CHANGING = 'is membership upgrade requirement';
 
     /**
      * DiscountCriteriaService constructor.
@@ -56,12 +62,13 @@ class DiscountCriteriaService
     public function __construct(
         ProductRepository $productRepository,
         UserProductRepository $userProductRepository,
-        UserProviderInterface $userProvider
-    )
-    {
+        UserProviderInterface $userProvider,
+        UpgradeService $upgradeService,
+    ) {
         $this->productRepository = $productRepository;
         $this->userProductRepository = $userProductRepository;
         $this->userProvider = $userProvider;
+        $this->upgradeService = $upgradeService;
     }
 
     /**
@@ -89,8 +96,7 @@ class DiscountCriteriaService
         Cart $cart,
         float $totalDueInItems,
         float $totalDueInShipping
-    ): bool
-    {
+    ): bool {
         switch ($discountCriteria->getType()) {
             case self::PRODUCT_QUANTITY_REQUIREMENT_TYPE:
                 return $this->productQuantityRequirementMet($discountCriteria, $cart);
@@ -110,6 +116,8 @@ class DiscountCriteriaService
                 return $this->cartItemsTotalRequirement($discountCriteria, $cart);
             case self::IS_MEMBER_OF_BRAND_REQUIREMENT_TYPE:
                 return $this->isMemberOfBrandRequirement($discountCriteria);
+            case self::IS_MEMBERSHIP_CHANGING:
+                return $this->isMembershipChangingRequirementMet($discountCriteria, $cart);
             default:
                 return false;
         }
@@ -134,26 +142,24 @@ class DiscountCriteriaService
         }
 
         foreach ($discountCriteria->getProducts() as $dcProduct) {
-
             $productCartItem = $cart->getItemBySku($dcProduct->getSku());
 
             if (
-            (isset($productsMap[$dcProduct->getId()]) &&
-                $productCartItem &&
-                ($productCartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
-                ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())
-                ||
-                ((integer)$discountCriteria->getMin() == 0 &&
-                (integer)$discountCriteria->getMax() == 0 &&
-                empty($productCartItem))
-            )
+                (isset($productsMap[$dcProduct->getId()]) &&
+                    $productCartItem &&
+                    ($productCartItem->getQuantity() >= (integer)$discountCriteria->getMin()) &&
+                    ($productCartItem->getQuantity() <= (integer)$discountCriteria->getMax())
+                    ||
+                    ((integer)$discountCriteria->getMin() == 0 &&
+                        (integer)$discountCriteria->getMax() == 0 &&
+                        empty($productCartItem))
+                )
             ) {
                 // if dcProduct is in cart with valid quantity
                 if ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY) {
                     return true;
                 }
-            }
-            elseif ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL) {
+            } elseif ($discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ALL) {
                 // if dcProduct is not in cart with valid quantity & discount criteria relation to producs == ALL
                 return false;
             }
@@ -275,7 +281,7 @@ class DiscountCriteriaService
             return true;
         }
 
-   		if (!auth()->check() || !$discountCriteria->getProductsRelationType()) {
+        if (!auth()->check() || !$discountCriteria->getProductsRelationType()) {
             return false;
         }
 
@@ -291,7 +297,7 @@ class DiscountCriteriaService
             return $userProductsCount === 0;
         }
 
-		return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
+        return $discountCriteria->getProductsRelationType() == DiscountCriteria::PRODUCTS_RELATION_TYPE_ANY ?
             $userProductsCount > 0 : $userProductsCount == count($discountCriteria->getProducts());
     }
 
@@ -362,5 +368,20 @@ class DiscountCriteriaService
     protected function getPurchaser(): User
     {
         return self::$purchaser ?: $this->userProvider->getCurrentUser();
+    }
+
+    private function isMembershipChangingRequirementMet(DiscountCriteria $discountCriteria, Cart $cart)
+    {
+        if (!$cart->getMembershipChangeDiscountsEnabled()) {
+            return false;
+        }
+        $products = $this->productRepository->bySkus($cart->listSkus());
+        foreach ($products as $product) {
+            $isMembershipChanging = $this->upgradeService->isMembershipChanging($product);
+            if ($isMembershipChanging) {
+                return true;
+            }
+        }
+        return false;
     }
 }

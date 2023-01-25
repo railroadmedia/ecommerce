@@ -37,7 +37,9 @@ class Product
     const TYPE_PHYSICAL_ONE_TIME = 'physical one time';
 
     const DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS = 'all content access';
+    const DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS = 'basic content access';
     const DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS = 'specific content access';
+    const DIGITAL_ACCESS_TYPE_SONGS_CONTENT_ACCESS = 'songs content access';
 
     const DIGITAL_ACCESS_TIME_TYPE_RECURRING = 'recurring';
     const DIGITAL_ACCESS_TIME_TYPE_ONE_TIME = 'one time';
@@ -537,7 +539,6 @@ class Product
     public function getPublicStockCount(): ?int
     {
         return $this->publicStockCount;
-
     }
 
     /**
@@ -621,7 +622,9 @@ class Product
             return [];
         }
 
-        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode($this->digitalAccessPermissionNames);
+        return is_array($this->digitalAccessPermissionNames) ? $this->digitalAccessPermissionNames : json_decode(
+            $this->digitalAccessPermissionNames
+        );
     }
 
     /**
@@ -671,5 +674,11 @@ class Product
         }
 
         return intval($this->getStock()) <= intval($this->getMinStockLevel());
+    }
+
+    public function isMembershipProduct(): bool
+    {
+        return $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS
+            || $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
     }
 }

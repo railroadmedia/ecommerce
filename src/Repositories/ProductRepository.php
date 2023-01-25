@@ -223,4 +223,25 @@ class ProductRepository extends RepositoryBase
     {
         return $this->bySkus($cart->listSkus());
     }
+
+    public function getMembershipProduct(string $brand, string $digitalAccessType, string $digitalAccessTimeIntervalType): ?Product
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $q = $qb->select('p')
+            ->from(Product::class, 'p')
+            ->where($qb->expr()->eq('p.type', ':type'))
+            ->andWhere($qb->expr()->eq('p.brand', ':brand'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessType', ':digitalAccessType'))
+            ->andWhere($qb->expr()->eq('p.digitalAccessTimeIntervalType', ':digitalAccessTimeIntervalType'))
+            ->andWhere("p.sku NOT LIKE '%trial%'")
+            ->orderBy('p.id', 'desc')
+            ->getQuery()
+            ->setParameter('type', Product::TYPE_DIGITAL_SUBSCRIPTION)
+            ->setParameter('brand', $brand)
+            ->setParameter('digitalAccessType', $digitalAccessType)
+            ->setParameter('digitalAccessTimeIntervalType', $digitalAccessTimeIntervalType);
+
+        return $q->getResult()[0] ?? null;
+    }
 }

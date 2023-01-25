@@ -122,7 +122,7 @@ class AccessCodeService
             foreach ($accessCodeProducts as $product) {
 
                 // only extend their membership subscription if the code being claimed is for a membership product
-                if ($product->getDigitalAccessType() != Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS) {
+                if (!$product->isMembershipProduct()) {
                     continue;
                 }
 
@@ -206,7 +206,7 @@ class AccessCodeService
 
                 $userProductSku = $userProduct->getProduct()->getSku();
 
-                if($userProduct->getProduct()->getDigitalAccessType() == Product::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS){
+                if($userProduct->getProduct()->isMembershipProduct()){
 
                     $userProductExpirationDate = Carbon::parse($userProduct->getExpirationDate());
 

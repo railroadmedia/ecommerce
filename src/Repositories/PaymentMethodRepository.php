@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Repositories;
 
+use App\Modules\Ecommerce\Models\UserPaymentMethod;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
@@ -147,10 +148,10 @@ class PaymentMethodRepository extends RepositoryBase
             ->where('upm.user = :userId')
             ->andWhere('pmj.id = pm.id')
             ->andWhere('upm.isPrimary = true')
+            ->orderBy('pm.id', 'desc')
             ->setParameter('userId', $userId);
-
         return $qb->getQuery()
-            ->getOneOrNullResult();
+            ->getResult()[0] ?? null;
     }
 
     /**
@@ -200,12 +201,12 @@ class PaymentMethodRepository extends RepositoryBase
                             )
                     )
             )
-            ->setParameter('ccBrand', $brand)
-            ->setParameter('ppbaBrand', $brand);
+                ->setParameter('ccBrand', $brand)
+                ->setParameter('ppbaBrand', $brand);
         }
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 
     /**
@@ -253,11 +254,11 @@ class PaymentMethodRepository extends RepositoryBase
                             )
                     )
             )
-            ->setParameter('ccBrand', $brand)
-            ->setParameter('ppbaBrand', $brand);
+                ->setParameter('ccBrand', $brand)
+                ->setParameter('ppbaBrand', $brand);
         }
 
         return $qb->getQuery()
-                    ->getResult();
+            ->getResult();
     }
 }

@@ -90,8 +90,7 @@ class CartService
         LocationService $locationService,
         UserProductService $userProductService,
         UserProviderInterface $userProvider
-    )
-    {
+    ) {
         $this->discountService = $discountService;
         $this->productRepository = $productRepository;
         $this->taxService = $taxService;
@@ -122,15 +121,13 @@ class CartService
         int $quantity,
         bool $lock = false,
         string $promoCode = ''
-    ): Product
-    {
+    ): Product {
         $this->refreshCart();
 
         // cart locking
         if ($lock) {
             $this->cart->setLocked(true);
         } elseif ($this->cart->getLocked()) {
-
             // if the cart is locked and a new item is added, we should wipe it first
             $this->cart = new Cart();
             $this->cart->toSession();
@@ -282,7 +279,6 @@ class CartService
 
         if (!$this->isPaymentPlanEligible() ||
             !in_array($numberOfPayments, config('ecommerce.payment_plan_options'))) {
-
             throw new UpdateNumberOfPaymentsCartException($numberOfPayments);
         }
 
@@ -599,8 +595,7 @@ class CartService
     public function getDueForPaymentPlanPayments(
         $taxRate,
         $numberOfPaymentsOverride = null
-    )
-    {
+    ) {
         $totalItemCostDue = $this->getTotalItemCosts();
         $numberOfPayments = $numberOfPaymentsOverride ?? $this->cart->getPaymentPlanNumberOfPayments() ?? 1;
 
@@ -692,16 +687,17 @@ class CartService
      */
     public function isPaymentPlanEligible()
     {
+        if ($this->hasAnyRecurringSubscriptionProducts()) {
+            return false;
+        }
         $orderDue = $this->getDueForOrder();
 
-        if (!$this->hasAnyRecurringSubscriptionProducts() &&
-            $this->hasAnyPhysicalProducts() &&
+        if ($this->hasAnyPhysicalProducts() &&
             $orderDue > config('ecommerce.payment_plan_minimum_price_with_physical_items', 100)) {
             return true;
         }
 
-        if (!$this->hasAnyRecurringSubscriptionProducts() &&
-            !$this->hasAnyPhysicalProducts() &&
+        if (!$this->hasAnyPhysicalProducts() &&
             $orderDue > config('ecommerce.payment_plan_minimum_price_without_physical_items', 100)) {
             return true;
         }
@@ -710,7 +706,8 @@ class CartService
     }
 
 
-    public function checkProductsStock($cart) {
+    public function checkProductsStock($cart)
+    {
         $productsBySku = $this->productRepository->bySkus($cart->listSkus());
         $productsBySku = key_array_of_entities_by($productsBySku, 'getSku');
 
@@ -848,7 +845,6 @@ class CartService
         $financeCost = config('ecommerce.financing_cost_per_order', 1);
 
         if ($this->isPaymentPlanEligible()) {
-
             if ($numberOfPayments > 1) {
                 $totals['financing_cost_per_payment'] = round($financeCost / $numberOfPayments, 2);
 
@@ -967,7 +963,6 @@ class CartService
         $result = [];
 
         foreach ($configProductsData[$brand] ?? [] as $recommendedProductData) {
-
             $sku = $recommendedProductData['sku'];
 
             if (!$count) {
@@ -1003,13 +998,13 @@ class CartService
 
             $result[$sku] = [
                 'name_override' => isset($recommendedProductData['name_override']) ?
-                                    $recommendedProductData['name_override'] : null,
+                    $recommendedProductData['name_override'] : null,
                 'sales_page_url_override' => isset($recommendedProductData['sales_page_url_override']) ?
-                                    $recommendedProductData['sales_page_url_override'] : null,
+                    $recommendedProductData['sales_page_url_override'] : null,
                 'add_directly_to_cart' => isset($recommendedProductData['add_directly_to_cart']) ?
-                                    $recommendedProductData['add_directly_to_cart'] : true,
+                    $recommendedProductData['add_directly_to_cart'] : true,
                 'cta' => isset($recommendedProductData['cta']) ?
-                                    $recommendedProductData['cta'] : null,
+                    $recommendedProductData['cta'] : null,
             ];
 
             $count--;
@@ -1082,7 +1077,7 @@ class CartService
             ),
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
+                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME)
         ];
 
         if ($nameOverride !== null) {
@@ -1102,5 +1097,18 @@ class CartService
         }
 
         return $serialization;
+    }
+
+    /**
+     * @return void
+     */
+    public function AllowMembershipChangeDiscounts()
+    {
+        $this->cart->setMembershipChangeDiscountsEnabled(true);
+    }
+
+    public function getMembershipChangeDiscountsEnabled(): bool
+    {
+        return $this->cart->getMembershipChangeDiscountsEnabled();
     }
 }
