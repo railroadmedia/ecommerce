@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\Cart\UpdateNumberOfPaymentsCartException;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Location\Services\LocationService;
+use Railroad\Permissions\Services\PermissionService;
 use Throwable;
 
 class CartService
@@ -63,6 +64,16 @@ class CartService
      */
     private $userProvider;
 
+    /**
+     * @var PermissionService
+     */
+    private $permissionService;
+
+    /**
+     * @var UpgradeService
+     */
+    private $upgradeService;
+
     const SESSION_KEY = 'shopping-cart-';
     const LOCKED_SESSION_KEY = 'order-form-locked';
     const PAYMENT_PLAN_NUMBER_OF_PAYMENTS_SESSION_KEY = 'payment-plan-number-of-payments';
@@ -89,7 +100,9 @@ class CartService
         ShippingService $shippingService,
         LocationService $locationService,
         UserProductService $userProductService,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        PermissionService $permissionService,
+        UpgradeService $upgradeService
     ) {
         $this->discountService = $discountService;
         $this->productRepository = $productRepository;
@@ -98,6 +111,8 @@ class CartService
         $this->locationService = $locationService;
         $this->userProductService = $userProductService;
         $this->userProvider = $userProvider;
+        $this->permissionService = $permissionService;
+        $this->upgradeService = $upgradeService;
     }
 
     /**
@@ -1077,7 +1092,8 @@ class CartService
             ),
             'requires_shipping' => $product->getIsPhysical(),
             'is_digital' => ($product->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION ||
-                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME)
+                $product->getType() == Product::TYPE_DIGITAL_ONE_TIME),
+            'is_membership_change' => $this->upgradeService->isMembershipChanging($product),
         ];
 
         if ($nameOverride !== null) {
