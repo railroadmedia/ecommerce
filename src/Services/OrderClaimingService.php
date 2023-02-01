@@ -64,6 +64,11 @@ class OrderClaimingService
     private $userProvider;
 
     /**
+     * @var UpgradeService
+     */
+    private $upgradeService;
+
+    /**
      * OrderClaimingService constructor.
      *
      * @param CartService $cartService
@@ -73,6 +78,7 @@ class OrderClaimingService
      * @param PermissionService $permissionService
      * @param TaxService $taxService
      * @param UserProviderInterface $userProvider
+     * @param UpgradeService $upgradeService
      */
     public function __construct(
         CartService $cartService,
@@ -81,9 +87,9 @@ class OrderClaimingService
         EcommerceEntityManager $entityManager,
         PermissionService $permissionService,
         TaxService $taxService,
-        UserProviderInterface $userProvider
-    )
-    {
+        UserProviderInterface $userProvider,
+        UpgradeService $upgradeService
+    ) {
         $this->cartService = $cartService;
         $this->discountService = $discountService;
         $this->shippingService = $shippingService;
@@ -91,6 +97,7 @@ class OrderClaimingService
         $this->entityManager = $entityManager;
         $this->taxService = $taxService;
         $this->userProvider = $userProvider;
+        $this->upgradeService = $upgradeService;
     }
 
     /**
@@ -142,7 +149,6 @@ class OrderClaimingService
         if ($currentUser &&
             $this->permissionService->can(auth()->id(), 'place-orders-for-other-users') &&
             $currentUser->getId() != $purchaser->getId()) {
-
             $order->setPlacedByUser($currentUser);
         }
 
@@ -189,7 +195,6 @@ class OrderClaimingService
         $subscriptions = [];
 
         foreach ($orderItems as $orderItem) {
-
             $order->addOrderItem($orderItem);
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
@@ -208,7 +213,6 @@ class OrderClaimingService
 
             // create product subscriptions
             if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
-
                 $subscription = $this->createSubscription(
                     $purchaser,
                     $paymentMethod,
@@ -242,7 +246,6 @@ class OrderClaimingService
 
         // create the payment plan subscription if required
         if ($cart->getPaymentPlanNumberOfPayments() > 1 && !empty($payment)) {
-
             $subscription = $this->createSubscription(
                 $purchaser,
                 $paymentMethod,
@@ -292,8 +295,7 @@ class OrderClaimingService
         ?OrderItem $orderItem,
         ?Cart $cart,
         int $totalCyclesDue = null
-    ): Subscription
-    {
+    ): Subscription {
         $type = Subscription::TYPE_SUBSCRIPTION;
 
         $nextBillDate = null;
@@ -304,7 +306,6 @@ class OrderClaimingService
         $totalCyclesPaid = 1;
 
         if (is_null($orderItem)) {
-
             $nextBillDate =
                 Carbon::now()
                     ->addMonths(1);
@@ -314,25 +315,25 @@ class OrderClaimingService
             $subscriptionPricePerPayment = $this->cartService->getPaymentPlanRecurringPrice($totalCyclesDue);
 
             $subscriptionTaxableAmount = $this->cartService->getTotalItemCosts();
-        }
-        else {
-
+        } else {
             $product = $orderItem->getProduct();
 
-            if (!empty($product->getSubscriptionIntervalType())) {
+            $isMembershipChange = $this->cartService->getMembershipChangeDiscountsEnabled()
+                && $this->upgradeService->isMembershipChanging($product);
+            if ($isMembershipChange) {
+                $currentSubscription = $this->upgradeService->getCurrentSubscription();
+                $nextBillDate = $currentSubscription->getPaidUntil();
+                $this->upgradeService->cancelSubscription($currentSubscription, 'Cancelled due to membership change');
+            } elseif (!empty($product->getSubscriptionIntervalType())) {
                 if ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_monthly')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addMonths($product->getSubscriptionIntervalCount());
-
-                }
-                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
+                } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_yearly')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addYears($product->getSubscriptionIntervalCount());
-
-                }
-                elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
+                } elseif ($product->getSubscriptionIntervalType() == config('ecommerce.interval_type_daily')) {
                     $nextBillDate =
                         Carbon::now()
                             ->addDays($product->getSubscriptionIntervalCount());
@@ -343,13 +344,12 @@ class OrderClaimingService
             $subscriptionPricePerPayment = $orderItem->getProduct()->getPrice();
             $cartItem = $cart ? $cart->getItemBySku($product->getSku()) : null;
 
-            if ($cart && $cartItem && $cartItem->getDueOverride()) {
+            if ($cart && $cartItem && $cartItem->getDueOverride() && !$isMembershipChange) {
                 $subscriptionPricePerPayment = $cartItem->getDueOverride();
                 $productPriceOverride = true;
             }
 
             foreach ($orderItem->getOrderItemDiscounts() as $orderItemDiscount) {
-
                 $discount = $orderItemDiscount->getDiscount();
 
                 if ($discount->getType() == DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE) {
@@ -357,15 +357,16 @@ class OrderClaimingService
                     $nextBillDate =
                         Carbon::now()
                             ->addDays($discount->getAmount());
-
-                }
-                elseif (
+                } elseif (
                     $discount->getType() == DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE
                     && !$productPriceOverride
                 ) {
                     $subscriptionPricePerPayment =
-                        round($orderItem->getProduct()
-                            ->getPrice() - $discount->getAmount(), 2);
+                        round(
+                            $orderItem->getProduct()
+                                ->getPrice() - $discount->getAmount(),
+                            2
+                        );
                 }
             }
 
@@ -394,7 +395,7 @@ class OrderClaimingService
 
         if ($purchaser->getType() == Purchaser::USER_TYPE) {
             $subscription->setUser($purchaser->getUserObject());
-        }elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
+        } elseif ($purchaser->getType() == Purchaser::CUSTOMER_TYPE) {
             $subscription->setCustomer($purchaser->getCustomerEntity());
         }
 
@@ -450,8 +451,7 @@ class OrderClaimingService
         Cart $cart,
         array $orderItems,
         array $subscriptions
-    ): ?PaymentTaxes
-    {
+    ): ?PaymentTaxes {
         $paymentTaxes = new PaymentTaxes();
 
         $paymentTaxes->setPayment($payment);
@@ -469,12 +469,11 @@ class OrderClaimingService
         } else {
             foreach ($orderItems as $orderItem) {
                 if ($orderItem->getProduct()->getType() == Product::TYPE_DIGITAL_SUBSCRIPTION) {
-
                     // the DiscountService::SUBSCRIPTION_RECURRING_PRICE_AMOUNT_OFF_TYPE type discount is applied here in OrderClaimingService, not in cart service
                     // the resulting product due needs to match subscription
 
                     $orderItemSubscription = $subscriptions[$orderItem->getProduct()->getSku()];
-                    $totalItemCostDue +=  $orderItemSubscription->getTotalPrice() - $orderItemSubscription->getTax();
+                    $totalItemCostDue += $orderItemSubscription->getTotalPrice() - $orderItemSubscription->getTax();
                 } else {
                     $totalItemCostDue += $orderItem->getFinalPrice();
                 }

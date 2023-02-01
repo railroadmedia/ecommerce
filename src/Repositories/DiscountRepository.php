@@ -6,9 +6,12 @@ use Doctrine\ORM\ORMException;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Discount;
+use Railroad\Ecommerce\Entities\DiscountCriteria;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
+use Railroad\Ecommerce\Services\DiscountCriteriaService;
 use Railroad\Ecommerce\Services\DiscountService;
+use Railroad\Ecommerce\Services\UpgradeService;
 
 /**
  * Class DiscountRepository
@@ -119,12 +122,17 @@ class DiscountRepository extends RepositoryBase
             )
             ->setParameter('active', true);
 
-        return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
-            ->useQueryCache(true)
-            ->useResultCache(true)
+        $results = $qb->getQuery()
             ->getResult();
+
+        $upgradeDiscount = new Discount();
+        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_CHANGING_TYPE);
+        $discountCriteria = new DiscountCriteria();
+        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_CHANGING);
+        $upgradeDiscount->addDiscountCriteria($discountCriteria);
+
+        $results[] = $upgradeDiscount;
+        return $results;
     }
 
     /**
@@ -217,10 +225,16 @@ class DiscountRepository extends RepositoryBase
                     DiscountService::SUBSCRIPTION_FREE_TRIAL_DAYS_TYPE
                 ]
             );
-
-        return $qb->getQuery()
-            ->setResultCacheDriver($this->arrayCache)
-            ->setQueryCacheDriver($this->arrayCache)
+        $results = $qb->getQuery()
             ->getResult();
+        $upgradeDiscount = new Discount();
+        $upgradeDiscount->setType(DiscountService::MEMBERSHIP_CHANGING_TYPE);
+        $discountCriteria = new DiscountCriteria();
+        $discountCriteria->setType(DiscountCriteriaService::IS_MEMBERSHIP_CHANGING);
+        $upgradeDiscount->addDiscountCriteria($discountCriteria);
+
+        $results[] = $upgradeDiscount;
+
+        return $results;
     }
 }
