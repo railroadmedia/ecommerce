@@ -105,7 +105,6 @@ class InvoiceService
             $orderId = $order->getId();
             $customerId = $order->getCustomer()?->getId() ?? 0;
             $userId = $order->getUser()?->getId() ?? 0;
-            Log::debug("sendOrderInvoiceEmail orderId=$orderId userId=$userId customerId=$customerId");
             $orderInvoiceEmail = new OrderInvoice(
                 $this->getViewDataForOrderInvoice($order, $payment), $payment->getGatewayName()
             );
@@ -116,6 +115,7 @@ class InvoiceService
                         ->getEmail() :
                     $order->getCustomer()
                         ->getEmail();
+            Log::debug("sendOrderInvoiceEmail orderId=$orderId userId=$userId customerId=$customerId email=$emailAddress");
 
             Mail::to($emailAddress)
                 ->send($orderInvoiceEmail);
