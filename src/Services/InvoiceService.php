@@ -103,9 +103,9 @@ class InvoiceService
     {
         try {
             $orderId = $order->getId();
-            $customerId = $order->getCustomer()?->getId() ?? 0;
-            $userId = $order->getUser()?->getId() ?? 0;
-            Log::debug("sendOrderInvoiceEmail orderId=$orderId userId=$userId customerId=$customerId");
+            $customerId = $order->getCustomer() ? $order->getCustomer()->getId() : 0;
+            $userId = $order->getUser() ? $order->getUser()->getId() : 0;
+
             $orderInvoiceEmail = new OrderInvoice(
                 $this->getViewDataForOrderInvoice($order, $payment), $payment->getGatewayName()
             );
@@ -117,9 +117,10 @@ class InvoiceService
                     $order->getCustomer()
                         ->getEmail();
 
+            Log::warning("sendOrderInvoiceEmail orderId=$orderId userId=$userId customerId=$customerId email=$emailAddress");
+
             Mail::to($emailAddress)
                 ->send($orderInvoiceEmail);
-
         } catch (Exception $e) {
             error_log('Failed to send invoice for order: ' . $order->getId());
             error_log($e);
@@ -163,7 +164,7 @@ class InvoiceService
             return $this->getViewDataForOrderInvoice($subscription->getOrder(), $payment);
         }
 
-        foreach($taxesPerType as $taxForAType){
+        foreach ($taxesPerType as $taxForAType) {
             $totalTaxes += $taxForAType;
         }
 
@@ -215,7 +216,6 @@ class InvoiceService
 
             Mail::to($emailAddress)
                 ->send($subscriptionRenewalInvoiceEmail);
-
         } catch (Exception $e) {
             error_log('Failed to send invoice for subscription renewal: ' . $subscription->getId());
             error_log($e);
