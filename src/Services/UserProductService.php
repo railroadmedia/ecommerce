@@ -349,7 +349,7 @@ class UserProductService
         Product $product,
         ?DateTimeInterface $expirationDate,
         $quantity = 0,
-        $allowMembershipAccess = true
+        $allowPackBonusMembershipAccess = true
     ) {
         /**
          * @var $userProduct UserProduct
@@ -363,8 +363,8 @@ class UserProductService
             $this->updateUserProduct($userProduct, $expirationDate, ($userProduct->getQuantity() + $quantity));
         }
 
-        if ($allowMembershipAccess) {
-            $this->handlePackMembershipAccess($product, $user);
+        if ($allowPackBonusMembershipAccess) {
+            $this->handlePackBonusMembershipAccess($product, $user);
         }
     }
 
@@ -545,14 +545,14 @@ class UserProductService
         return $this->userProductRepository->getLatestExpirationDateByBrand($user, $brand);
     }
 
-    public function handlePackMembershipAccess(Product $product, User $user): void
+    public function handlePackBonusMembershipAccess(Product $product, User $user): void
     {
         if (!$membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate()) {
             return;
         }
 
         //Handle adding a fixed membership access time for cohort packs
-        $membershipProduct = $this->productRepository->bySku('musora-access-pack');
+        $membershipProduct = $this->productRepository->bySku('musora-access-pack-bonus');
         if (!$membershipProduct) {
             Log::error("Cohort pack sku does not exist.");
             return;
