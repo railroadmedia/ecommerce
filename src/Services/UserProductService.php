@@ -155,6 +155,8 @@ class UserProductService
             ->setParameter('userId', $userId);
 
         return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 
@@ -175,6 +177,8 @@ class UserProductService
             ->setParameter('userIds', $userIds);
 
         return $qb->getQuery()
+            ->setResultCacheDriver($this->arrayCache)
+            ->setQueryCacheDriver($this->arrayCache)
             ->getResult();
     }
 
@@ -543,7 +547,8 @@ class UserProductService
 
     public function handlePackBonusMembershipAccess(Product $product, User $user): void
     {
-        if (!$membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate()) {
+        $membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate();
+        if (empty($membershipAccessExpirationDate)) {
             return;
         }
 
