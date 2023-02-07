@@ -547,8 +547,7 @@ class UserProductService
 
     public function handlePackMembershipAccess(Product $product, User $user): void
     {
-        if ($product->getDigitalAccessType() != Product::DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS ||
-            !$membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate()) {
+        if (!$membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate()) {
             return;
         }
 

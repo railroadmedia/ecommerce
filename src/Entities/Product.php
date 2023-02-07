@@ -2,7 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
-use Carbon\Carbon;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
@@ -625,7 +625,7 @@ class Product
     /**
      * @return string|null
      */
-    public function getDigitalMembershipAccessExpirationDate(): ?Carbon
+    public function getDigitalMembershipAccessExpirationDate(): ?DateTimeInterface
     {
         return $this->digitalMembershipAccessExpirationDate;
     }
@@ -633,7 +633,7 @@ class Product
     /**
      * @param string|null $digitalAccessType
      */
-    public function setDigitalAccessExpirationDate(?Carbon $date): void
+    public function setDigitalAccessExpirationDate(?DateTimeInterface $date): void
     {
         $this->digitalMembershipAccessExpirationDate = $date;
     }
