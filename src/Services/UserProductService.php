@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Subscription;
@@ -18,6 +19,7 @@ use Railroad\Ecommerce\Events\UserProducts\UserProductCreated;
 use Railroad\Ecommerce\Events\UserProducts\UserProductDeleted;
 use Railroad\Ecommerce\Events\UserProducts\UserProductUpdated;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
+use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
 use Throwable;
 
@@ -34,6 +36,11 @@ class UserProductService
     protected $userProductRepository;
 
     /**
+     * @var ProductRepository
+     */
+    protected $productRepository;
+
+    /**
      * @var ArrayCache
      */
     public $arrayCache;
@@ -46,11 +53,12 @@ class UserProductService
      */
     public function __construct(
         EcommerceEntityManager $entityManager,
-        UserProductRepository $userProductRepository
+        UserProductRepository $userProductRepository,
+        ProductRepository $productRepository
     ) {
         $this->entityManager = $entityManager;
         $this->userProductRepository = $userProductRepository;
-
+        $this->productRepository = $productRepository;
         $this->arrayCache = app()->make('EcommerceArrayCache');
     }
 
@@ -203,7 +211,7 @@ class UserProductService
             ->setParameter('product', $product);
 
         return $qb->getQuery()
-                ->getResult()[0] ?? null;
+            ->getResult()[0] ?? null;
     }
 
     /**
@@ -340,7 +348,8 @@ class UserProductService
         User $user,
         Product $product,
         ?DateTimeInterface $expirationDate,
-        $quantity = 0
+        $quantity = 0,
+        $allowMembershipAccess = true
     ) {
         /**
          * @var $userProduct UserProduct
@@ -352,6 +361,10 @@ class UserProductService
             $this->createUserProduct($user, $product, $expirationDate, $productQuantity);
         } else {
             $this->updateUserProduct($userProduct, $expirationDate, ($userProduct->getQuantity() + $quantity));
+        }
+
+        if ($allowMembershipAccess) {
+            $this->handlePackMembershipAccess($product, $user);
         }
     }
 
@@ -530,5 +543,27 @@ class UserProductService
     public function getLatestExpirationDateByBrand(User $user, string $brand)
     {
         return $this->userProductRepository->getLatestExpirationDateByBrand($user, $brand);
+    }
+
+    public function handlePackMembershipAccess(Product $product, User $user): void
+    {
+        if ($product->getDigitalAccessType() != Product::DIGITAL_ACCESS_TYPE_SPECIFIC_CONTENT_ACCESS ||
+            !$membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate()) {
+            return;
+        }
+
+        //Handle adding a fixed membership access time for cohort packs
+        $membershipProduct = $this->productRepository->bySku('musora-access-pack');
+        if (!$membershipProduct) {
+            Log::error("Cohort pack sku does not exist.");
+            return;
+        }
+        $membershipProduct = $this->assignUserProduct(
+            $user,
+            $membershipProduct,
+            $membershipAccessExpirationDate,
+            1,
+            false //avoid infinite looping
+        );
     }
 }
