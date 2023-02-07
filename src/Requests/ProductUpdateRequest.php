@@ -135,6 +135,7 @@ class ProductUpdateRequest extends FormRequest
                 'data.attributes.digital_access_time_type',
                 'data.attributes.digital_access_time_interval_type',
                 'data.attributes.digital_access_type',
+                'data.attributes.digital_membership_access_expiration_date',
             ]
         );
     }

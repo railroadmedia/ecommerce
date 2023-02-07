@@ -40,6 +40,9 @@ class ProductTransformer extends TransformerAbstract
             'digital_access_time_type' => $product->getDigitalAccessTimeType(),
             'digital_access_time_interval_type' => $product->getDigitalAccessTimeIntervalType(),
             'digital_access_type' => $product->getDigitalAccessType(),
+            'digital_membership_access_expiration_date' => !empty($product->getDigitalMembershipAccessExpirationDate()) ?
+                $product->getDigitalMembershipAccessExpirationDate()
+                    ->toDateString() : null,
             'digital_access_permission_names' => $product->getDigitalAccessPermissionNames(),
             'note' => $product->getNote(),
             'created_at' => $product->getCreatedAt() ?
