@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Carbon\Carbon;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
@@ -227,6 +228,13 @@ class Product
      * @var string
      */
     protected $digitalAccessType;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true, name="digital_membership_access_expiration_date")
+     *
+     * @var string
+     */
+    protected $digitalMembershipAccessExpirationDate;
 
     /**
      * @ORM\Column(type="text", nullable=true, name="digital_access_permission_names")
@@ -611,6 +619,23 @@ class Product
     public function setDigitalAccessType(?string $digitalAccessType): void
     {
         $this->digitalAccessType = $digitalAccessType;
+    }
+
+
+    /**
+     * @return string|null
+     */
+    public function getDigitalMembershipAccessExpirationDate(): ?Carbon
+    {
+        return $this->digitalMembershipAccessExpirationDate;
+    }
+
+    /**
+     * @param string|null $digitalAccessType
+     */
+    public function setDigitalAccessExpirationDate(?Carbon $date): void
+    {
+        $this->digitalMembershipAccessExpirationDate = $date;
     }
 
     /**
