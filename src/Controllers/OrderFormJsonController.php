@@ -111,8 +111,13 @@ class OrderFormJsonController extends Controller
                 ],
                 404
             );
-        }
-        elseif ($result['redirect'] && !isset($result['errors'])) {
+        } elseif ($result['redirect-with-message'] && isset($result['redirect-message']) && isset($result['redirect-url'])) {
+
+            return ResponseService::redirectWithMessage($result['redirect-url'], $result['redirect-message'])
+                ->addMeta(['redirect' => $result['redirect-url']])
+                ->addMeta(['message' => $result['redirect-message']]);
+
+        } elseif ($result['redirect'] && !isset($result['errors'])) {
 
             return ResponseService::redirect($result['redirect']);
         }

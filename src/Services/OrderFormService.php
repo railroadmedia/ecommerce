@@ -9,6 +9,7 @@ use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Exceptions\RedirectNeededException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
@@ -270,8 +271,17 @@ class OrderFormService
 
                 $paymentMethod = $payment->getPaymentMethod();
             }
-        } catch (PaymentFailedException $paymentFailedException) {
+        } catch (RedirectNeededException $redirectNeededException) {
 
+            $url = $redirectNeededException->getUrlRedirect();
+
+            return [
+                'redirect-with-message' => true,
+                'redirect-url' => $url,
+                'redirect-message' => $redirectNeededException->getMessage()
+            ];
+
+        } catch (PaymentFailedException $paymentFailedException) {
             $url = $request->get('redirect') ?? strtok(app('url')->previous(), '?');
 
             return [

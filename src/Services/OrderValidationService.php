@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Railroad\Ecommerce\Entities\Structures\Cart;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
+use Railroad\Ecommerce\Exceptions\RedirectNeededException;
 
 class OrderValidationService
 {
@@ -48,10 +49,21 @@ class OrderValidationService
             $hasTrialCreatedWithinPeriod = false;
 
             foreach ($usersProducts as $userProduct) {
-                if ($userProduct->getProduct()->getBrand() == $purchaser->getBrand() &&
-                    strpos(strtolower($userProduct->getProduct()->getSku()), 'trial') !== false &&
-                    !empty($userProduct->getExpirationDate()) &&
-                    $userProduct->getExpirationDate() > Carbon::now()->subDays(120)) {
+
+                $currentBrandRelevant = $userProduct->getProduct()->getBrand() == $purchaser->getBrand();
+                $productLikelyATrial = strpos(strtolower($userProduct->getProduct()->getSku()), 'trial') !== false;
+
+                $recentExpiry = false;
+
+                if(!empty($userProduct->getExpirationDate())){
+                    $userProductExpiryNotGreaterThan90DaysPast = $userProduct->getExpirationDate() > Carbon::now()->subDays(90);
+                    // $userProductExpiryPast = $userProduct->getExpirationDate() < Carbon::now();
+                    // $userProductExpiryInFuture = $userProduct->getExpirationDate() > Carbon::now();
+
+                    $recentExpiry = $userProductExpiryNotGreaterThan90DaysPast;
+                }
+
+                if ($currentBrandRelevant && $productLikelyATrial && $recentExpiry) {
                     $hasTrialCreatedWithinPeriod = true;
                 }
             }
@@ -63,9 +75,28 @@ class OrderValidationService
                 foreach ($cart->getItems() as $cartItem) {
                     if (strpos(strtolower($cartItem->getSku()), 'trial') !== false &&
                         $this->cartService->getDueForInitialPayment() === 0) {
-                        throw new PaymentFailedException(
-                            'This account is not eligible for a free trial period. Please choose a regular membership.'
-                        );
+
+                        // OLD PART REPLACED BY NEW STUFF BELOW (delete this comment anytime, ALSO DELETE THE NOW-OBSOLETE COMMENTED-OUT CODE BELOW)
+//                        throw new PaymentFailedException(
+//                            'This account is not eligible for a free trial period. Please choose a regular membership.'
+//                        );
+
+                        // NEW (delete this comment anytime)
+                        $urlForEvergreenSalesPage = 'https://www.' . $purchaser->getBrand() . '.com/lp';
+                        if(env('APP_ENV') === 'local'){
+                            $urlForEvergreenSalesPage = 'https://dev.' . $purchaser->getBrand() . ':8443.com/lp';
+                        }
+
+                        $message = 'We\'re sorry, but with your account configuration the previous products cannot ' .
+                            'be purchased. Instead please proceed from this page we\'ll have you playing right quick!';
+
+                        $message = "We're sorry, but due to technical details your account doesn't qualify for this " .
+                            "offer (trial and expired within past 90 days). Instead please click the link below to " .
+                            "proceed with an improved offer that will work with your unique account history. We're " .
+                            "sorry about the hassle, but it will just take a minute and we'll get you playing right " .
+                            "away!";
+
+                        throw new RedirectNeededException($urlForEvergreenSalesPage, $message);
                     }
                 }
             }
