@@ -19,6 +19,7 @@
 | `claimer_id` | INT(11) |  | NULL |  |
 | `claimed_on` | DATETIME |  | NULL |  |
 | `brand` | VARCHAR(255) | Not null |  |  |
+| `source` | TEXT | NULL |  |  |
 | `created_at` | DATETIME | Not null |  |  |
 | `updated_at` | DATETIME |  | NULL |  |
 
