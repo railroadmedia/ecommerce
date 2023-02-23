@@ -132,7 +132,8 @@ class PaymentJsonController extends Controller
         SubscriptionRepository $subscriptionRepository,
         TaxService $taxService,
         UserPaymentMethodsRepository $userPaymentMethodsRepository
-    ) {
+    )
+    {
         $this->currencyService = $currencyService;
         $this->entityManager = $entityManager;
         $this->invoiceService = $invoiceService;
@@ -184,8 +185,8 @@ class PaymentJsonController extends Controller
         $gateway = $request->input('data.attributes.payment_gateway');
 
         $paymentType =
-            $request->input('data.relationships.subscription.data.id') ? config('ecommerce.renewal_payment_type') :
-                config('ecommerce.order_payment_type');
+                $request->input('data.relationships.subscription.data.id') ? config('ecommerce.renewal_payment_type') :
+                    config('ecommerce.order_payment_type');
 
         // if the currency not exist on the request and the payment it's manual,
         // get the currency with Location package, based on ip address
@@ -197,6 +198,7 @@ class PaymentJsonController extends Controller
         $exception = null;
 
         if (!$request->input('data.relationships.paymentMethod.data.id')) {
+
             // if the logged in user it's not admin => can not pay without payment method
             throw_if(
                 !$this->permissionService->can(
@@ -225,7 +227,9 @@ class PaymentJsonController extends Controller
             $payment->setCreatedAt(Carbon::now());
 
             $this->entityManager->persist($payment);
+
         } else {
+
             $userPaymentMethod = $this->userPaymentMethodsRepository->getByMethodId(
                 $request->input('data.relationships.paymentMethod.data.id')
             );
@@ -254,6 +258,7 @@ class PaymentJsonController extends Controller
             $payment = null;
 
             try {
+
                 $payment = $this->paymentService->chargeUsersExistingPaymentMethod(
                     $paymentMethod->getId(),
                     $currency,
@@ -262,7 +267,9 @@ class PaymentJsonController extends Controller
                     $paymentType,
                     false
                 );
+
             } catch (Exception $paymentFailedException) {
+
                 $exception = new TransactionFailedException(
                     $paymentFailedException->getMessage()
                 );
@@ -279,6 +286,7 @@ class PaymentJsonController extends Controller
         $subscription = null;
 
         if ($request->input('data.relationships.subscription.data.id')) {
+
             $subscriptionId = $request->input(
                 'data.relationships.subscription.data.id'
             );
@@ -295,6 +303,7 @@ class PaymentJsonController extends Controller
             $this->entityManager->persist($subscriptionPayment);
 
             if ($payment->getTotalPaid() > 0) {
+
                 $subscription->setIsActive(true);
                 $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
                 $subscription->setPaidUntil(
@@ -306,6 +315,7 @@ class PaymentJsonController extends Controller
 
                 $subscription->setRenewalAttempt(0);
                 $subscription->setFailedPayment(null);
+
             } else {
                 $subscription->setRenewalAttempt($subscription->getRenewalAttempt() + 1);
                 $subscription->setFailedPayment($payment);
@@ -316,6 +326,7 @@ class PaymentJsonController extends Controller
 
         // Save the link between order and payment and save the paid amount on order row
         if ($request->input('data.relationships.order.data.id')) {
+
             $oderId = $request->input('data.relationships.order.data.id');
 
             $order = $this->orderRepository->find($oderId);
@@ -338,6 +349,7 @@ class PaymentJsonController extends Controller
             }
 
             if ($payment->getTotalPaid() > 0) {
+
                 /**
                  * @var $orderPayments [] \Railroad\Ecommerce\Entities\OrderPayment
                  */
@@ -346,6 +358,7 @@ class PaymentJsonController extends Controller
                 $basedSumPaid = 0;
 
                 foreach ($orderPayments as $pastOrderPayment) {
+
                     /**
                      * @var $pastOrderPayment OrderPayment
                      */
@@ -375,10 +388,9 @@ class PaymentJsonController extends Controller
                         )
                     );
                 }
-            } else {
-                if ($paymentPlan) {
-                    $paymentPlan->setRenewalAttempt($paymentPlan->getRenewalAttempt() + 1);
-                }
+
+            } else if ($paymentPlan) {
+                $paymentPlan->setRenewalAttempt($paymentPlan->getRenewalAttempt() + 1);
             }
         }
 
@@ -396,10 +408,12 @@ class PaymentJsonController extends Controller
                 $address = new Address($country, $region);
             } elseif ($subscription && $subscription->getPaymentMethod() &&
                 $subscription->getPaymentMethod()->getBillingAddress()) {
+
                 $country = $subscription->getPaymentMethod()->getBillingAddress()->getCountry();
                 $region = $subscription->getPaymentMethod()->getBillingAddress()->getRegion();
                 $address = new Address($country, $region);
             } elseif ($order) {
+
                 if ($order->getShippingAddress()) {
                     $country = $order->getShippingAddress()->getCountry();
                     $region = $order->getShippingAddress()->getRegion();
@@ -441,10 +455,8 @@ class PaymentJsonController extends Controller
 
         if (!is_null($subscription)) {
             event(new UserSubscriptionRenewed($subscription, $payment));
-        } else {
-            if ($user) {
-                event(new PaymentEvent($payment, $user));
-            }
+        } else if ($user) {
+            event(new PaymentEvent($payment, $user));
         }
 
         return ResponseService::payment($payment);
@@ -532,44 +544,12 @@ class PaymentJsonController extends Controller
 
         if (!empty($order)) {
             $this->invoiceService->sendOrderInvoiceEmail($order, $payment);
+        } else if (!empty($subscription)) {
+            $this->invoiceService->sendSubscriptionRenewalInvoiceEmail($subscription, $payment);
         } else {
-            if (!empty($subscription)) {
-                $this->invoiceService->sendSubscriptionRenewalInvoiceEmail($subscription, $payment);
-            } else {
-                throw new NotFoundException(
-                    'Invoice sending failed, payment with id: ' . $paymentId . ' has no associated order or subscription'
-                );
-            }
-        }
-
-        return ResponseService::empty(204);
-    }
-
-    public function testSendInvoice()
-    {
-        $paymentId = 921381; //sends email to robert@musora.com
-        $payment = $this->paymentRepository->findOneBy(['id' => $paymentId]);
-
-        throw_if(
-            is_null($payment),
-            new NotFoundException(
-                'Invoice sending failed, payment not found with id: ' . $paymentId
-            )
-        );
-
-        $order = $payment->getOrder();
-        $subscription = $payment->getSubscription();
-
-        if (!empty($order)) {
-            $this->invoiceService->sendOrderInvoiceEmail($order, $payment);
-        } else {
-            if (!empty($subscription)) {
-                $this->invoiceService->sendSubscriptionRenewalInvoiceEmail($subscription, $payment);
-            } else {
-                throw new NotFoundException(
-                    'Invoice sending failed, payment with id: ' . $paymentId . ' has no associated order or subscription'
-                );
-            }
+            throw new NotFoundException(
+                'Invoice sending failed, payment with id: ' . $paymentId . ' has no associated order or subscription'
+            );
         }
 
         return ResponseService::empty(204);

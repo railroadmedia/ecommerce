@@ -26,8 +26,4 @@ Route::group([
             'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@sendInvoice',
         ])
         ->name('payment.send-invoice');
-
-    Route::get('/send-invoice/test', [
-        'uses' => Railroad\Ecommerce\Controllers\PaymentJsonController::class . '@testSendInvoice',
-    ]);
 });
