@@ -14,7 +14,7 @@ class AddSourceToAccessCodesTable extends Migration
     public function up()
     {
         Schema::table('ecommerce_access_codes', function (Blueprint $table) {
-            $table->text('source')->after('note')->nullable();
+            $table->string('source')->index()->after('note')->nullable();
         });
     }
 
