@@ -73,6 +73,32 @@ class OrderFormJsonController extends Controller
      */
     public function submitOrder(OrderFormSubmitRequest $request)
     {
+        // ================================================================
+        // ↓↓↓↓↓ FOR DEVELOPMENT ONLY, DEFINITELY DON'T MERGE THIS ↓↓↓↓↓↓
+        // ↓↓↓ ALSO YOU CAN DISCARD THIS BRANCH ANYTIME AFTER FEB 2023 ↓↓↓
+        // ================================================================
+        $header = 'Something went wrong';
+        $message = 'It looks like you’ve started a trial with Musora in the last 90 days. Unfortunately, that means ' .
+            'that your account is not eligible to start another trial at this time. Click below to check out a ' .
+            'special offer and start your membership today!';
+        $buttonText = 'YOUR OFFER';
+        $brand = $request->get('brand');
+        $url = 'https://dev.' . $brand . '.com:8443/lp';
+        return response()->json(
+            [
+                'modal-show-redirect-with-message' => true,
+                'modal-header' => $header,
+                'modal-message' => $message,
+                'modal-button-text' => $buttonText,
+                'modal-button-url' => $url
+            ],
+            422
+        );
+        // ================================================================
+        // ↑↑↑↑↑ FOR DEVELOPMENT ONLY, DEFINITELY DON'T MERGE THIS ↑↑↑↑↑↑
+        // ↑↑↑ ALSO YOU CAN DISCARD THIS BRANCH ANYTIME AFTER FEB 2023 ↑↑↑
+        // ================================================================
+
         $this->cartService->refreshCart();
 
         // if the cart it's empty; we throw an exception
