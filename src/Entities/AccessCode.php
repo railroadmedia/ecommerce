@@ -124,6 +124,14 @@ class AccessCode
     }
 
     /**
+     * @return string|null
+     */
+    public function getProductIdsAsString(): ?string
+    {
+        return implode(", ", $this->getProductIds());
+    }
+
+    /**
      * @param array $productIds
      */
     public function setProductIds(array $productIds)
