@@ -33,8 +33,7 @@ class CartController extends Controller
     public function __construct(
         CartService $cartService,
         ProductRepository $productRepository
-    )
-    {
+    ) {
         $this->cartService = $cartService;
         $this->productRepository = $productRepository;
     }
@@ -62,10 +61,10 @@ class CartController extends Controller
             $this->cartService->clearCart();
         }
 
+        $products = $this->parseProducts($request, $locked);
         $addedProducts = [];
 
-        foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
-
+        foreach ($products as $productSku => $quantityToAdd) {
             try {
                 $product = $this->cartService->addToCart(
                     $productSku,
@@ -90,10 +89,10 @@ class CartController extends Controller
         }
 
         $bonusArray = [];
-        foreach($request->get('bonuses', []) as $sku => $bonus) {
+        foreach ($request->get('bonuses', []) as $sku => $bonus) {
             $product = $this->productRepository->bySku($sku);
 
-            if(!empty($product)){
+            if (!empty($product)) {
                 $bonusArray[] = [
                     'description' => $product->getDescription(),
                     'name' => $product->getName(),
@@ -127,7 +126,9 @@ class CartController extends Controller
 
         /** @var RedirectResponse $redirectResponse */
         $redirectResponse =
-            $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->to(config('ecommerce.post_add_to_cart_redirect', '/order'));
+            $request->get('redirect') ? redirect()->away($request->get('redirect')) : redirect()->to(
+                config('ecommerce.post_add_to_cart_redirect', '/order')
+            );
 
         $redirectResponse->with('cart', $cartArray);
 
@@ -140,5 +141,29 @@ class CartController extends Controller
         }
 
         return $redirectResponse;
+    }
+
+    /**
+     * @param Request $request
+     * @param bool $locked
+     * @return array
+     * @throws Throwable
+     */
+    private function parseProducts(Request $request, bool $locked): array
+    {
+        $products = [];
+        $productsArrayString = $request->get('product-array', []);
+        if (empty($productsArrayString)) {
+            foreach ($request->get('products', []) as $productSku => $quantityToAdd) {
+                $products[$productSku] = $quantityToAdd;
+            }
+        } else {
+            $products = [];
+            foreach (explode(",", $productsArrayString) as $productString) {
+                $productArray = explode(":", $productString);
+                $products[$productArray[0]] = $productArray[1];
+            }
+        }
+        return $products;
     }
 }
