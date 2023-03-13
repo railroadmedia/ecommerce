@@ -84,19 +84,24 @@ class OrderValidationService
                         // NEW (delete this comment anytime)
                         $urlForEvergreenSalesPage = 'https://www.' . $purchaser->getBrand() . '.com/lp';
                         if(env('APP_ENV') === 'local'){
-                            $urlForEvergreenSalesPage = 'https://dev.' . $purchaser->getBrand() . ':8443.com/lp';
+                            $urlForEvergreenSalesPage = 'https://dev.' . $purchaser->getBrand() . '.com:8443/lp';
                         }
 
-                        $message = 'We\'re sorry, but with your account configuration the previous products cannot ' .
-                            'be purchased. Instead please proceed from this page we\'ll have you playing right quick!';
+                        $redirectMessageToUser = 'It looks like you’ve started a trial with Musora in the last 90 ' .
+                            'days. Unfortunately, that means that your account is not eligible to start another ' .
+                            'trial at this time. Click below to check out a special offer and start your membership ' .
+                            'today!';
 
-                        $message = "We're sorry, but due to technical details your account doesn't qualify for this " .
-                            "offer (trial and expired within past 90 days). Instead please click the link below to " .
-                            "proceed with an improved offer that will work with your unique account history. We're " .
-                            "sorry about the hassle, but it will just take a minute and we'll get you playing right " .
-                            "away!";
+                        $messageTitleText = 'Something went wrong';
 
-                        throw new RedirectNeededException($urlForEvergreenSalesPage, $message);
+                        $buttonText = 'YOUR OFFER';
+
+                        throw new RedirectNeededException(
+                            $urlForEvergreenSalesPage,
+                            $redirectMessageToUser,
+                            $messageTitleText,
+                            $buttonText
+                        );
                     }
                 }
             }

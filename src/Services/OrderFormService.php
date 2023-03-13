@@ -109,7 +109,6 @@ class OrderFormService
      */
     public function processOrderFormSubmit(OrderFormSubmitRequest $request): array
     {
-
         try {
             // setup the cart
             $cart = $request->getCart();
@@ -273,12 +272,9 @@ class OrderFormService
             }
         } catch (RedirectNeededException $redirectNeededException) {
 
-            $url = $redirectNeededException->getUrlRedirect();
-
             return [
                 'redirect-with-message' => true,
-                'redirect-url' => $url,
-                'redirect-message' => $redirectNeededException->getMessage()
+                'redirect-needed-exception' => $redirectNeededException,
             ];
 
         } catch (PaymentFailedException $paymentFailedException) {

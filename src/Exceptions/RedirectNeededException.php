@@ -7,21 +7,34 @@ use Illuminate\Http\JsonResponse;
 
 class RedirectNeededException extends Exception
 {
-    protected $message;
-
-    private $urlRedirect;
+    protected $urlRedirect;
+    protected $redirectMessageToUser;
+    protected $messageTitleText;
+    protected $buttonText;
 
     /**
      * NotAllowedException constructor.
      *
-     * @param string $message
+     * @param $urlRedirect
+     * @param $redirectMessageToUser
+     * @param $messageTitleText
+     * @param $buttonText
      */
-    public function __construct($urlRedirect, $message)
+    public function __construct(
+        $urlRedirect,
+        $redirectMessageToUser,
+        $messageTitleText,
+        $buttonText
+    )
     {
-        parent::__construct($message);
+        parent::__construct(
+            'Redirect-with-message required with message: "' . $redirectMessageToUser . '".'
+        );
 
         $this->urlRedirect = $urlRedirect;
-        $this->message = $message;
+        $this->redirectMessageToUser = $redirectMessageToUser;
+        $this->messageTitleText = $messageTitleText;
+        $this->buttonText = $buttonText;
     }
 
     public function getUrlRedirect()
@@ -29,5 +42,18 @@ class RedirectNeededException extends Exception
         return $this->urlRedirect;
     }
 
-    // todo: what to do?
+    public function getRedirectMessageToUser()
+    {
+        return $this->redirectMessageToUser;
+    }
+
+    public function getMessageTitleText()
+    {
+        return $this->messageTitleText;
+    }
+
+    public function getButtonText()
+    {
+        return $this->buttonText;
+    }
 }
