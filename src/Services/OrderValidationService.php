@@ -41,47 +41,38 @@ class OrderValidationService
     public function validateOrder(Cart $cart, Purchaser $purchaser)
     {
         if (!empty($purchaser->getId())) {
-            // check if they have any trial membership user products for brand that were valid within the last 120 days
+            // check if they have any trial membership user products for that were valid within the last x days
             $this->userProductService->arrayCache->deleteAll();
 
             $usersProducts = $this->userProductService->getAllUsersProducts($purchaser->getId());
 
-            $hasTrialCreatedWithinPeriod = false;
+            $hasRecentTrial = false;
 
             foreach ($usersProducts as $userProduct) {
 
-                $currentBrandRelevant = $userProduct->getProduct()->getBrand() == $purchaser->getBrand();
-                $productLikelyATrial = strpos(strtolower($userProduct->getProduct()->getSku()), 'trial') !== false;
-
-                $recentExpiry = false;
-
-                if(!empty($userProduct->getExpirationDate())){
-                    $userProductExpiryNotGreaterThan90DaysPast = $userProduct->getExpirationDate() > Carbon::now()->subDays(90);
-                    // $userProductExpiryPast = $userProduct->getExpirationDate() < Carbon::now();
-                    // $userProductExpiryInFuture = $userProduct->getExpirationDate() > Carbon::now();
-
-                    $recentExpiry = $userProductExpiryNotGreaterThan90DaysPast;
+                if(empty($userProduct->getExpirationDate())){
+                    continue;
                 }
 
-                if ($currentBrandRelevant && $productLikelyATrial && $recentExpiry) {
-                    $hasTrialCreatedWithinPeriod = true;
+                $productAlmostCertainlyTrial =
+                    strpos(strtolower($userProduct->getProduct()->getSku()), 'trial') !== false;
+
+                $expiryWithinTimeConstraint = $userProduct->getExpirationDate() > Carbon::now()->subDays(90);
+
+                if ($productAlmostCertainlyTrial && $expiryWithinTimeConstraint) {
+                    $hasRecentTrial = true;
                 }
             }
 
-            if ($hasTrialCreatedWithinPeriod) {
+            if ($hasRecentTrial) {
                 $this->cartService->setCart($cart);
 
-                // then check if they are trying to order a trial product, if so, reject it
+                // check if they are trying to order a trial product, if so, reject it
                 foreach ($cart->getItems() as $cartItem) {
                     if (strpos(strtolower($cartItem->getSku()), 'trial') !== false &&
+
                         $this->cartService->getDueForInitialPayment() === 0) {
 
-                        // OLD PART REPLACED BY NEW STUFF BELOW (delete this comment anytime, ALSO DELETE THE NOW-OBSOLETE COMMENTED-OUT CODE BELOW)
-//                        throw new PaymentFailedException(
-//                            'This account is not eligible for a free trial period. Please choose a regular membership.'
-//                        );
-
-                        // NEW (delete this comment anytime)
                         $urlForEvergreenSalesPage = 'https://www.' . $purchaser->getBrand() . '.com/lp';
                         if(env('APP_ENV') === 'local'){
                             $urlForEvergreenSalesPage = 'https://dev.' . $purchaser->getBrand() . '.com:8443/lp';
