@@ -3,9 +3,9 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Carbon\Carbon;
-use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\AccessCodeRepository")
@@ -18,6 +18,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  *         @ORM\Index(name="ecommerce_access_codes_claimer_id_index", columns={"claimer_id"}),
  *         @ORM\Index(name="ecommerce_access_codes_claimed_on_index", columns={"claimed_on"}),
  *         @ORM\Index(name="ecommerce_access_codes_brand_index", columns={"brand"}),
+ *         @ORM\Index(name="ecommerce_access_codes_source_index", columns={"source"}),
  *         @ORM\Index(name="ecommerce_access_codes_created_on_index", columns={"created_at"}),
  *         @ORM\Index(name="ecommerce_access_codes_updated_on_index", columns={"updated_at"})
  *     }
@@ -79,6 +80,13 @@ class AccessCode
     protected $brand;
 
     /**
+     * @ORM\Column(type="string",  nullable=true)
+     *
+     * @var string
+     */
+    protected $source;
+
+    /**
      * @return int|null
      */
     public function getId(): ?int
@@ -113,6 +121,14 @@ class AccessCode
     public function getProductIds(): ?array
     {
         return $this->productIds;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getProductIdsAsString(): ?string
+    {
+        return implode(", ", $this->getProductIds());
     }
 
     /**
@@ -186,4 +202,21 @@ class AccessCode
     {
         $this->claimer = $claimer;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getSource(): ?string
+    {
+        return $this->source;
+    }
+
+    /**
+     * @param string $source
+     */
+    public function setSource(string $source)
+    {
+        $this->source = $source;
+    }
+
 }
