@@ -60,18 +60,15 @@ class UserPaymentMethodsRepository extends EntityRepository
             ->andWhere(
                 $qb->expr()
                     ->in('cc.paymentGatewayName', ':brand')
-            )
-        ;
+            )->orderBy('upm.id', 'desc');
 
         /** @var $q Query */
         $q = $qb->getQuery();
 
         $q->setParameter('user', $user)
             ->setParameter('true', true)
-            ->setParameter('brand', $brand)
-        ;
-
-        return $q->getOneOrNullResult();
+            ->setParameter('brand', $brand);
+        return $q->setMaxResults(1)->getOneOrNullResult();
     }
 
     /**
