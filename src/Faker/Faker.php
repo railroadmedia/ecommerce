@@ -27,6 +27,7 @@ class Faker extends Generator
                         ->toDateTimeString() : null,
                 'brand' => config('ecommerce.brand'),
                 'note' => $this->text,
+                'source' => $this->text,
                 'created_at' => Carbon::now()
                     ->toDateTimeString(),
             ],
