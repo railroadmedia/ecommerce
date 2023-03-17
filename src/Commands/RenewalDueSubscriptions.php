@@ -18,6 +18,7 @@ use Throwable;
 class RenewalDueSubscriptions extends Command
 {
     protected $name = 'ecommerce:renewalDueSubscriptions';
+    protected $signature = 'ecommerce:renewalDueSubscriptions {limit?}';
     protected $description = 'Renewal of due subscriptions.';
 
     private array $expectedPaymentFailures = [
@@ -47,8 +48,10 @@ class RenewalDueSubscriptions extends Command
         $timeStart = microtime(true);
         $entityManager->getFilters()->disable('soft-deleteable');
 
+        $limit = $this->argument('limit');
+
         $tStart = microtime(true);
-        $dueSubscriptions = $subscriptionRepository->getSubscriptionsDueToRenew();
+        $dueSubscriptions = $subscriptionRepository->getSubscriptionsDueToRenew($limit);
         $this->info('Query time: ' . (microtime(true) - $tStart));
 
         $this->info('Attempting to renew subscriptions. Count: ' . count($dueSubscriptions));

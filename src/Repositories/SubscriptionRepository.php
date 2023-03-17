@@ -59,7 +59,7 @@ class SubscriptionRepository extends RepositoryBase
      *
      * @return Subscription[]
      */
-    public function getSubscriptionsDueToRenew()
+    public function getSubscriptionsDueToRenew($limit = null)
     {
         /** @var $qb QueryBuilder */
         $qb = $this->createQueryBuilder('s');
@@ -175,6 +175,9 @@ class SubscriptionRepository extends RepositoryBase
             $q->setParameter($param, $value);
         }
 
+        if ($limit) {
+            $q = $q->setMaxResults($limit);
+        }
         return $q->getResult();
     }
 
