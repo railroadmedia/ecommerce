@@ -54,8 +54,7 @@ class AccountingService
         RefundRepository $refundRepository,
         ProductRepository $productRepository,
         DatabaseManager $databaseManager
-    )
-    {
+    ) {
         $this->paymentRepository = $paymentRepository;
         $this->refundRepository = $refundRepository;
         $this->productRepository = $productRepository;
@@ -99,6 +98,12 @@ class AccountingService
         // fetch report summary totals, calculated at least partially in mysql
         $result = new AccountingProductTotals($smallDate, $bigDate);
 
+        $brands = [$brand];
+        if ($brand == 'drumeo') {
+            //add musora gateway to drumeo report
+            $brands[] = 'musora';
+        }
+
         // get all the payments and refunds during this period to process
         $payments = $connection->table('ecommerce_payments')
             ->select(
@@ -115,7 +120,7 @@ class AccountingService
             )
             ->leftJoin('ecommerce_payment_taxes', 'ecommerce_payment_taxes.payment_id', '=', 'ecommerce_payments.id')
             ->whereBetween('ecommerce_payments.created_at', [$smallDateTime, $bigDateTime])
-            ->where('ecommerce_payments.gateway_name', $brand)
+            ->whereIn('ecommerce_payments.gateway_name', $brands)
             ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
 //            ->where('ecommerce_payments.id', 347634) // testing only
             ->get()
@@ -167,11 +172,10 @@ class AccountingService
                 'ecommerce_order_items.product_id'
             )
             ->whereBetween('ecommerce_payments.created_at', [$smallDateTime, $bigDateTime])
-            ->where('ecommerce_payments.gateway_name', $brand)
+            ->whereIn('ecommerce_payments.gateway_name', $brands)
             ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
 //            ->where('ecommerce_payments.id', 347634) // testing only
             ->get()
-
             ->toArray();
 
         $subPayments = $connection->table('ecommerce_payments')
@@ -244,7 +248,7 @@ class AccountingService
                 'ecommerce_subscription_order_items.product_id'
             )
             ->whereBetween('ecommerce_payments.created_at', [$smallDateTime, $bigDateTime])
-            ->where('ecommerce_payments.gateway_name', $brand)
+            ->whereIn('ecommerce_payments.gateway_name', $brands)
             ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
 //            ->where('ecommerce_payments.id', 347634) // testing only
             ->get()
@@ -357,7 +361,7 @@ class AccountingService
                 'ecommerce_subscription_order_items.product_id'
             )
             ->whereBetween('ecommerce_refunds.created_at', [$smallDateTime, $bigDateTime])
-            ->where('ecommerce_payments.gateway_name', $brand)
+            ->whereIn('ecommerce_payments.gateway_name', $brands)
             ->where('ecommerce_payments.status', '!=', Payment::STATUS_FAILED)
 //            ->where('ecommerce_payments.id', 352096) // testing only
             ->get();
@@ -497,10 +501,13 @@ class AccountingService
             'taxPaid' => 0,
             'shippingPaid' => 0,
             'financePaid' => 0,
-            'recurringProductPaid' => 0, // only for subscription product renewals, and only including payments after the first
+            'recurringProductPaid' => 0,
+            // only for subscription product renewals, and only including payments after the first
             'productPaid' => 0,
-            'grossPaid' => 0, // this is the grand total paid for the product itself (excluding tax, shipping finance)
-            'netPaid' => 0, // this is the net paid including tax, shipping, finance, and with subtracted refunds
+            'grossPaid' => 0,
+            // this is the grand total paid for the product itself (excluding tax, shipping finance)
+            'netPaid' => 0,
+            // this is the net paid including tax, shipping, finance, and with subtracted refunds
             'productSku' => 'sku',
             'productName' => 'name',
             'refunded' => 0,
@@ -518,7 +525,6 @@ class AccountingService
         // refund amount / original payment amount = refund ratio
 
         foreach ($paymentsArrayGrouped as $paymentId => $paymentData) {
-
             // figure out if we should associate this payment with only the subscription (membership renewals)
             // or if it should be associated with an order or a payment plan renewal for an order
 
@@ -528,16 +534,12 @@ class AccountingService
                     $paymentData['subscription']['subscription_type'] == Subscription::TYPE_PAYMENT_PLAN) ||
                 empty($paymentData['subscription']) || $paymentData['payment_type'] == Payment::TYPE_INITIAL_ORDER
             ) {
-
                 // use initial order linked to payment
                 if (!empty($paymentData['order']) && !empty($paymentData['order']['items'])) {
-
                     $orderToUse = $paymentData['order'];
-
                     // use the order attached to the subscription
                 } elseif (!empty($paymentData['subscription']['order']) &&
                     !empty($paymentData['subscription']['order']['items'])) {
-
                     $orderToUse = $paymentData['subscription']['order'];
                 } else {
                     // this means something is wrong with the data, we'll skip for now
@@ -576,7 +578,6 @@ class AccountingService
                 $thisOrderNet = 0;
 
                 foreach ($orderToUse['items'] as $paymentOrderItem) {
-
                     // calculate order item cost ratio for this item
                     if ($totalCostOfOrderItems > 0) {
                         $orderItemCostRatio = $paymentOrderItem['order_item_final_price'] / $totalCostOfOrderItems;
@@ -689,7 +690,6 @@ class AccountingService
             // renewal payment so use the subscription to associate
             if (!empty($paymentData['subscription']) &&
                 !empty($paymentData['subscription']['subscription_product_sku'])) {
-
                 // calculate refund ratio if applicable
                 if ($paymentData['payment_total_paid'] > 0 && $paymentData['refund_amount'] > 0) {
                     $refundRatio = $paymentData['refund_amount'] / $paymentData['payment_total_paid'];
@@ -785,7 +785,6 @@ class AccountingService
 //        dd($productsMap);
 
         foreach ($productsMap as $productId => $productData) {
-
             if (empty($productData['productName'])) {
                 continue;
             }
@@ -881,7 +880,9 @@ class AccountingService
         // gross recurring product
         $result->setNetRecurringProduct(0);
         foreach ($result->getAccountingProducts() as $accountingProduct) {
-            $result->setNetRecurringProduct($result->getNetRecurringProduct() + $accountingProduct->getNetRecurringProduct());
+            $result->setNetRecurringProduct(
+                $result->getNetRecurringProduct() + $accountingProduct->getNetRecurringProduct()
+            );
         }
         $result->setNetRecurringProduct(round($result->getNetRecurringProduct(), 2));
 
@@ -970,7 +971,6 @@ class AccountingService
 
         // for each group of order items, start calculating product stats
         foreach ($ordersMap as $orderId => $orderData) {
-
             $paidPhysical = [];
             $freePhysical = [];
 
@@ -995,7 +995,6 @@ class AccountingService
             }
 
             foreach ($orderData['items'] as $productId => $productData) {
-
                 $orderItemRatio = 0;
 
                 if (
@@ -1092,7 +1091,6 @@ class AccountingService
 
         // for each group of order items, start calculating product stats
         foreach ($ordersMap as $orderId => $orderData) {
-
             // sometimes the productDue is way higher than the sum of the order item prices, so instead we'll just add
             // them up to make the order item ratio
             $sumOfOrderItemPrices = 0;
@@ -1114,7 +1112,6 @@ class AccountingService
             }
 
             foreach ($orderData['items'] as $productId => $productData) {
-
                 $orderItemRatio = 0;
 
                 if (
@@ -1246,9 +1243,7 @@ class AccountingService
         }
 
         foreach ($refundOrdersMap as $orderId => $refundOrderData) {
-
             foreach ($refundOrderData['items'] as $productId => $productData) {
-
                 $orderItemRatio = 0;
 
                 if ($refundOrderData['hasPaidItems']) {
@@ -1371,9 +1366,7 @@ class AccountingService
         }
 
         foreach ($refundOrdersMap as $orderId => $refundOrderData) {
-
             foreach ($refundOrderData['items'] as $productId => $productData) {
-
                 $orderItemRatio = 0;
 
                 if ($refundOrderData['hasPaidItems']) {
@@ -1410,7 +1403,6 @@ class AccountingService
                     $productsMap[$productId]['refunded'] += $refundedForProduct;
                     $productsMap[$productId]['netPaid'] -= $refundedForProduct;
                 }
-
                 // quantity data for payment plans refunds is considered only on initial order payment
             }
         }
@@ -1418,7 +1410,6 @@ class AccountingService
         $refundPaymentPlansProductsData = null;
 
         foreach ($productsMap as $productId => $productData) {
-
             if (empty($productData['productName'])) {
                 continue;
             }
