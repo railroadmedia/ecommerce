@@ -356,11 +356,11 @@
 
                                                     <br><br>
 
-                                                    {{ config('ecommerce.company_name_on_invoice')[$order->getBrand()] ?? '' }}
+                                                    {{ config('ecommerce.musora_company_name_on_invoice') }}
 
-                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$order->getBrand()]))
-                                                        <br>GST/HST # -
-                                                        {{ config('ecommerce.canada_gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                    @if(!empty(config('ecommerce.musora_canada_gst_number')))
+                                                        <br>GST # -
+                                                        {{ config('ecommerce.musora_canada_gst_number') }}
                                                     @endif
                                                     <br><br>
                                                 </td>
