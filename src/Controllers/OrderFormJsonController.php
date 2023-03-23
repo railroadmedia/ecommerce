@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
+use Railroad\Ecommerce\Exceptions\RedirectNeededException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Railroad\Ecommerce\Services\CartService;
 use Railroad\Ecommerce\Services\OrderFormService;
@@ -94,8 +95,22 @@ class OrderFormJsonController extends Controller
                 return ResponseService::order($result['order'])
                     ->addMeta(['redirect' => config('ecommerce.order_form_post_purchase_redirect_path_without_brand') . $result['order']->getBrand()]);
             }
-        }
-        elseif (isset($result['errors'])) {
+        } elseif ((isset($result['redirect-with-message']) && $result['redirect-with-message'])) {
+
+            /** @var $redirectNeededException RedirectNeededException */
+            $redirectNeededException = $result['redirect-needed-exception'];
+
+            return response()->json(
+                [
+                    'modal-show-redirect-with-message' => true,
+                    'modal-header' => $redirectNeededException->getMessageTitleText(),
+                    'modal-message' => $redirectNeededException->getRedirectMessageToUser(),
+                    'modal-button-text' => $redirectNeededException->getButtonText(),
+                    'modal-button-url' => $redirectNeededException->getUrlRedirect()
+                ],
+                422
+            );
+        } elseif (isset($result['errors'])) {
             $errors = [];
             foreach ($result['errors'] as $message) {
 
@@ -111,8 +126,13 @@ class OrderFormJsonController extends Controller
                 ],
                 404
             );
-        }
-        elseif ($result['redirect'] && !isset($result['errors'])) {
+        } elseif ($result['redirect-with-message'] && isset($result['redirect-message']) && isset($result['redirect-url'])) {
+
+            return ResponseService::redirectWithMessage($result['redirect-url'], $result['redirect-message'])
+                ->addMeta(['redirect' => $result['redirect-url']])
+                ->addMeta(['message' => $result['redirect-message']]);
+
+        } elseif ($result['redirect'] && !isset($result['errors'])) {
 
             return ResponseService::redirect($result['redirect']);
         }

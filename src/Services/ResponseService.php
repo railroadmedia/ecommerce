@@ -499,6 +499,25 @@ class ResponseService extends FractalResponseService
     }
 
     /**
+     * @param string $url
+     *
+     * @return Fractal
+     */
+    public static function redirectWithMessage(string $url, string $message)
+    {
+        return fractal(
+            null,
+            function () {
+                return null;
+            },
+            new JsonApiSerializer()
+        )->addMeta([
+            'redirect' => $url,
+            'message' => $message
+        ]);
+    }
+
+    /**
      * @param array $cartItems
      * @param Address $billingAddress
      * @param Address $shippingAddress
