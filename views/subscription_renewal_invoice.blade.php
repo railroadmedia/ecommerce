@@ -347,7 +347,7 @@
                                                     {{ config('ecommerce.musora_company_name_on_invoice') }}
 
                                                     @if(!empty(config('ecommerce.musora_canada_gst_number')))
-                                                        <br>GST # -
+                                                        <br>GST/HST # -
                                                         {{ config('ecommerce.musora_canada_gst_number') }}
                                                     @endif
                                                     <br><br>

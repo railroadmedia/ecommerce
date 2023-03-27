@@ -359,7 +359,7 @@
                                                     {{ config('ecommerce.musora_company_name_on_invoice') }}
 
                                                     @if(!empty(config('ecommerce.musora_canada_gst_number')))
-                                                        <br>GST # -
+                                                        <br>GST/HST # -
                                                         {{ config('ecommerce.musora_canada_gst_number') }}
                                                     @endif
                                                     <br><br>
@@ -383,14 +383,6 @@
                                                             </tr>
                                                         @endforeach
 
-                                                        @foreach($taxesPerType as $type => $amount)
-                                                                <tr>
-                                                                    <td>{{ strtoupper($type) }}</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
-                                                                </tr>
-                                                        @endforeach
-
                                                         @if(!empty($order->getShippingDue()))
                                                             <tr>
                                                                 <td>Shipping</td>
@@ -399,6 +391,14 @@
                                                                 </td>
                                                             </tr>
                                                         @endif
+
+                                                        @foreach($taxesPerType as $type => $amount)
+                                                                <tr>
+                                                                    <td>{{ strtoupper($type) }}</td>
+                                                                    <td class="alignright">
+                                                                        {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
+                                                                </tr>
+                                                        @endforeach
 
                                                         @if(!empty($order->getFinanceDue()))
                                                             <tr>
