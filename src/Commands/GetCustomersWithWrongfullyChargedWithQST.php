@@ -31,6 +31,8 @@ class GetCustomersWithWrongfullyChargedWithQST extends Command
 
     public function handle()
     {
+        $this->info('### Command has started ###');
+
         $orderPayments = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
             ->select("SELECT uu.id as user_id, uu.email as user_email, ec.email as customer_email, 
                 ec.id as customer_id, eop.payment_id, ep.type as payment_type, 
@@ -47,8 +49,6 @@ class GetCustomersWithWrongfullyChargedWithQST extends Command
                 and ept.product_rate = 0.15
                 order by ep.created_at DESC;"
             );
-
-
 
 
         $subscriptionPayments = $this->databaseManager->connection(config('ecommerce.database_connection_name'))
@@ -70,6 +70,12 @@ class GetCustomersWithWrongfullyChargedWithQST extends Command
                 order by ep.created_at DESC;"
             )
         ;
+
+        foreach ($orderPayments as $orderPayment) {
+            if ($orderPayment->payment_type == 'subscription_renewal') {
+                $orderPayment->payment_type = 'payment_plan';
+            }
+        }
 
         $payments = array_merge($subscriptionPayments, $orderPayments);
 
@@ -96,7 +102,7 @@ class GetCustomersWithWrongfullyChargedWithQST extends Command
                 'Payment ID',
                 'Payment Type',
                 'Payment Date',
-                'Brand',
+                'Product Brand',
                 'User/Customer Email',
                 'User Id',
                 'Invoice Link',
@@ -110,6 +116,8 @@ class GetCustomersWithWrongfullyChargedWithQST extends Command
         }
 
         fclose($f);
+
+        $this->info('### Command has finished ###');
 
     }
 
