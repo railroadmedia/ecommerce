@@ -11,7 +11,6 @@
         ------------------------------------- */
         * {
             margin: 0;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             box-sizing: border-box;
             font-size: 14px;
         }
@@ -100,7 +99,6 @@
             TYPOGRAPHY
         ------------------------------------- */
         h1, h2, h3 {
-            font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
             color: #000;
             margin: 40px 0 0;
             line-height: 1.2em;
