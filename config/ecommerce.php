@@ -405,14 +405,10 @@ return [
     ],
 
     // this is displayed on all invoices to canadian customers
-    'canada_gst_hst_number' => [
-        'brand' => '12345 1512312',
-    ],
+    'musora_canada_gst_number' => '12345 1512312',
 
     // displayed on invoices
-    'company_name_on_invoice' => [
-        'brand' => 'My Company',
-    ],
+    'musora_company_name_on_invoice' => 'My Company',
 
     // currencies
     'supported_currencies' => [

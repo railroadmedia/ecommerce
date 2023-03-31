@@ -17,7 +17,6 @@
         ------------------------------------- */
         * {
             margin: 0;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             box-sizing: border-box;
             font-size: 14px;
         }
@@ -106,7 +105,6 @@
             TYPOGRAPHY
         ------------------------------------- */
         h1, h2, h3 {
-            font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
             color: #000;
             margin: 40px 0 0;
             line-height: 1.2em;
@@ -343,12 +341,12 @@
                                                     @endif
 
                                                     <br><br>
-                                                    
-                                                    {{ config('ecommerce.company_name_on_invoice')[$subscription->getBrand()] ?? '' }}
 
-                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$subscription->getBrand()]))
+                                                    {{ config('ecommerce.musora_company_name_on_invoice') }}
+
+                                                    @if(!empty(config('ecommerce.musora_canada_gst_number')))
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.canada_gst_hst_number')[$subscription->getBrand()] ?? '' }}
+                                                        {{ config('ecommerce.musora_canada_gst_number') }}
                                                     @endif
                                                     <br><br>
                                                 </td>
