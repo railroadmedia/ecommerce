@@ -54,8 +54,7 @@ class OrderValidationService
                     continue;
                 }
 
-                $productAlmostCertainlyTrial =
-                    strpos(strtolower($userProduct->getProduct()->getSku()), 'trial') !== false;
+                $productAlmostCertainlyTrial = $userProduct->getProduct()->isTrial();
 
                 $expiryWithinTimeConstraint = $userProduct->getExpirationDate() > Carbon::now()->subDays(90);
 

@@ -706,4 +706,8 @@ class Product
         return $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS
             || $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
     }
+
+    public function isTrial(): bool{
+       return str_contains(strtolower($this->sku), 'trial');
+    }
 }
