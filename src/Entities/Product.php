@@ -50,6 +50,8 @@ class Product
     const DIGITAL_ACCESS_TIME_INTERVAL_TYPE_MONTH = 'month';
     const DIGITAL_ACCESS_TIME_INTERVAL_TYPE_YEAR = 'year';
 
+    const DIGITAL_PRODUCT_TYPES = [self::TYPE_DIGITAL_SUBSCRIPTION, self::TYPE_DIGITAL_ONE_TIME];
+
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
@@ -705,5 +707,10 @@ class Product
     {
         return $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_ALL_CONTENT_ACCESS
             || $this->digitalAccessType == self::DIGITAL_ACCESS_TYPE_BASIC_CONTENT_ACCESS;
+    }
+
+    public function isDigitalProduct(): bool
+    {
+        return in_array($this->getType(), self::DIGITAL_PRODUCT_TYPES);
     }
 }
