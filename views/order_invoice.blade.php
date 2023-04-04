@@ -11,7 +11,6 @@
         ------------------------------------- */
         * {
             margin: 0;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             box-sizing: border-box;
             font-size: 14px;
         }
@@ -356,11 +355,11 @@
 
                                                     <br><br>
 
-                                                    {{ config('ecommerce.company_name_on_invoice')[$order->getBrand()] ?? '' }}
+                                                    {{ config('ecommerce.musora_company_name_on_invoice') }}
 
-                                                    @if(!empty(config('ecommerce.canada_gst_hst_number')[$order->getBrand()]))
+                                                    @if(!empty(config('ecommerce.musora_canada_gst_number')))
                                                         <br>GST/HST # -
-                                                        {{ config('ecommerce.canada_gst_hst_number')[$order->getBrand()] ?? '' }}
+                                                        {{ config('ecommerce.musora_canada_gst_number') }}
                                                     @endif
                                                     <br><br>
                                                 </td>
@@ -383,14 +382,6 @@
                                                             </tr>
                                                         @endforeach
 
-                                                        @foreach($taxesPerType as $type => $amount)
-                                                                <tr>
-                                                                    <td>{{ strtoupper($type) }}</td>
-                                                                    <td class="alignright">
-                                                                        {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
-                                                                </tr>
-                                                        @endforeach
-
                                                         @if(!empty($order->getShippingDue()))
                                                             <tr>
                                                                 <td>Shipping</td>
@@ -399,6 +390,14 @@
                                                                 </td>
                                                             </tr>
                                                         @endif
+
+                                                        @foreach($taxesPerType as $type => $amount)
+                                                            <tr>
+                                                                <td>{{ strtoupper($type) }}</td>
+                                                                <td class="alignright">
+                                                                    {{ $currencySymbol}} {{ number_format($amount, 2) }}</td>
+                                                            </tr>
+                                                        @endforeach
 
                                                         @if(!empty($order->getFinanceDue()))
                                                             <tr>
