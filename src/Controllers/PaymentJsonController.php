@@ -456,7 +456,7 @@ class PaymentJsonController extends Controller
         if (!is_null($subscription)) {
             event(new UserSubscriptionRenewed($subscription, $payment));
         } else if ($user) {
-            event(new PaymentEvent($payment));
+//            event(new PaymentEvent($payment));
         }
 
         return ResponseService::payment($payment);
