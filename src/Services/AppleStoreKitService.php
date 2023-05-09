@@ -20,6 +20,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
+use Railroad\Ecommerce\Events\MobilePaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
@@ -899,8 +900,11 @@ class AppleStoreKitService
 
         if(($receipt->getNotificationType() == AppleReceipt::APPLE_INITIAL_BUY_NOTIFICATION_TYPE)||
             ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE)) {
-            event(new MobileOrderEvent(null, null, $subscription));
+            event(new MobilePaymentEvent(null, null, $subscription));
         }
+
+        event(new MobileOrderEvent(null, null, $subscription));
+
         return $subscription;
     }
 
