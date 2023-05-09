@@ -213,9 +213,11 @@ class AppleStoreKitService
 
         auth()->loginUsingId($user->getId());
 
-        $this->syncPurchasedItems($appleResponse, $receipt, $user);
+        $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
         $this->entityManager->flush();
+
+        event(new MobilePaymentEvent(null, null, $subscription));
 
         return $user;
     }
@@ -308,6 +310,8 @@ class AppleStoreKitService
                         $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                     )
                 );
+
+                event(new MobilePaymentEvent(null, null, $subscription));
             } elseif (!empty($subscription->getCanceledOn())) {
                 Log::debug("Apple Receipt Successfully Canceled $receiptId");
                 event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
@@ -897,11 +901,6 @@ class AppleStoreKitService
         $this->entityManager->persist($subscription);
 
         $this->entityManager->flush();
-
-        if(($receipt->getNotificationType() == AppleReceipt::APPLE_INITIAL_BUY_NOTIFICATION_TYPE)||
-            ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE)) {
-            event(new MobilePaymentEvent(null, null, $subscription));
-        }
 
         event(new MobileOrderEvent(null, null, $subscription));
 
