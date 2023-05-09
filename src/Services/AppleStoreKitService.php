@@ -897,7 +897,10 @@ class AppleStoreKitService
 
         $this->entityManager->flush();
 
-        event(new MobileOrderEvent(null, null, $subscription));
+        if(($receipt->getNotificationType() == AppleReceipt::APPLE_INITIAL_BUY_NOTIFICATION_TYPE)||
+            ($receipt->getNotificationType() == AppleReceipt::APPLE_RENEWAL_NOTIFICATION_TYPE)) {
+            event(new MobileOrderEvent(null, null, $subscription));
+        }
         return $subscription;
     }
 
