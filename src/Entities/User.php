@@ -2,6 +2,7 @@
 
 namespace Railroad\Ecommerce\Entities;
 
+use Carbon\Carbon;
 use Railroad\Doctrine\Contracts\UserEntityInterface;
 use Railroad\Ecommerce\Contracts\IdentifiableInterface;
 
@@ -17,16 +18,19 @@ class User implements UserEntityInterface, IdentifiableInterface
      */
     private $email;
 
+    private ?Carbon $membershipExpirationDate;
+
     /**
      * User constructor.
      *
      * @param int $id
      * @param string $email
      */
-    public function __construct(int $id, string $email)
+    public function __construct(int $id, string $email, ?Carbon $membershipExpirationDate = null)
     {
         $this->id = $id;
         $this->email = $email;
+        $this->membershipExpirationDate = $membershipExpirationDate;
     }
 
     /**
@@ -59,6 +63,12 @@ class User implements UserEntityInterface, IdentifiableInterface
     public function setEmail($email): void
     {
         $this->email = $email;
+    }
+
+
+    public function getMembershipExpirationDate(): ?Carbon
+    {
+        return $this->membershipExpirationDate;
     }
 
     /**

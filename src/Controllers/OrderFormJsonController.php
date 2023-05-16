@@ -4,6 +4,8 @@ namespace Railroad\Ecommerce\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Railroad\Ecommerce\Entities\Order;
+use Railroad\Ecommerce\Entities\OrderItem;
 use Railroad\Ecommerce\Exceptions\NotFoundException;
 use Railroad\Ecommerce\Exceptions\RedirectNeededException;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
@@ -91,14 +93,11 @@ class OrderFormJsonController extends Controller
                 return ResponseService::order($result['order'])
                     ->addMeta(['redirect' => config('ecommerce.post_purchase_redirect_customer_order')]);
             } else {
-                return ResponseService::order($result['order'])
-                    ->addMeta(
-                        [
-                            'redirect' => config(
-                                    'ecommerce.order_form_post_purchase_redirect_path_without_brand'
-                                ) . $result['order']->getBrand()
-                        ]
-                    );
+                /** @var Order $order */
+                $order = $result['order'];
+
+                $url = $this->getOrderResponseUrl($order);
+                return ResponseService::order($result['order'])->addMeta(['redirect' => $url]);
             }
         } elseif ((isset($result['redirect-with-message']) && $result['redirect-with-message'])) {
             /** @var $redirectNeededException RedirectNeededException */
@@ -132,5 +131,20 @@ class OrderFormJsonController extends Controller
         } elseif ($result['redirect'] && !isset($result['errors'])) {
             return ResponseService::redirect($result['redirect']);
         }
+    }
+
+    /**
+     * @param Order $order
+     * @return string
+     */
+    public function getOrderResponseUrl(Order $order): string
+    {
+        $productIds = $order->getOrderItems()->map(function ($orderItem) {
+            /** @var OrderItem $orderItem */
+            return $orderItem->getProduct()?->getId() ?? 0;
+        })->toArray();
+
+        $url = config('ecommerce.order_form_post_purchase_redirect_path_without_brand') . $order->getBrand() . '?' . http_build_query(['products' => implode(',', $productIds)]);
+        return $url;
     }
 }
