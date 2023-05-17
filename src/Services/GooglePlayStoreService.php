@@ -412,6 +412,8 @@ class GooglePlayStoreService
                 $startDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis());
                 $incrementDate = $expirationDate->copy();
 
+                $existingPayment = null;
+
                 for ($i = $numberOfPaidOrders; $i > 0; $i--) {
 
                     // make payments working back from the expiration date

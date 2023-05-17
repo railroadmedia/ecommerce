@@ -836,6 +836,8 @@ class AppleStoreKitService
         );
         $subscriptionPayments = $this->subscriptionPaymentRepository->getByPayments($existingPayments);
 
+        $existingPayment = null;
+
         // sync payments
         // 1 payment for every purchased item
         foreach ($purchasedItems as $purchasedItem) {
@@ -1025,7 +1027,7 @@ class AppleStoreKitService
             }
 
             event(new MobileOrderEvent($order, null, null));
-            event(new PaymentEvent($existingPayment));
+            event(new PaymentEvent($payment));
         }
     }
 
