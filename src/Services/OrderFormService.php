@@ -6,13 +6,16 @@ use Exception;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
+use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Events\GiveContentAccess;
+use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
 use Railroad\Ecommerce\Exceptions\RedirectNeededException;
 use Railroad\Ecommerce\Exceptions\StripeCardException;
 use Railroad\Ecommerce\Gateways\PayPalPaymentGateway;
 use Railroad\Ecommerce\Repositories\PaymentMethodRepository;
+use Railroad\Ecommerce\Repositories\PaymentRepository;
 use Railroad\Ecommerce\Requests\OrderFormSubmitRequest;
 use Stripe\Error\Card as StripeCard;
 use Throwable;
@@ -55,6 +58,11 @@ class OrderFormService
     private $paymentMethodRepository;
 
     /**
+     * @var PaymentRepository
+     * */
+    private $paymentRepository;
+
+    /**
      * @var OrderValidationService
      */
     private $orderValidationService;
@@ -69,6 +77,7 @@ class OrderFormService
      * @param PurchaserService $purchaserService
      * @param ShippingService $shippingService
      * @param PaymentMethodRepository $paymentMethodRepository
+     * @param PaymentRepository $paymentRepository
      */
     public function __construct(
         CartService $cartService,
@@ -78,7 +87,8 @@ class OrderFormService
         PurchaserService $purchaserService,
         ShippingService $shippingService,
         PaymentMethodRepository $paymentMethodRepository,
-        OrderValidationService $orderValidationService
+        OrderValidationService $orderValidationService,
+        PaymentRepository $paymentRepository
     )
     {
         $this->cartService = $cartService;
@@ -89,6 +99,7 @@ class OrderFormService
         $this->shippingService = $shippingService;
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->orderValidationService = $orderValidationService;
+        $this->paymentRepository = $paymentRepository;
     }
 
     /**
@@ -126,6 +137,7 @@ class OrderFormService
         }
 
         try {
+            $payment = null;
             $this->cartService->setCart($cart);
 
             $purchaser = $request->getPurchaser();
@@ -188,7 +200,6 @@ class OrderFormService
 
             // if its free, dont create a payment
             if ($paymentAmountInBaseCurrency == 0) {
-                $payment = null;
 
                 if (empty($cart->getPaymentMethodId())) {
                     if ($request->get('payment_method_type') == PaymentMethod::TYPE_CREDIT_CARD) {
@@ -342,6 +353,17 @@ class OrderFormService
         }
 
         $order = $this->orderClaimingService->claimOrder($purchaser, $paymentMethod, $payment, $cart, $shippingAddress);
+
+        if ($payment && user()) {
+            // in some situations $payment->getOrder() is null or $order->getPayments() is empty
+            $payment = $this->paymentRepository->find($payment->getId());
+            foreach ($order->getPayments() as $orderPayment) {
+                if ($orderPayment->getId() == $payment->getId()) {
+                    $payment = $orderPayment;
+                }
+            }
+            event(new PaymentEvent($payment));
+        }
 
         event(new GiveContentAccess($order));
 
