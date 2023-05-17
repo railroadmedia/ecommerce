@@ -549,7 +549,7 @@ class GooglePlayStoreService
                 $this->entityManager->flush();
 
                 event(new MobileOrderEvent(null, null, $subscription));
-                event(new PaymentEvent($existingPayment));
+//                event(new PaymentEvent($existingPayment));
             } else {
                 if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
@@ -658,7 +658,7 @@ class GooglePlayStoreService
                         }
 
                         event(new MobileOrderEvent($order, null, null));
-                        event(new PaymentEvent($existingPayment));
+//                        event(new PaymentEvent($existingPayment));
                     } else {
                         //assign user free product included with the membership
                         $this->userProductService->assignUserProduct(

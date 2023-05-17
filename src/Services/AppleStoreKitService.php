@@ -901,7 +901,7 @@ class AppleStoreKitService
         $this->entityManager->flush();
 
         event(new MobileOrderEvent(null, null, $subscription));
-        event(new PaymentEvent($existingPayment));
+//        event(new PaymentEvent($existingPayment));
 
         return $subscription;
     }
@@ -1027,7 +1027,7 @@ class AppleStoreKitService
             }
 
             event(new MobileOrderEvent($order, null, null));
-            event(new PaymentEvent($payment));
+//            event(new PaymentEvent($payment));
         }
     }
 
