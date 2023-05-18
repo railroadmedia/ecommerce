@@ -836,12 +836,13 @@ class SubscriptionRepository extends RepositoryBase
      * @param int $userId
      * @param Carbon $date
      *
-     * @return Subscription[]
+     * @return Subscription|null
+     * @throws NonUniqueResultException
      */
     public function getUserMembershipSubscriptionBeforeDate(
         int $userId,
         Carbon $date
-    ): array {
+    ) {
         $qb =
             $this->getEntityManager()
                 ->createQueryBuilder();
@@ -879,7 +880,9 @@ class SubscriptionRepository extends RepositoryBase
             ->andWhere(
                 $qb->expr()
                     ->in('s.type', ':membership')
-            );
+            )
+            ->orderBy('s.startDate', 'DESC')
+            ->setMaxResults(1);
 
         return $qb->setParameter('userId', $userId)
             ->setParameter('date', $date)
@@ -897,7 +900,7 @@ class SubscriptionRepository extends RepositoryBase
                 ]
             )
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 
     /**

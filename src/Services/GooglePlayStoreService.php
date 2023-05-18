@@ -17,6 +17,7 @@ use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
+use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Events\MobilePaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
@@ -416,6 +417,8 @@ class GooglePlayStoreService
                 $startDate = Carbon::createFromTimestampMs($googleSubscriptionResponse->getStartTimeMillis());
                 $incrementDate = $expirationDate->copy();
 
+                $existingPayment = null;
+
                 for ($i = $numberOfPaidOrders; $i > 0; $i--) {
 
                     // make payments working back from the expiration date
@@ -551,6 +554,7 @@ class GooglePlayStoreService
                 $this->entityManager->flush();
 
                 event(new MobileOrderEvent(null, null, $subscription));
+//                event(new PaymentEvent($existingPayment));
             } else {
                 if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
@@ -659,6 +663,7 @@ class GooglePlayStoreService
                         }
 
                         event(new MobileOrderEvent($order, null, null));
+//                        event(new PaymentEvent($existingPayment));
                     } else {
                         //assign user free product included with the membership
                         $this->userProductService->assignUserProduct(

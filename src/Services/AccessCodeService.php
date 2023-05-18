@@ -338,4 +338,17 @@ class AccessCodeService
     {
         return implode(" - ", str_split($code, 4));
     }
+
+    /**
+     * @param  string|null  $code
+     * Into: Check if access code exists; if it exists, split the access code into 6 parts and return it as an array; if not, return null
+     * @return array
+     */
+    public function checkAndSplitAccessCode($code)
+    {
+        if (!$code) {
+            return null;
+        }
+        return ($this->accessCodeRepository->findOneBy(['code' => $code])) ? str_split($code, 4) : null;
+    }
 }

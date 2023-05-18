@@ -553,7 +553,7 @@ class UserProductService
     public function handlePackBonusMembershipAccess(Product $product, User $user): void
     {
         $membershipAccessExpirationDate = $product->getDigitalMembershipAccessExpirationDate();
-        if (empty($membershipAccessExpirationDate)) {
+        if (empty($membershipAccessExpirationDate) || $membershipAccessExpirationDate <= $user->getMembershipExpirationDate()) {
             return;
         }
 

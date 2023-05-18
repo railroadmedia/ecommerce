@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\Subscription;
+use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\CommandSubscriptionRenewFailed;
 use Railroad\Ecommerce\Exceptions\PaymentFailedException;
@@ -67,6 +68,7 @@ class RenewalDueSubscriptions extends Command
                 if ($payment) {
                     /** @var $payment Payment */
                     event(new CommandSubscriptionRenewed($dueSubscription, $payment));
+                    event(new PaymentEvent($payment));
                 }
             } catch (Throwable $throwable) {
                 $message = $throwable->getMessage();
