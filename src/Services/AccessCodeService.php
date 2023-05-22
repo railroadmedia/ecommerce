@@ -312,15 +312,21 @@ class AccessCodeService
     /**
      * @param  array  $productIds
      * @param  string  $brand
+     * @param string|null $source
      * @return AccessCode
      */
-    public function generateAccessCode(array $productIds, $brand)
+    public function generateAccessCode(array $productIds, $brand, string $source = null)
     {
         $accessCode = new AccessCode();
         $accessCode->setProductIds($productIds);
         $accessCode->setBrand($brand);
 
+        if ($source) {
+            $accessCode->setSource($source);
+        }
+
         $accessCode->generateCode();
+
 
         $this->entityManager->persist($accessCode);
         $this->entityManager->flush();
