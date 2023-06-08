@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Entities\Order;
@@ -296,6 +297,8 @@ class GooglePlayStoreService
         $googleSubscriptionResponse,
         User $user
     ) {
+        $userId = $user->getId();
+        Log::debug("GooglePlayStoreService:syncPurchasedItems $userId");
         $subscription = null;
         $purchasedProducts = $this->getPurchasedItem($googleReceipt);
 
@@ -488,6 +491,7 @@ class GooglePlayStoreService
                         if (empty($subscription->getLatestPayment())) {
                             $subscription->setLatestPayment($existingPayment);
                         }
+                        event(new PaymentEvent($existingPayment));
                     }
                 }
 
@@ -543,13 +547,13 @@ class GooglePlayStoreService
                     if (empty($subscription->getLatestPayment())) {
                         $subscription->setLatestPayment($existingPayment);
                     }
+                    event(new PaymentEvent($existingPayment));
                 }
 
                 $this->entityManager->persist($subscription);
                 $this->entityManager->flush();
 
                 event(new MobileOrderEvent(null, null, $subscription));
-//                event(new PaymentEvent($existingPayment));
             } else {
                 if ($purchasedProduct->getType() == Product::TYPE_DIGITAL_ONE_TIME) {
 
@@ -616,6 +620,7 @@ class GooglePlayStoreService
 
                             $this->entityManager->persist($payment);
                             $this->entityManager->flush();
+                            event(new PaymentEvent($payment));
                         }
 
                         $orderPayment = $this->orderPaymentRepository->getByPayment($payment);
@@ -658,7 +663,6 @@ class GooglePlayStoreService
                         }
 
                         event(new MobileOrderEvent($order, null, null));
-//                        event(new PaymentEvent($existingPayment));
                     } else {
                         //assign user free product included with the membership
                         $this->userProductService->assignUserProduct(

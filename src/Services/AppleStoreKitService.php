@@ -467,6 +467,9 @@ class AppleStoreKitService
         $syncAll = false,
         ?Subscription $subscription = null,
     ) {
+        $userId = $user?->getId();
+        Log::debug("AppleStoreKitService:syncPurchasedItems $userId");
+
         $latestPurchaseItem = $this->getLatestPurchasedItem($appleResponse);
         $allPurchasedItems = $appleResponse->getLatestReceiptInfo();
         $allActivePurchasedItems = [];
@@ -891,8 +894,8 @@ class AppleStoreKitService
 
             $this->entityManager->persist($subscriptionPayment);
             $this->entityManager->flush();
-
             $subscription->setLatestPayment($existingPayment);
+            event(new PaymentEvent($existingPayment));
         }
 
         $this->entityManager->persist($receipt);
@@ -901,7 +904,6 @@ class AppleStoreKitService
         $this->entityManager->flush();
 
         event(new MobileOrderEvent(null, null, $subscription));
-//        event(new PaymentEvent($existingPayment));
 
         return $subscription;
     }
@@ -984,6 +986,7 @@ class AppleStoreKitService
 
                 $this->entityManager->persist($payment);
                 $this->entityManager->flush();
+                event(new PaymentEvent($payment));
             }
 
             $orderPayment = $this->orderPaymentRepository->getByPayment($payment);
