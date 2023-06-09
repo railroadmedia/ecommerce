@@ -21,6 +21,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\PaymentEvent;
+use Railroad\Ecommerce\Events\MobilePaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
@@ -213,9 +214,11 @@ class AppleStoreKitService
 
         auth()->loginUsingId($user->getId());
 
-        $this->syncPurchasedItems($appleResponse, $receipt, $user);
+        $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
         $this->entityManager->flush();
+
+        event(new MobilePaymentEvent(null, null, $subscription));
 
         return $user;
     }
@@ -308,6 +311,8 @@ class AppleStoreKitService
                         $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                     )
                 );
+
+                event(new MobilePaymentEvent(null, null, $subscription));
             } elseif (!empty($subscription->getCanceledOn())) {
                 Log::debug("Apple Receipt Successfully Canceled $receiptId");
                 event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));

@@ -19,6 +19,7 @@ use Railroad\Ecommerce\Entities\SubscriptionPayment;
 use Railroad\Ecommerce\Entities\User;
 use Railroad\Ecommerce\Events\MobileOrderEvent;
 use Railroad\Ecommerce\Events\PaymentEvent;
+use Railroad\Ecommerce\Events\MobilePaymentEvent;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionCanceled;
 use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
@@ -213,7 +214,9 @@ class GooglePlayStoreService
         auth()->loginUsingId($user->getId());
 
         // sync the subscription or product
-        $this->syncPurchasedItems($receipt, $googleResponse, $user);
+        $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $user);
+
+        event(new MobilePaymentEvent(null, null, $subscription));
 
         return $user;
     }
@@ -272,6 +275,8 @@ class GooglePlayStoreService
                         $subscription, $subscription->getLatestPayment(), MobileSubscriptionRenewed::ACTOR_SYSTEM
                     )
                 );
+
+                event(new MobilePaymentEvent(null, null, $subscription));
 
             } else {
 

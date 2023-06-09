@@ -713,4 +713,8 @@ class Product
     {
         return in_array($this->getType(), self::DIGITAL_PRODUCT_TYPES);
     }
+   
+    public function isTrial(): bool{
+       return str_contains(strtolower($this->sku), 'trial');
+    }
 }
