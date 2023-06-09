@@ -61,10 +61,8 @@ class AppleStoreKitController extends Controller
      */
     public function processReceipt(AppleReceiptRequest $request)
     {
-        Log::info(
-            'AppleStoreKitController processReceipt Request Dump --------------------------------------------------'
-        );
-        Log::info(var_export($request->input(), true));
+        //Log::info('AppleStoreKitController processReceipt Request Dump --------------------------------------------------');
+        //Log::info(var_export($request->input(), true));
 
         $receipt = new AppleReceipt();
 
