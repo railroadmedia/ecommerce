@@ -1035,7 +1035,6 @@ class AppleStoreKitService
             }
 
             event(new MobileOrderEvent($order, null, null));
-//            event(new PaymentEvent($payment));
         }
     }
 

@@ -490,6 +490,7 @@ class GooglePlayStoreService
                         $subscriptionPayment->setPayment($existingPayment);
 
                         $this->entityManager->persist($subscriptionPayment);
+                        $this->entityManager->flush();
 
                         $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
 
@@ -546,6 +547,7 @@ class GooglePlayStoreService
                     $subscriptionPayment->setPayment($existingPayment);
 
                     $this->entityManager->persist($subscriptionPayment);
+                    $this->entityManager->flush();
 
                     $subscription->setTotalCyclesPaid($subscription->getTotalCyclesPaid() + 1);
 
