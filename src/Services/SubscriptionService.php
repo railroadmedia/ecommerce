@@ -18,7 +18,6 @@ use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Structures\SubscriptionRenewal;
 use Railroad\Ecommerce\Entities\Subscription;
 use Railroad\Ecommerce\Entities\SubscriptionPayment;
-use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Events\SubscriptionEvent;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewed;
 use Railroad\Ecommerce\Events\Subscriptions\SubscriptionRenewFailed;
@@ -595,7 +594,6 @@ class SubscriptionService
         }
 
         $this->entityManager->flush();
-        event(new PaymentEvent($payment));
 
         if ($payment->getTotalPaid() > 0) {
             $nextBillDate = null;
@@ -687,6 +685,7 @@ class SubscriptionService
         }
 
         $this->userProductService->updateSubscriptionProducts($subscription);
+
         return $payment;
     }
 
