@@ -216,9 +216,9 @@ class AppleStoreKitService
 
         $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
-        $this->entityManager->flush();
-
         event(new MobilePaymentEvent(null, null, $subscription));
+
+        $this->entityManager->flush();
 
         return $user;
     }
@@ -903,12 +903,12 @@ class AppleStoreKitService
             event(new PaymentEvent($existingPayment));
         }
 
+        event(new MobileOrderEvent(null, null, $subscription));
+
         $this->entityManager->persist($receipt);
         $this->entityManager->persist($subscription);
 
         $this->entityManager->flush();
-
-        event(new MobileOrderEvent(null, null, $subscription));
 
         return $subscription;
     }
