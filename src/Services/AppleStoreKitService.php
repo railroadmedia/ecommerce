@@ -216,9 +216,9 @@ class AppleStoreKitService
 
         $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
-        event(new MobilePaymentEvent(null, null, $subscription));
-
         $this->entityManager->flush();
+
+        event(new MobilePaymentEvent(null, null, $subscription));
 
         return $user;
     }
