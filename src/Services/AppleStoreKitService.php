@@ -903,12 +903,12 @@ class AppleStoreKitService
             event(new PaymentEvent($existingPayment));
         }
 
-        event(new MobileOrderEvent(null, null, $subscription));
-
         $this->entityManager->persist($receipt);
         $this->entityManager->persist($subscription);
 
         $this->entityManager->flush();
+
+        event(new MobileOrderEvent(null, null, $subscription));
 
         return $subscription;
     }
