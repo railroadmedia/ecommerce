@@ -505,8 +505,10 @@ class AppleStoreKitService
         foreach ($allActivePurchasedItems as $latestPurchaseItem) {
             $firstPurchaseItem =
                 $this->getFirstPurchasedItemForProductId($appleResponse, $latestPurchaseItem->getProductId());
-
-            $products = $this->getProductsByAppleStoreId($latestPurchaseItem->getProductId(), $latestPurchaseItem->isTrialPeriod());
+            $products = $this->getProductsByAppleStoreId($firstPurchaseItem->getProductId(), $firstPurchaseItem->isTrialPeriod());
+            if($firstPurchaseItem->getProductId() != $latestPurchaseItem->getProductId()) {
+                $products = $this->getProductsByAppleStoreId($latestPurchaseItem->getProductId(), $latestPurchaseItem->isTrialPeriod());
+            }
 
             if (empty($products)) {
                 continue;
