@@ -4,9 +4,13 @@ namespace Railroad\Ecommerce\Commands;
 
 use Illuminate\Console\Command;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
+use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
+use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
+use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
+use Railroad\Ecommerce\Services\GooglePlayStoreService;
 use Throwable;
 
 class MobileAppGoogleAppleHelper extends Command
@@ -19,7 +23,7 @@ class MobileAppGoogleAppleHelper extends Command
      *
      * @var string
      */
-    protected $signature = 'MobileAppGoogleAppleHelper {googleOrApple} {commandName} {receiptString}';
+    protected $signature = 'MobileAppGoogleAppleHelper {googleOrApple} {commandName} {receiptString} ';
 
     /**
      * The console command description.
@@ -37,6 +41,9 @@ class MobileAppGoogleAppleHelper extends Command
         AppleStoreKitGateway $appleStoreKitGateway,
         AppleStoreKitService $appleStoreKitService,
         AppleReceiptRepository $appleReceiptRepository,
+        GooglePlayStoreGateway $googlePlayStoreGateway,
+        GooglePlayStoreService $googlePlayStoreService,
+        GoogleReceiptRepository $googleReceiptRepository,
         UserProviderInterface $userProvider
     ) {
         ini_set('xdebug.var_display_max_depth', '25');
@@ -51,7 +58,13 @@ class MobileAppGoogleAppleHelper extends Command
                 $userProvider
             );
         } elseif ($this->argument('googleOrApple') == 'google') {
-            $this->google();
+            $this->google(
+                $googlePlayStoreGateway,
+                $googlePlayStoreService,
+                $googleReceiptRepository,
+                $userProvider
+
+            );
         } else {
             $this->info('First argument must be "google" or "apple".');
             $this->info('Example: php artisan MobileAppGoogleAppleHelper apple fetchReceipt 9h49ghhasfh0rhah');
@@ -99,8 +112,64 @@ class MobileAppGoogleAppleHelper extends Command
         }
     }
 
-    private function google()
+    private function google( $googlePlayStoreGateway,
+        $googlePlayStoreService,
+        $googleReceiptRepository,
+        $userProvider)
     {
+        if ($this->argument('commandName') == 'fetchReceipt') {
+            $receiptEntities =  $googleReceiptRepository->createQueryBuilder('gp')
+                ->where('gp.purchaseToken  = :purchase_token')
+                ->setParameter('purchase_token', $this->argument('receiptString'))
+                ->getQuery()
+                ->getResult();
+            $receiptEntity = \Arr::first($receiptEntities);
+            if(!$receiptEntity){
+                $response = $googlePlayStoreGateway->getResponse('com.musoraapp', 'musora_monthly_subscription',$this->argument('receiptString'));
+
+            }else {
+                $response =
+                    $googlePlayStoreGateway->getResponse(
+                        $receiptEntity->getPackageName(),
+                        $receiptEntity->getProductId(),
+                        $this->argument('receiptString')
+                    );
+            }
+            $this->info("\n\n\n----------------------------------------------------");
+            $this->info('Google receipt response dump:');
+
+            var_dump($response);
+        } elseif ($this->argument('commandName') == 'resyncReceipt') {
+            $receiptEntities =  $googleReceiptRepository->createQueryBuilder('gp')
+                ->where('gp.purchaseToken  = :purchase_token')
+                ->setParameter('purchase_token', $this->argument('receiptString'))
+                ->getQuery()
+                ->getResult();
+            $receiptEntity = \Arr::first($receiptEntities);
+            $response = $googlePlayStoreGateway->getResponse($receiptEntity->getPackageName(), $receiptEntity->getProductId(),$this->argument('receiptString'));
+
+            // create user if doesn't exist
+            $user = $userProvider->getUserByEmail($receiptEntity->getEmail());
+
+            if (empty($user)) {
+                $randomPassword = $this->generatePassword();
+                $user = $userProvider->createUser($receiptEntity->getEmail(), $randomPassword);
+
+                $this->info('User created. Email: ' . $user->getEmail() . ' - Password: ' . $randomPassword);
+            } else {
+                $this->info('Found user ' . $user->getId());
+            }
+
+            if (empty($receiptEntity)) {
+                $this->info('Could not find that receipt row in the database.');
+
+                return;
+            }
+
+            $googlePlayStoreService->syncPurchasedItems($receiptEntity, $response, $user);
+
+            $this->info('Synced successfully.');
+        }
     }
 
     private function generatePassword($len = 10)
