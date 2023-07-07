@@ -505,8 +505,10 @@ class AppleStoreKitService
         foreach ($allActivePurchasedItems as $latestPurchaseItem) {
             $firstPurchaseItem =
                 $this->getFirstPurchasedItemForProductId($appleResponse, $latestPurchaseItem->getProductId());
-
-            $products = $this->getProductsByAppleStoreId($latestPurchaseItem->getProductId());
+            $products = $this->getProductsByAppleStoreId($firstPurchaseItem->getProductId(), $firstPurchaseItem->isTrialPeriod());
+            if($firstPurchaseItem->getProductId() != $latestPurchaseItem->getProductId()) {
+                $products = $this->getProductsByAppleStoreId($latestPurchaseItem->getProductId(), $latestPurchaseItem->isTrialPeriod());
+            }
 
             if (empty($products)) {
                 continue;
@@ -536,12 +538,16 @@ class AppleStoreKitService
 
     /**
      * @param string $appleStoreId
+     * @param false $isTrialPeriod
      * @return array|null
      * @throws ORMException
      */
-    public function getProductsByAppleStoreId(string $appleStoreId): ?array
+    public function getProductsByAppleStoreId(string $appleStoreId, $isTrialPeriod = false): ?array
     {
         $productsMap = config('ecommerce.apple_store_products_map');
+        if($isTrialPeriod){
+            $productsMap = config('ecommerce.apple_store_products_map_trial');
+        }
 
         if (isset($productsMap[$appleStoreId])) {
             return $this->productRepository->bySkus((array)$productsMap[$appleStoreId]);
