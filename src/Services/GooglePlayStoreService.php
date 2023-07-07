@@ -25,6 +25,7 @@ use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\GooglePlayStoreGateway;
+use Railroad\Ecommerce\Gateways\RevenueCatGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\GoogleReceiptRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -93,6 +94,8 @@ class GooglePlayStoreService
      */
     private $currencyConvertionHelper;
 
+    private RevenueCatGateway $revenueCatGateway;
+
     /**
      * @var array
      */
@@ -132,7 +135,8 @@ class GooglePlayStoreService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         GoogleReceiptRepository $googleReceiptRepository,
         OrderPaymentRepository $orderPaymentRepository,
-        CurrencyConversion $currencyConvertionHelper
+        CurrencyConversion $currencyConvertionHelper,
+        RevenueCatGateway $revenueCatGateway
     ) {
         $this->googlePlayStoreGateway = $googlePlayStoreGateway;
         $this->entityManager = $entityManager;
@@ -145,6 +149,7 @@ class GooglePlayStoreService
         $this->googleReceiptRepository = $googleReceiptRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->currencyConvertionHelper = $currencyConvertionHelper;
+        $this->revenueCatGateway = $revenueCatGateway;
     }
 
     /**
@@ -215,6 +220,8 @@ class GooglePlayStoreService
 
         // sync the subscription or product
         $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $user);
+
+        $this->revenueCatGateway->sendRequest($receipt->getPurchaseToken(), $user, $receipt->getProductId(), 'android');
 
         event(new MobilePaymentEvent(null, null, $subscription));
 

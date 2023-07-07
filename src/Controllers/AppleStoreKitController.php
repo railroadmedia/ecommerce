@@ -103,8 +103,6 @@ class AppleStoreKitController extends Controller
 
         $user = $this->appleStoreKitService->processReceipt($receipt); // exception may be thrown
 
-        //$this->revenueCatGateway->sendRequest($receipt, $user);
-
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
         return ResponseService::appleReceipt($receipt, $userAuthToken);

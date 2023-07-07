@@ -27,6 +27,7 @@ use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
+use Railroad\Ecommerce\Gateways\RevenueCatGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -100,6 +101,8 @@ class AppleStoreKitService
      */
     private $currencyConvertionHelper;
 
+    private RevenueCatGateway $revenueCatGateway;
+
     const RENEWAL_EXPIRATION_REASON = [
         1 => 'Apple in-app: Customer canceled their subscription.',
         2 => 'Apple in-app: Billing error.',
@@ -137,7 +140,8 @@ class AppleStoreKitService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         AppleReceiptRepository $appleReceiptRepository,
         OrderPaymentRepository $orderPaymentRepository,
-        CurrencyConversion $currencyConversion
+        CurrencyConversion $currencyConversion,
+        RevenueCatGateway $revenueCatGateway
     ) {
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -150,6 +154,7 @@ class AppleStoreKitService
         $this->appleReceiptRepository = $appleReceiptRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->currencyConvertionHelper = $currencyConversion;
+        $this->revenueCatGateway = $revenueCatGateway;
     }
 
     /**
@@ -217,6 +222,8 @@ class AppleStoreKitService
         $subscription = $this->syncPurchasedItems($appleResponse, $receipt, $user);
 
         $this->entityManager->flush();
+
+        $this->revenueCatGateway->sendRequest($receipt->getReceipt(), $user, $currentPurchasedItem->getProductId(), 'ios');
 
         event(new MobilePaymentEvent(null, null, $subscription));
 

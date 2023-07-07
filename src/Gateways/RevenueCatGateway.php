@@ -10,27 +10,40 @@ use Throwable;
 
 class RevenueCatGateway
 {
-    public function sendRequest($receipt, $user)
+    public function sendRequest($receipt, $user, $productId, $platform)
     {
         $client = new \GuzzleHttp\Client();
+        $userId = $user->getId();
+        $bod = [
+            'product_id' => $productId,
+            'app_user_id' => "$userId",
+            'fetch_token' => $receipt,
+            'observer_mode' => 'true',
+            'attributes' => [
+                'email' => [
+                    'value' => $user->getEmail(),
+                ],
+            ],
+        ];
 
         try {
             $response = $client->request('POST', 'https://api.revenuecat.com/v1/receipts', [
-                'body' => '{"product_id":"DLM-1-year",
-                "app_user_id":"'.$user->getId().'",
-                "fetch_token":"'.$receipt->getReceipt().'"}',
+                'body' => json_encode($bod),
                 'headers' => [
-                    'X-Platform' => 'ios',
+                    'X-Platform' => $platform,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
-                    'Authorization' => 'Bearer '.config('ecommerce.revenuecat.token'),
+                    'Authorization' => 'Bearer '.config('ecommerce.revenuecat.'.$platform),
                 ],
             ]);
         } catch (GuzzleException $exception) {
-            dd($exception->getMessage());
+            error_log($exception->getMessage());
+
+            return $exception->getMessage();
         }
 
-        dd($response);
+        return $response->getBody()
+            ->getContents();
     }
 
 }

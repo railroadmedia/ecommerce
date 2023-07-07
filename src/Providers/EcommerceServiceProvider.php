@@ -41,6 +41,7 @@ use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\RetentionReportingTool;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
 use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
+use Railroad\Ecommerce\Commands\SyncRevenueCat;
 use Railroad\Ecommerce\Commands\UpdateLastDigits;
 use Railroad\Ecommerce\Commands\VerifyAppleNotifications;
 use Railroad\Ecommerce\Commands\VerifyLocalPriceConversion;
@@ -141,7 +142,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
                 PopulatePermissionNamesColumnInEcommerceProducts::class,
-                GetCustomersWithWrongfullyChargedWithQST::class
+                GetCustomersWithWrongfullyChargedWithQST::class,
+                SyncRevenueCat::class,
             ]
         );
 
