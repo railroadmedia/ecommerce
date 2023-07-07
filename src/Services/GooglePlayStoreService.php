@@ -312,7 +312,8 @@ class GooglePlayStoreService
         $userId = $user->getId();
         Log::debug("GooglePlayStoreService:syncPurchasedItems $userId");
         $subscription = null;
-        $purchasedProducts = $this->getPurchasedItem($googleReceipt);
+        $isTrial =  $googleSubscriptionResponse->getPaymentState() == 2;
+        $purchasedProducts = $this->getPurchasedItem($googleReceipt, $isTrial);
 
         if (empty($purchasedProducts)) {
             throw new ReceiptValidationException('Purchased google in app product not found in config.');
@@ -698,9 +699,13 @@ class GooglePlayStoreService
      * @return Product|null
      * @throws ORMException
      */
-    public function getPurchasedItem(GoogleReceipt $receipt)
+    public function getPurchasedItem(GoogleReceipt $receipt, $isTrialPeriod = false)
     : array {
         $productsMap = config('ecommerce.google_store_products_map');
+        if($isTrialPeriod){
+            $productsMap = config('ecommerce.google_store_products_map_trial');
+        }
+
         if (isset($productsMap[$receipt->getProductId()])) {
             return $this->productRepository->bySkus((array)$productsMap[$receipt->getProductId()]);
         }
