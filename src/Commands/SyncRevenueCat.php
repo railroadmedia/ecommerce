@@ -51,13 +51,14 @@ class SyncRevenueCat extends Command
 
         foreach ($googleReceipts as $googleReceipt) {
             $user = $userProvider->getUserByEmail($googleReceipt->email);
-
-            $revenueCatGateway->sendRequest(
-                $googleReceipt->purchase_token,
-                $user,
-                $googleReceipt->product_id,
-                'android'
-            );
+            if ($user) {
+                $revenueCatGateway->sendRequest(
+                    $googleReceipt->purchase_token,
+                    $user,
+                    $googleReceipt->product_id,
+                    'android'
+                );
+            }
         }
 
         $this->info('Google done.');
@@ -76,13 +77,14 @@ class SyncRevenueCat extends Command
                     $latestPurchasedInfo = $latestReceiptInfo[0];
 
                     $user = $userProvider->getUserByEmail($appleReceipt->email);
-
-                    $revenueCatGateway->sendRequest(
-                        $appleReceipt->receipt,
-                        $user,
-                        $latestPurchasedInfo->getProductId(),
-                        'ios'
-                    );
+                    if ($user) {
+                        $revenueCatGateway->sendRequest(
+                            $appleReceipt->receipt,
+                            $user,
+                            $latestPurchasedInfo->getProductId(),
+                            'ios'
+                        );
+                    }
                 }
             }
         }
