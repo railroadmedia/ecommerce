@@ -27,6 +27,7 @@ use Railroad\Ecommerce\Commands\AddPastMembershipStats;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
+use Railroad\Ecommerce\Commands\FixPaidUntilForPurchasedProduct;
 use Railroad\Ecommerce\Commands\FixSerializeErrorInAppPurchaseTables;
 use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
 use Railroad\Ecommerce\Commands\GetCustomersWithWrongfullyChargedWithQST;
@@ -142,7 +143,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
                 PopulatePermissionNamesColumnInEcommerceProducts::class,
-                GetCustomersWithWrongfullyChargedWithQST::class
+                GetCustomersWithWrongfullyChargedWithQST::class,
+                FixPaidUntilForPurchasedProduct::class
             ]
         );
 
