@@ -54,6 +54,7 @@ use Railroad\Ecommerce\Listeners\DuplicateSubscriptionHandler;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\MobileOrderUserProductListener;
 use Railroad\Ecommerce\Listeners\OrderInvoiceListener;
+use Railroad\Ecommerce\Listeners\OrderOneTimeProductListener;
 use Railroad\Ecommerce\Listeners\OrderShippingFulfilmentListener;
 use Railroad\Ecommerce\Listeners\OrderUserProductListener;
 use Railroad\Ecommerce\Listeners\SubscriptionInvoiceListener;
@@ -162,6 +163,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderUserProductListener::class,
                 OrderInvoiceListener::class,
                 DuplicateSubscriptionHandler::class,
+                OrderOneTimeProductListener::class
             ],
             SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
             MobileOrderEvent::class => [MobileOrderUserProductListener::class]
