@@ -195,12 +195,28 @@ class PaymentMethodRepository extends RepositoryBase
                         $qb->expr()
                             ->andX(
                                 $qb->expr()
+                                    ->isNotNull('cc.id'),
+                                $qb->expr()
+                                    ->eq('cc.paymentGatewayName', ':mGateway')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
                                     ->isNotNull('ppba.id'),
                                 $qb->expr()
                                     ->eq('ppba.paymentGatewayName', ':ppbaBrand')
                             )
+                        ,
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('ppba.id'),
+                                $qb->expr()
+                                    ->eq('ppba.paymentGatewayName', ':mGateway')
+                            )
                     )
             )
+                ->setParameter('mGateway', "musora")
                 ->setParameter('ccBrand', $brand)
                 ->setParameter('ppbaBrand', $brand);
         }
