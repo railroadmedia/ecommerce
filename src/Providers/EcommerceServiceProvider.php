@@ -27,6 +27,7 @@ use Railroad\Ecommerce\Commands\AddPastMembershipStats;
 use Railroad\Ecommerce\Commands\ConvertDiscountCriteriaProducsAssociation;
 use Railroad\Ecommerce\Commands\FillPaymentGatewayColumnFromPaymentMethod;
 use Railroad\Ecommerce\Commands\FindDuplicateSubscriptionsAndLifetimesWithSubscriptions;
+use Railroad\Ecommerce\Commands\FixPaidUntilForPurchasedProduct;
 use Railroad\Ecommerce\Commands\FixSerializeErrorInAppPurchaseTables;
 use Railroad\Ecommerce\Commands\FixSubscriptionTotalAndTaxes;
 use Railroad\Ecommerce\Commands\GetCustomersWithWrongfullyChargedWithQST;
@@ -54,6 +55,7 @@ use Railroad\Ecommerce\Listeners\DuplicateSubscriptionHandler;
 use Railroad\Ecommerce\Listeners\GiveContentAccessListener;
 use Railroad\Ecommerce\Listeners\MobileOrderUserProductListener;
 use Railroad\Ecommerce\Listeners\OrderInvoiceListener;
+use Railroad\Ecommerce\Listeners\OrderOneTimeProductListener;
 use Railroad\Ecommerce\Listeners\OrderShippingFulfilmentListener;
 use Railroad\Ecommerce\Listeners\OrderUserProductListener;
 use Railroad\Ecommerce\Listeners\SubscriptionInvoiceListener;
@@ -141,7 +143,8 @@ class EcommerceServiceProvider extends ServiceProvider
                 UpdateLastDigits::class,
                 MatchOrderItemDiscountAmountToTotal::class,
                 PopulatePermissionNamesColumnInEcommerceProducts::class,
-                GetCustomersWithWrongfullyChargedWithQST::class
+                GetCustomersWithWrongfullyChargedWithQST::class,
+                FixPaidUntilForPurchasedProduct::class
             ]
         );
 
@@ -162,6 +165,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 OrderUserProductListener::class,
                 OrderInvoiceListener::class,
                 DuplicateSubscriptionHandler::class,
+                OrderOneTimeProductListener::class
             ],
             SubscriptionRenewed::class => [SubscriptionInvoiceListener::class],
             MobileOrderEvent::class => [MobileOrderUserProductListener::class]
