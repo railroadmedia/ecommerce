@@ -3,7 +3,7 @@
 namespace Railroad\Ecommerce\Commands;
 
 use Carbon\Carbon;
-use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\ORMException;
 use Doctrine\ORM\NonUniqueResultException;
 use Exception;
 use Illuminate\Console\Command;
