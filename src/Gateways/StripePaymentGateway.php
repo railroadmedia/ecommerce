@@ -235,6 +235,31 @@ class StripePaymentGateway
     }
 
     /**
+     * @param $gatewayName
+     * @param $customerId
+     * @return Customer
+     * @throws PaymentFailedException
+     */
+    public function listCreditCards($gatewayName, $customerId)
+    {
+        $config = config('ecommerce.payment_gateways')['stripe'][$gatewayName] ?? '';
+
+        if (empty($config)) {
+            throw new PaymentFailedException('Gateway ' . $gatewayName . ' is not configured.');
+        }
+
+        try {
+            $this->stripe->setApiKey($config['stripe_api_secret']);
+
+            $customer = $this->stripe->listCreditCards($customerId);
+        } catch (Exception $exception) {
+            throw new PaymentFailedException('Payment failed: ' . $exception->getMessage());
+        }
+
+        return $customer;
+    }
+
+    /**
      * @param Customer $customer
      * @param                  $cardId
      * @param                  $gatewayName
