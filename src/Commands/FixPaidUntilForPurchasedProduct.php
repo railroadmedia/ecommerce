@@ -16,7 +16,6 @@ use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\ProductRepository;
 use Railroad\Ecommerce\Repositories\SubscriptionRepository;
 use Railroad\Ecommerce\Repositories\UserProductRepository;
-use Railroad\Ecommerce\Services\UserProductService;
 
 class FixPaidUntilForPurchasedProduct extends Command
 {
@@ -34,36 +33,35 @@ class FixPaidUntilForPurchasedProduct extends Command
      */
     protected $description = "Updates the paidUntil value of active subscriptions when the user also purchased the specified product";
 
+    protected SubscriptionRepository $subscriptionRepository;
+    protected EcommerceEntityManager $ecommerceEntityManager;
+    protected ProductRepository $productRepository;
+    protected UserProductRepository $userProductRepository;
+
     protected bool $simulate = false;
     protected bool $verbose = false;
 
     /**
+     * Execute the console command.
+     *
      * @param SubscriptionRepository $subscriptionRepository
      * @param EcommerceEntityManager $ecommerceEntityManager
-     * @param UserProductService $userProductService
      * @param ProductRepository $productRepository
      * @param UserProductRepository $userProductRepository
-     */
-    public function __construct(
-        protected SubscriptionRepository $subscriptionRepository,
-        protected EcommerceEntityManager $ecommerceEntityManager,
-        protected UserProductService     $userProductService,
-        protected ProductRepository      $productRepository,
-        protected UserProductRepository  $userProductRepository,
-    )
-    {
-        parent::__construct();
-    }
-
-
-    /**
-     * Execute the console command.
      *
      * @return int
      * @throws ORMException
      */
-    public function handle(): int
+    public function handle(SubscriptionRepository $subscriptionRepository,
+                           EcommerceEntityManager $ecommerceEntityManager,
+                           ProductRepository      $productRepository,
+                           UserProductRepository  $userProductRepository): int
     {
+        $this->subscriptionRepository = $subscriptionRepository;
+        $this->ecommerceEntityManager = $ecommerceEntityManager;
+        $this->productRepository = $productRepository;
+        $this->userProductRepository = $userProductRepository;
+
         $this->simulate = $this->option("execute") == false;
         $this->verbose = !$this->option("silent");
 
