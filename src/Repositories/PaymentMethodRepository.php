@@ -221,8 +221,30 @@ class PaymentMethodRepository extends RepositoryBase
                 ->setParameter('ppbaBrand', $brand);
         }
 
-        return $qb->getQuery()
+        $result = $qb->getQuery()
             ->getResult();
+
+        $onlyShowMusoraStripe = false;
+
+        /** @var PaymentMethod $paymentMethod */
+        foreach ($result as $paymentMethod) {
+            if ($paymentMethod->getCreditCard() &&
+                $paymentMethod->getCreditCard()->getPaymentGatewayName() == 'musora') {
+                $onlyShowMusoraStripe = true;
+                break;
+            }
+        }
+
+        if ($onlyShowMusoraStripe) {
+            $result = array_filter($result, function ($paymentMethod) {
+                if ($paymentMethod->getCreditCard()) {
+                    return $paymentMethod->getCreditCard()->getPaymentGatewayName() == 'musora';
+                }
+                return true;
+            });
+        }
+
+        return $result;
     }
 
     /**
