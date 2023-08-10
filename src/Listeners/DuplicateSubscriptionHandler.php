@@ -96,7 +96,7 @@ class DuplicateSubscriptionHandler
         if ($userIsLifetimeMember) {
             foreach ($allUsersSubscriptions as $userSubscription) {
                 if (!empty($userSubscription->getProduct()) &&
-                    $userProduct->getProduct()->isMembershipProduct() &&
+                    $userSubscription->getProduct()->isMembershipProduct() &&
                     $userSubscription->getIsActive()) {
                     $oldUserSubscription = clone($userSubscription);
 
@@ -122,7 +122,7 @@ class DuplicateSubscriptionHandler
             // extend the date of the most recently created subscription
             foreach ($allUsersSubscriptions as $userSubscription) {
                 if (!empty($userSubscription->getProduct()) &&
-                    $userProduct->getProduct()->isMembershipProduct() &&
+                    $userSubscription->getProduct()->isMembershipProduct() &&
                     $userSubscription->getPaidUntil() > Carbon::now() &&
                     $userSubscription->getIsActive()) {
                     $totalMinutes += Carbon::now()->diffInMinutes($userSubscription->getPaidUntil());
@@ -153,7 +153,7 @@ class DuplicateSubscriptionHandler
                 // cancel all the other ones
                 foreach ($allUsersSubscriptions as $userSubscription) {
                     if (!empty($userSubscription->getProduct()) &&
-                        $userProduct->getProduct()->isMembershipProduct() &&
+                        $userSubscription->getProduct()->isMembershipProduct() &&
                         $userSubscription->getPaidUntil() > Carbon::now() &&
                         $userSubscription->getIsActive() &&
                         $mostRecentlyPurchasedActiveSubscription->getId() != $userSubscription->getId()) {
