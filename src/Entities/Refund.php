@@ -5,6 +5,7 @@ namespace Railroad\Ecommerce\Entities;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\RefundRepository")
@@ -21,7 +22,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Refund
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, NotableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id

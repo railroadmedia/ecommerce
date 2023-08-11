@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderItemFulfillmentRepository")
@@ -23,7 +24,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class OrderItemFulfillment
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, NotableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id
