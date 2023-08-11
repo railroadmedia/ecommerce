@@ -1,6 +1,6 @@
 <?php
 
-namespace Railroad\Referral\Events;
+namespace Railroad\Ecommerce\Events;
 
 use Railroad\Referral\Models\Referrer;
 
