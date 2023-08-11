@@ -19,7 +19,7 @@
     "aporat/store-receipt-validator": "4.2.*",
     "stripe/stripe-php": "^7.95",
     "ext-pdo": "*",
-    "railroad/referral": "3.0.*"
+    "railroad/referral": "dev-referral-contest"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5.10",
