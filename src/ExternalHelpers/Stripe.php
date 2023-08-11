@@ -98,7 +98,7 @@ class Stripe
 
     public function listCreditCards($id)
     {
-        return $this->stripe->customer->allSources($id);
+        return $this->stripe->customer->allSources($id, ['limit' => 100]);
     }
 
     /**
