@@ -131,6 +131,7 @@ class CartController extends Controller
             );
 
         $redirectResponse->with('cart', $cartArray);
+        $redirectResponse->with('referralCode', $request->get('referralCode'));
 
         session()->put('bonuses', $bonusArray);
 
