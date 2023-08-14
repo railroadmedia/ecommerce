@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\IdentifiableInterface;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\CustomerRepository")
@@ -20,7 +21,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Customer implements IdentifiableInterface
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, NotableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id

@@ -3,9 +3,11 @@
 namespace Railroad\Ecommerce\Repositories;
 
 use Doctrine\ORM\ORMException;
+use Doctrine\ORM\QueryBuilder;
 use Illuminate\Http\Request;
 use Railroad\Ecommerce\Composites\Query\ResultsQueryBuilderComposite;
 use Railroad\Ecommerce\Entities\Address;
+use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\Traits\UseFormRequestQueryBuilder;
 
@@ -97,24 +99,7 @@ class AddressRepository extends RepositoryBase
      */
     public function getUserShippingAddresses($userId, $brand = null)
     {
-        $qb = $this->entityManager->createQueryBuilder();
-
-        $qb->select('a')
-            ->from(Address::class, 'a')
-            ->where(
-                $qb->expr()
-                    ->eq('a.user', ':userId')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->eq('a.type', ':type')
-            )
-            ->andWhere(
-                $qb->expr()
-                    ->isNull('a.deletedAt')
-            )
-            ->setParameter('userId', $userId)
-            ->setParameter('type', Address::SHIPPING_ADDRESS_TYPE);
+        $qb = $this->buildQueryForShippingAddressesForUserOrCustomer(Purchaser::USER_TYPE, $userId);
 
         if ($brand) {
             $qb->andWhere(
@@ -126,5 +111,58 @@ class AddressRepository extends RepositoryBase
 
         return $qb->getQuery()
                     ->getResult();
+    }
+
+    /**
+     * @param $customerId
+     * @param string $brand
+     *
+     * @return Address[]
+     */
+    public function getCustomerShippingAddresses($customerId, $brand = null)
+    {
+        $qb = $this->buildQueryForShippingAddressesForUserOrCustomer(Purchaser::CUSTOMER_TYPE, $customerId);
+
+        if ($brand) {
+            $qb->andWhere(
+                $qb->expr()
+                    ->eq('a.brand', ':brand')
+            )
+                ->setParameter('brand', $brand);
+        }
+
+        return $qb->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Build the query to get shipping addresses for the given customer or user
+     *
+     * @param string $entityType
+     * @param int $entityId
+     * @return QueryBuilder
+     */
+    private function buildQueryForShippingAddressesForUserOrCustomer(string $entityType, int $entityId): QueryBuilder
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb->select('a')
+            ->from(Address::class, 'a')
+            ->where(
+                $qb->expr()
+                    ->eq("a.$entityType", ':entityId')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->eq('a.type', ':type')
+            )
+            ->andWhere(
+                $qb->expr()
+                    ->isNull('a.deletedAt')
+            )
+            ->setParameter('entityId', $entityId)
+            ->setParameter('type', Address::SHIPPING_ADDRESS_TYPE);
+
+       return $qb;
     }
 }

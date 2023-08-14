@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderItemRepository")
@@ -21,7 +22,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class OrderItem
 {
-    use TimestampableEntity;
+    use TimestampableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id
