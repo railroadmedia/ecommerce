@@ -215,15 +215,6 @@ class OrderFormService
             // create and login the user or create the customer
             $this->purchaserService->persist($purchaser);
 
-            // CMT-77 apply referral if it is so
-            if ($request->get('referralCode')) {
-                $item = array_key_first($cart->getItems());
-                $this->applyReferral(
-                    $request->get('brand'),
-                    $request->get('referralCode'),
-                    $purchaser,
-                    $cart->getItems()[$item]->getSku()); // as it is only one product, get the sku for the first item in the card
-            }
 
             if ($purchaser->getType() == Purchaser::USER_TYPE) {
                 DiscountCriteriaService::setPurchaser($purchaser->getUserObject());
@@ -433,6 +424,15 @@ class OrderFormService
         //remove all items from the cart
         $this->cartService->clearCart();
 
+        // CMT-77 apply referral if it is so
+        if ($request->get('referralCode')) {
+            $item = array_key_first($cart->getItems());
+            $this->applyReferral(
+                $request->get('brand'),
+                $request->get('referralCode'),
+                $purchaser,
+                $cart->getItems()[$item]->getSku()); // as it is only one product, get the sku for the first item in the card
+        }
         return ['order' => $order];
     }
 }
