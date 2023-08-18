@@ -40,6 +40,7 @@ use Railroad\Ecommerce\Commands\ProcessAppleExpiredSubscriptions;
 use Railroad\Ecommerce\Commands\RenewalDueSubscriptions;
 use Railroad\Ecommerce\Commands\RetentionReportingTool;
 use Railroad\Ecommerce\Commands\SplitPaymentMethodIdsToColumns;
+use Railroad\Ecommerce\Commands\StoreProductIdOnAppleReceipts;
 use Railroad\Ecommerce\Commands\SynchOrdersWithPaymentPlans;
 use Railroad\Ecommerce\Commands\SyncRevenueCat;
 use Railroad\Ecommerce\Commands\UpdateLastDigits;
@@ -144,6 +145,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 PopulatePermissionNamesColumnInEcommerceProducts::class,
                 GetCustomersWithWrongfullyChargedWithQST::class,
                 SyncRevenueCat::class,
+                StoreProductIdOnAppleReceipts::class,
             ]
         );
 

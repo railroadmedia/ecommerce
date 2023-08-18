@@ -158,6 +158,15 @@ class AppleReceipt
      */
     protected $localCurrency;
 
+    /**
+     *
+     *
+     * @ORM\Column(type="string", name="product_id")
+     *
+     * @var string
+     */
+    protected $productId;
+
 
     /**
      * @return int|null
@@ -421,5 +430,21 @@ class AppleReceipt
     public function setLocalCurrency(string $currency)
     {
         $this->localCurrency = $currency;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getProductId(): ?string
+    {
+        return $this->productId;
+    }
+
+    /**
+     * @param string $productId
+     */
+    public function setProductId(string $productId)
+    {
+        $this->productId = $productId;
     }
 }
