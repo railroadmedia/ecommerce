@@ -223,7 +223,7 @@ class AppleStoreKitService
 
         $this->entityManager->flush();
 
-        $this->revenueCatGateway->sendRequest($receipt->getReceipt(), $user, $currentPurchasedItem->getProductId(), 'ios');
+        $this->revenueCatGateway->sendRequest($receipt->getReceipt(), $user, $currentPurchasedItem->getProductId(), 'ios', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $receipt->getBrand());
 
         event(new MobilePaymentEvent(null, null, $subscription));
 

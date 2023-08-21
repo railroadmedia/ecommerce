@@ -10,14 +10,17 @@ use Throwable;
 
 class RevenueCatGateway
 {
-    public function sendRequest($receipt, $user, $productId, $platform)
+    public function sendRequest($receipt, $user, $productId, $platform, $localPrice = null, $currency = null, $brand = null)
     {
+
         $client = new \GuzzleHttp\Client();
         $userId = $user->getId();
         $bod = [
             'product_id' => $productId,
             'app_user_id' => "$userId",
             'fetch_token' => $receipt,
+            'price' => $localPrice,
+            'currency' => $currency,
             'observer_mode' => 'true',
             'attributes' => [
                 'email' => [
@@ -33,7 +36,7 @@ class RevenueCatGateway
                     'X-Platform' => $platform,
                     'accept' => 'application/json',
                     'content-type' => 'application/json',
-                    'Authorization' => 'Bearer '.config('ecommerce.revenuecat.'.$platform),
+                    'Authorization' => 'Bearer '.config('ecommerce.revenuecat.'.$platform)[$brand??'musora'],
                 ],
             ]);
         } catch (GuzzleException $exception) {
