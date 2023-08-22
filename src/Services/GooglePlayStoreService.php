@@ -160,7 +160,7 @@ class GooglePlayStoreService
      * @throws ReceiptValidationException
      * @throws Throwable
      */
-    public function processReceipt(GoogleReceipt $receipt)
+    public function processReceipt(GoogleReceipt $receipt, $app='Musora')
     : User {
         $this->entityManager->persist($receipt);
 
@@ -221,7 +221,7 @@ class GooglePlayStoreService
         // sync the subscription or product
         $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $user);
 
-        $this->revenueCatGateway->sendRequest($receipt->getPurchaseToken(), $user, $receipt->getProductId(), 'android', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $receipt->getBrand());
+        $this->revenueCatGateway->sendRequest($receipt->getPurchaseToken(), $user, $receipt->getProductId(), 'android', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $app);
 
         event(new MobilePaymentEvent(null, null, $subscription));
 

@@ -166,7 +166,7 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processReceipt(AppleReceipt $receipt): User
+    public function processReceipt(AppleReceipt $receipt, $app = 'Musora'): User
     {
         $appleResponse = null;
 
@@ -223,7 +223,7 @@ class AppleStoreKitService
 
         $this->entityManager->flush();
 
-        $this->revenueCatGateway->sendRequest($receipt->getReceipt(), $user, $currentPurchasedItem->getProductId(), 'ios', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $receipt->getBrand());
+        $this->revenueCatGateway->sendRequest($receipt->getReceipt(), $user, $currentPurchasedItem->getProductId(), 'ios', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $app);
 
         event(new MobilePaymentEvent(null, null, $subscription));
 

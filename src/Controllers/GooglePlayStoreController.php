@@ -123,7 +123,7 @@ class GooglePlayStoreController extends Controller
             }
         }
 
-        $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
+        $user = $this->googlePlayStoreService->processReceipt($receipt, $app = 'Musora'); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
