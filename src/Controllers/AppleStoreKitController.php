@@ -101,7 +101,7 @@ class AppleStoreKitController extends Controller
             }
         }
 
-        $user = $this->appleStoreKitService->processReceipt($receipt, $app = 'Musora'); // exception may be thrown
+        $user = $this->appleStoreKitService->processReceipt($receipt, $app ?? 'Musora'); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
