@@ -221,7 +221,9 @@ class GooglePlayStoreService
         // sync the subscription or product
         $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $user);
 
-        $this->revenueCatGateway->sendRequest($receipt->getPurchaseToken(), $user, $receipt->getProductId(), 'android', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $app);
+        if(config('ecommerce.sync_revenue_cat', false)){
+            $this->revenueCatGateway->sendRequest($receipt->getPurchaseToken(), $user, $receipt->getProductId(), 'android', $receipt->getLocalPrice(), $receipt->getLocalCurrency(), $app);
+        }
 
         event(new MobilePaymentEvent(null, null, $subscription));
 
