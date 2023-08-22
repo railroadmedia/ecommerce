@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\OrderRepository")
@@ -29,7 +30,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Order
 {
-    use TimestampableEntity, NotableEntity, SoftDeleteableEntity;
+    use TimestampableEntity, NotableEntity, SoftDeleteableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id

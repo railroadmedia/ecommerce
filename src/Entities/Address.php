@@ -8,6 +8,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Contracts\Address as AddressInterface;
 use Railroad\Ecommerce\Entities\Structures\Address as AddressStructure;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 use Railroad\Ecommerce\Services\TaxService;
 
 /**
@@ -30,7 +31,7 @@ use Railroad\Ecommerce\Services\TaxService;
  */
 class Address implements AddressInterface
 {
-    use TimestampableEntity, SoftDeleteableEntity, NotableEntity;
+    use TimestampableEntity, SoftDeleteableEntity, NotableEntity, ShopifyEntity;
 
     CONST BILLING_ADDRESS_TYPE = 'billing';
     CONST SHIPPING_ADDRESS_TYPE = 'shipping';

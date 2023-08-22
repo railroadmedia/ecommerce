@@ -47,8 +47,7 @@ class Stripe
         $addressLineTwo = null,
         $region = null,
         $zip = null
-    )
-    {
+    ) {
         return $this->stripe->token->create(
             [
                 "card" => [
@@ -97,6 +96,11 @@ class Stripe
         return $this->stripe->customer->retrieve($id);
     }
 
+    public function listCreditCards($id)
+    {
+        return $this->stripe->customer->allSources($id, ['limit' => 100]);
+    }
+
     /**
      * @param $email
      *
@@ -141,8 +145,7 @@ class Stripe
         $expirationYear,
         $addressCountry,
         $addressRegion
-    )
-    {
+    ) {
         $card->exp_month = $expirationMonth;
         $card->exp_year = $expirationYear;
         $card->address_country = $addressCountry;
@@ -166,8 +169,7 @@ class Stripe
         Customer $customer,
         $currency,
         $description = ''
-    )
-    {
+    ) {
         return $this->stripe->charge->create(
             [
                 'amount' => $amount,

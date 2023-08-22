@@ -195,18 +195,56 @@ class PaymentMethodRepository extends RepositoryBase
                         $qb->expr()
                             ->andX(
                                 $qb->expr()
+                                    ->isNotNull('cc.id'),
+                                $qb->expr()
+                                    ->eq('cc.paymentGatewayName', ':mGateway')
+                            ),
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
                                     ->isNotNull('ppba.id'),
                                 $qb->expr()
                                     ->eq('ppba.paymentGatewayName', ':ppbaBrand')
                             )
+                        ,
+                        $qb->expr()
+                            ->andX(
+                                $qb->expr()
+                                    ->isNotNull('ppba.id'),
+                                $qb->expr()
+                                    ->eq('ppba.paymentGatewayName', ':mGateway')
+                            )
                     )
             )
+                ->setParameter('mGateway', "musora")
                 ->setParameter('ccBrand', $brand)
                 ->setParameter('ppbaBrand', $brand);
         }
 
-        return $qb->getQuery()
+        $result = $qb->getQuery()
             ->getResult();
+
+        $onlyShowMusoraStripe = false;
+
+        /** @var PaymentMethod $paymentMethod */
+        foreach ($result as $paymentMethod) {
+            if ($paymentMethod->getCreditCard() &&
+                $paymentMethod->getCreditCard()->getPaymentGatewayName() == 'musora') {
+                $onlyShowMusoraStripe = true;
+                break;
+            }
+        }
+
+        if ($onlyShowMusoraStripe) {
+            $result = array_filter($result, function ($paymentMethod) {
+                if ($paymentMethod->getCreditCard()) {
+                    return $paymentMethod->getCreditCard()->getPaymentGatewayName() == 'musora';
+                }
+                return true;
+            });
+        }
+
+        return $result;
     }
 
     /**

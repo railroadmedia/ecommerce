@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\SoftDeleteable\Traits\SoftDeleteableEntity;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\ProductRepository")
@@ -31,7 +32,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Product
 {
-    use TimestampableEntity, SoftDeleteableEntity, NotableEntity;
+    use TimestampableEntity, SoftDeleteableEntity, NotableEntity, ShopifyEntity;
 
     const TYPE_DIGITAL_SUBSCRIPTION = 'digital subscription';
     const TYPE_DIGITAL_ONE_TIME = 'digital one time';
