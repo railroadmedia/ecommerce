@@ -328,7 +328,7 @@ class AppleStoreKitService
                     )
                 );
 
-                event(new MobilePaymentEvent(null, null, $subscription));
+                //event(new MobilePaymentEvent(null, null, $subscription));
             } elseif (!empty($subscription->getCanceledOn())) {
                 Log::debug("Apple Receipt Successfully Canceled $receiptId");
                 event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));

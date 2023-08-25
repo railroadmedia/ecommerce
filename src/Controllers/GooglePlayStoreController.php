@@ -199,6 +199,7 @@ class GooglePlayStoreController extends Controller
                 $receipt->setNotificationType($notificationType);
                 $receipt->setBrand($brand);
 
+                $firstReceipt = null;
                 if (!empty($oldReceipt)) {
                     if ($oldReceipt[0]->getLocalCurrency()) {
                         $receipt->setLocalCurrency($oldReceipt[0]->getLocalCurrency());
@@ -206,6 +207,7 @@ class GooglePlayStoreController extends Controller
                     if ($oldReceipt[0]->getLocalPrice()) {
                         $receipt->setLocalPrice($oldReceipt[0]->getLocalPrice());
                     }
+                    $firstReceipt = $oldReceipt[0];
                 }
 
                 $subscription =
@@ -215,7 +217,7 @@ class GooglePlayStoreController extends Controller
 
                 if ($subscription) {
                     try {
-                        $this->googlePlayStoreService->processNotification($receipt, $subscription);
+                        $this->googlePlayStoreService->processNotification($receipt, $subscription, $firstReceipt);
                     } catch (Exception $e) {
                         error_log($e);
 

@@ -239,7 +239,8 @@ class GooglePlayStoreService
      */
     public function processNotification(
         GoogleReceipt $receipt,
-        Subscription $subscription
+        Subscription $subscription,
+        $firstReceipt = null
     ) {
         $this->entityManager->persist($receipt);
 
@@ -274,7 +275,7 @@ class GooglePlayStoreService
         $this->entityManager->persist($receipt);
         $this->entityManager->flush();
 
-        $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $subscription->getUser());
+        $subscription = $this->syncPurchasedItems($receipt, $googleResponse, $subscription->getUser(), $firstReceipt);
 
         if (!empty($subscription)) {
             if ($receipt->getNotificationType() == GoogleReceipt::GOOGLE_RENEWAL_NOTIFICATION_TYPE) {
@@ -285,7 +286,7 @@ class GooglePlayStoreService
                     )
                 );
 
-                event(new MobilePaymentEvent(null, null, $subscription));
+                //event(new MobilePaymentEvent(null, null, $subscription));
 
             } else {
 
@@ -309,12 +310,17 @@ class GooglePlayStoreService
     public function syncPurchasedItems(
         GoogleReceipt $googleReceipt,
         $googleSubscriptionResponse,
-        User $user
+        User $user,
+        $firstReceipt = null
     ) {
         $userId = $user->getId();
         Log::debug("GooglePlayStoreService:syncPurchasedItems $userId");
         $subscription = null;
         $isTrial =  $googleSubscriptionResponse->getPaymentState() == 2;
+        if($firstReceipt){
+            $firstReceiptResponse = unserialize(base64_decode($firstReceipt->getRawReceiptResponse()));
+            $isTrial =  $firstReceiptResponse->getPaymentState() == 2;
+        }
         $purchasedProducts = $this->getPurchasedItem($googleReceipt, $isTrial);
 
         if (empty($purchasedProducts)) {
