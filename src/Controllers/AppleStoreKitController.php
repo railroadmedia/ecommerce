@@ -93,6 +93,7 @@ class AppleStoreKitController extends Controller
 
         if($request->has('data.attributes.app')){
             $app = $request->input('data.attributes.app');
+            $receipt->setBrand(lcfirst($app));
             if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
                 config()->set(
                     'ecommerce.payment_gateways.apple_store_kit.shared_secret',
