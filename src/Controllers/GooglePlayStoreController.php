@@ -109,6 +109,7 @@ class GooglePlayStoreController extends Controller
 
         if ($request->has('data.attributes.app')) {
             $app = $request->input('data.attributes.app');
+            $receipt->setBrand(lcfirst($app));
             if (config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
                 config()->set(
                     'ecommerce.payment_gateways.google_play_store.credentials',

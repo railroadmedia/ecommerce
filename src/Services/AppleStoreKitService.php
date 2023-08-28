@@ -281,6 +281,7 @@ class AppleStoreKitService
 
                 if (!empty($oldReceipts)) {
                     $receipt->setEmail($oldReceipts[0]->getEmail());
+                    $receipt->setBrand($oldReceipts[0]->getBrand());
                     if ($oldReceipts[0]->getLocalPrice()) {
                         $receipt->setLocalPrice($oldReceipts[0]->getLocalPrice());
                     }
