@@ -795,7 +795,7 @@ class AppleStoreKitService
                 $subscription->setTotalPrice($product->getPrice());
             }
 
-            $subscription->setBrand(config('ecommerce.brand'));
+            $subscription->setBrand($product->getBrand());
             $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
             $subscription->setProduct($product);
 
@@ -1026,7 +1026,7 @@ class AppleStoreKitService
 
                 $order->setTaxesDue(0);
                 $order->setShippingDue(0);
-                $order->setBrand(config('ecommerce.brand'));
+                $order->setBrand($product->getBrand());
 
                 $this->entityManager->persist($order);
 

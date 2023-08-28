@@ -343,7 +343,7 @@ class GooglePlayStoreService
                     $subscription->setRenewalAttempt(0);
                 }
 
-                $subscription->setBrand(config('ecommerce.brand'));
+                $subscription->setBrand($purchasedProduct->getBrand());
                 $subscription->setType(Subscription::TYPE_GOOGLE_SUBSCRIPTION);
                 $subscription->setUser($user);
                 $subscription->setProduct($purchasedProduct);
