@@ -54,24 +54,4 @@ class OrderItemRepository extends RepositoryBase
 
         return $qb->getQuery()->getResult();
     }
-
-    /**
-     * @param int $shopifyId
-     * @return OrderItem|null
-     *
-     * @throws \Doctrine\ORM\NonUniqueResultException
-     */
-    public function getByShopifyId(int $shopifyId): ?OrderItem
-    {
-        $qb = $this->createQueryBuilder("oi");
-
-        $qb->where(
-            $qb->expr()
-                ->eq("oi.shopifyId", ":shopifyId")
-        )->setParameter("shopifyId", $shopifyId);
-
-        return
-            $qb->getQuery()
-                ->getOneOrNullResult();
-    }
 }
