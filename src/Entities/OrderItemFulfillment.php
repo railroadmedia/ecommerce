@@ -42,6 +42,13 @@ class OrderItemFulfillment
     protected $order;
 
     /**
+     * @ORM\Column(type="integer", name="order_id")
+     *
+     * @var int
+     */
+    protected $orderId;
+
+    /**
      * @ORM\OneToOne(targetEntity="Railroad\Ecommerce\Entities\OrderItem")
      * @ORM\JoinColumn(name="order_item_id", referencedColumnName="id")
      */

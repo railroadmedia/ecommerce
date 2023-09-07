@@ -40,6 +40,13 @@ class OrderItem
     protected $order;
 
     /**
+     * @ORM\Column(type="integer", name="order_id")
+     *
+     * @var int
+     */
+    protected $orderId;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Product")
      * @ORM\JoinColumn(name="product_id", referencedColumnName="id")
      */
