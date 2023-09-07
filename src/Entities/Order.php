@@ -135,6 +135,11 @@ class Order
     protected $orderItems;
 
     /**
+     * @ORM\OneToMany(targetEntity="OrderItemFulfillment", mappedBy="order")
+     */
+    protected $orderItemFulfillments;
+
+    /**
      * @ORM\ManyToMany(targetEntity="Railroad\Ecommerce\Entities\Payment")
      * @ORM\JoinTable(name="ecommerce_order_payments",
      *      joinColumns={@ORM\JoinColumn(name="order_id", referencedColumnName="id")},
