@@ -3,68 +3,20 @@
 namespace Railroad\Ecommerce\Entities;
 
 use Carbon\Carbon;
-use Doctrine\ORM\Mapping as ORM;
-use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Doctrine\Contracts\UserEntityInterface;
 use Railroad\Ecommerce\Contracts\IdentifiableInterface;
-use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
-/**
- * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\UserRepository")
- * @ORM\Table(
- *     name="usora_users",
- * )
- */
 class User implements UserEntityInterface, IdentifiableInterface
 {
-    use TimestampableEntity, ShopifyEntity;
-
     /**
-     * @ORM\Id
-     * @ORM\Column(type="integer")
-     * @ORM\GeneratedValue
-     *
      * @var int
      */
-    protected $id;
+    private $id;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
-     *
      * @var string
      */
-    protected $email;
-
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     *
-     * @var string
-     */
-    protected $first_name;
-
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     *
-     * @var string
-     */
-    protected $last_name;
-
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     *
-     * @var string
-     */
-    protected $support_note;
-
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     *
-     * @var string
-     */
-    protected $phone_number;
-
-
-
+    private $email;
 
     private ?Carbon $membershipExpirationDate;
 
@@ -113,69 +65,6 @@ class User implements UserEntityInterface, IdentifiableInterface
         $this->email = $email;
     }
 
-    /**
-     * @return string|null
-     */
-    public function getFirstName(): ?string
-    {
-        return $this->first_name;
-    }
-
-    /**
-     * @param string|null $firstName
-     */
-    public function setFirstName(?string $firstName): void
-    {
-        $this->first_name = $firstName;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getLastName(): ?string
-    {
-        return $this->last_name;
-    }
-
-    /**
-     * @param string|null $lastName
-     */
-    public function setLastName(?string $lastName): void
-    {
-        $this->last_name = $lastName;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getSupportNote(): ?string
-    {
-        return $this->support_note;
-    }
-
-    /**
-     * @param string|null $supportNote
-     */
-    public function setSupportNote(?string $supportNote): void
-    {
-        $this->support_note = $supportNote;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getPhoneNumber(): ?string
-    {
-        return $this->phone_number;
-    }
-
-    /**
-     * @param string|null $phoneNumber
-     */
-    public function setPhoneNumber(?string $phoneNumber): void
-    {
-        $this->phone_number = $phoneNumber;
-    }
 
     public function getMembershipExpirationDate(): ?Carbon
     {
