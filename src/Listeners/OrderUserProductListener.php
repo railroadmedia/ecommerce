@@ -73,7 +73,7 @@ class OrderUserProductListener
                         $expirationDate = $subscription->getPaidUntil();
 
                         //for trials, we do not add the 'days_before_access_revoked_after_expiry' to expiration date
-                        if (!$product->isTrial()) {
+                        if ($subscription->getTotalCyclesPaid() > 0) {
                             $expirationDate = $expirationDate->addDays(
                                 config('ecommerce.days_before_access_revoked_after_expiry', 5)
                             );

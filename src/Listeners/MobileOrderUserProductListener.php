@@ -36,14 +36,15 @@ class MobileOrderUserProductListener
             /** @var $paidUntil Carbon */
             $paidUntil = $subscription->getPaidUntil()
                             ->copy();
-
+            //for trials, we do not add the 'days_before_access_revoked_after_expiry' to paidUntil date
+            if($subscription->getTotalCyclesPaid() > 0){
+                $paidUntil = $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5));
+            }
             if($user && $product) {
                 $this->userProductService->assignUserProduct(
                     $user,
                     $product,
-                    $paidUntil->addDays(
-                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
-                        )
+                    $paidUntil
                 );
             }
         }
