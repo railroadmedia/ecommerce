@@ -7,7 +7,6 @@ use Railroad\Ecommerce\Entities\Payment;
 use Railroad\Ecommerce\Entities\PaymentMethod;
 use Railroad\Ecommerce\Entities\Structures\Purchaser;
 use Railroad\Ecommerce\Entities\Subscription;
-use Railroad\Ecommerce\Events\AugustContestReferralClaimed;
 use Railroad\Ecommerce\Events\GiveContentAccess;
 use Railroad\Ecommerce\Events\PaymentEvent;
 use Railroad\Ecommerce\Exceptions\Cart\ProductOutOfStockException;
@@ -72,12 +71,6 @@ class OrderFormService
     private $orderValidationService;
 
     /**
-     * @var SaasquatchService
-     */
-    private $saasquatchService;
-    private $productRepository;
-
-    /**
      * OrderFormService constructor.
      *
      * @param CartService $cartService
@@ -87,9 +80,8 @@ class OrderFormService
      * @param PurchaserService $purchaserService
      * @param ShippingService $shippingService
      * @param PaymentMethodRepository $paymentMethodRepository
+     * @param OrderValidationService $orderValidationService
      * @param PaymentRepository $paymentRepository
-     * @param SaasquatchService $saasquatchService
-     * @param ProductRepository $productRepository
      */
     public function __construct(
         CartService $cartService,
@@ -101,8 +93,6 @@ class OrderFormService
         PaymentMethodRepository $paymentMethodRepository,
         OrderValidationService $orderValidationService,
         PaymentRepository $paymentRepository,
-        SaasquatchService $saasquatchService,
-        ProductRepository $productRepository,
     )
     {
         $this->cartService = $cartService;
@@ -114,45 +104,6 @@ class OrderFormService
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->orderValidationService = $orderValidationService;
         $this->paymentRepository = $paymentRepository;
-        $this->saasquatchService = $saasquatchService;
-        $this->productRepository = $productRepository;
-    }
-
-
-    private function applyReferral(String $brand, String $referralCode, Purchaser $purchaser, String $productSku) {
-        /**
-         * @var $referrer Referrer
-         */
-        $referrer = Referrer::query()->where('referral_code', $referralCode)->first();
-
-        if (empty($referrer)) {
-            throw new Exception(
-                'Error finding referrer for referral code: ' . $referralCode);
-        }
-
-        $productToAssign = $this->productRepository->bySku($productSku);
-
-        if (empty($productToAssign)) {
-            throw new Exception(
-                'Error assigning product to user trying to claim a referral. '.
-                'Could not find product with configured SKU, ' . $productSku
-            );
-        }
-
-        // increase the referrers referral count for this program and code and add this claimers user id to the column
-        $referrer->referrals_performed += 1;
-
-        $claimedUserIds = $referrer->claimed_user_ids;
-        $claimedUserIds[] = $purchaser->getId();
-
-        $referrer->claimed_user_ids = $claimedUserIds;
-
-        $referrer->save();
-
-        $this->saasquatchService->applyReferralCode($purchaser->getId(), $referrer->referral_code, $brand);
-
-        event(new AugustContestReferralClaimed($referrer, $productToAssign->getId(), $purchaser->getId()));
-        info("Applied referral code $referralCode for user " . $purchaser->getId() . " and triggered event AugustContestReferralClaimed.");
     }
 
     /**
@@ -424,15 +375,6 @@ class OrderFormService
         //remove all items from the cart
         $this->cartService->clearCart();
 
-        // CMT-77 apply referral if it is so
-        if ($request->get('referralCode')) {
-            $item = array_key_first($cart->getItems());
-            $this->applyReferral(
-                $request->get('brand'),
-                $request->get('referralCode'),
-                $purchaser,
-                $cart->getItems()[$item]->getSku()); // as it is only one product, get the sku for the first item in the card
-        }
         return ['order' => $order];
     }
 }
