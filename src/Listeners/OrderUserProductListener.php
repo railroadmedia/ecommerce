@@ -72,12 +72,6 @@ class OrderUserProductListener
                     if ($subscription) {
                         $expirationDate = $subscription->getPaidUntil();
 
-                        //for trials, we do not add the 'days_before_access_revoked_after_expiry' to expiration date
-                        if ($subscription->getTotalCyclesPaid() > 0 || !$product->isTrial()) {
-                            $expirationDate = $expirationDate->addDays(
-                                config('ecommerce.days_before_access_revoked_after_expiry', 5)
-                            );
-                        }
                     }
                 } elseif ($product->getType() == Product::TYPE_DIGITAL_ONE_TIME &&
                     !empty($product->getDigitalAccessTimeIntervalType()) &&
@@ -93,7 +87,7 @@ class OrderUserProductListener
                         $intervalType,
                         $nIntervals
                     )->addDays(
-                        config('ecommerce.days_before_access_revoked_after_expiry', 5)
+                        config('ecommerce.days_before_access_revoked_after_expiry', 7)
                     );
                     $existingProductExpirationDate = $latestExpirationDate ? $this->dateTimeService->addInterval(
                         $latestExpirationDate,

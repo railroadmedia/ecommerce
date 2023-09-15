@@ -852,7 +852,7 @@ class GooglePlayStoreService
                     if (Carbon::createFromTimestampMs($googleResponse->getExpiryTimeMillis()) >
                         Carbon::now()
                             ->subDays(
-                                config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                                config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 7)
                             ) && ($googleResponse->getAutoRenewing() == 1)) {
                         if (!empty($googleReceipt)) {
                             $existsSubscription = true;
