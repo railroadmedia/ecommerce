@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 use Railroad\Ecommerce\Entities\Traits\NotableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity(repositoryClass="Railroad\Ecommerce\Repositories\PaymentRepository")
@@ -27,7 +28,7 @@ use Railroad\Ecommerce\Entities\Traits\NotableEntity;
  */
 class Payment
 {
-    use TimestampableEntity, NotableEntity;
+    use TimestampableEntity, NotableEntity, ShopifyEntity;
 
     const STATUS_PAID = 'paid';
     const STATUS_PARTIALLY_PAID = 'partially_paid';
