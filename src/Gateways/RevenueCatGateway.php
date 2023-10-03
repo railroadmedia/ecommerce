@@ -123,12 +123,11 @@ class RevenueCatGateway
     /**
      * @param $userId
      * @param $attributes
-     * @param $musoraUserId
      * @param $platform
      * @param string $app
      * @return string
      */
-    public function updateSubscriberAttribute($userId, $attributes, $musoraUserId, $platform, $app = 'Musora')
+    public function updateSubscriberAttribute($userId, $attributes,  $platform, $app = 'Musora')
     {
         $client = new \GuzzleHttp\Client();
         $att = [];
