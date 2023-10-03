@@ -89,6 +89,7 @@ class RevenueCatGateway
             'fetch_token' => $receipt,
             'price' => $localPrice,
             'currency' => $currency,
+            'observer_mode' => 'true',
             'attributes' => [
                 'email' => [
                     'value' => $userEmail,
@@ -100,7 +101,6 @@ class RevenueCatGateway
         }
 
         try {
-           // dd(config('ecommerce.revenuecat.'.$platform)[$app]);
             $response = $client->request('POST', 'https://api.revenuecat.com/v1/receipts', [
                 'body' => json_encode($bod),
                 'headers' => [
