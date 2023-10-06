@@ -27,6 +27,7 @@ use Railroad\Ecommerce\Events\Subscriptions\MobileSubscriptionRenewed;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
 use Railroad\Ecommerce\ExternalHelpers\CurrencyConversion;
 use Railroad\Ecommerce\Gateways\AppleStoreKitGateway;
+use Railroad\Ecommerce\Gateways\RevenueCatGateway;
 use Railroad\Ecommerce\Managers\EcommerceEntityManager;
 use Railroad\Ecommerce\Repositories\AppleReceiptRepository;
 use Railroad\Ecommerce\Repositories\OrderPaymentRepository;
@@ -100,6 +101,8 @@ class AppleStoreKitService
      */
     private $currencyConvertionHelper;
 
+    private RevenueCatGateway $revenueCatGateway;
+
     const RENEWAL_EXPIRATION_REASON = [
         1 => 'Apple in-app: Customer canceled their subscription.',
         2 => 'Apple in-app: Billing error.',
@@ -137,7 +140,8 @@ class AppleStoreKitService
         SubscriptionPaymentRepository $subscriptionPaymentRepository,
         AppleReceiptRepository $appleReceiptRepository,
         OrderPaymentRepository $orderPaymentRepository,
-        CurrencyConversion $currencyConversion
+        CurrencyConversion $currencyConversion,
+        RevenueCatGateway $revenueCatGateway
     ) {
         $this->appleStoreKitGateway = $appleStoreKitGateway;
         $this->entityManager = $entityManager;
@@ -150,6 +154,7 @@ class AppleStoreKitService
         $this->appleReceiptRepository = $appleReceiptRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->currencyConvertionHelper = $currencyConversion;
+        $this->revenueCatGateway = $revenueCatGateway;
     }
 
     /**
@@ -161,7 +166,7 @@ class AppleStoreKitService
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function processReceipt(AppleReceipt $receipt): User
+    public function processReceipt(AppleReceipt $receipt, $app = 'Musora'): User
     {
         $appleResponse = null;
 
@@ -218,6 +223,17 @@ class AppleStoreKitService
 
         $this->entityManager->flush();
 
+        if(config('ecommerce.sync_revenue_cat', false)){
+            $this->revenueCatGateway->sendRequest(
+                $receipt->getReceipt(),
+                $user,
+                $currentPurchasedItem->getProductId(),
+                'ios',
+                $receipt->getLocalPrice(),
+                $receipt->getLocalCurrency(),
+                $app
+            );
+        }
         event(new MobilePaymentEvent(null, null, $subscription));
 
         return $user;
@@ -265,6 +281,7 @@ class AppleStoreKitService
 
                 if (!empty($oldReceipts)) {
                     $receipt->setEmail($oldReceipts[0]->getEmail());
+                    $receipt->setBrand($oldReceipts[0]->getBrand());
                     if ($oldReceipts[0]->getLocalPrice()) {
                         $receipt->setLocalPrice($oldReceipts[0]->getLocalPrice());
                     }
@@ -312,7 +329,7 @@ class AppleStoreKitService
                     )
                 );
 
-                event(new MobilePaymentEvent(null, null, $subscription));
+                //event(new MobilePaymentEvent(null, null, $subscription));
             } elseif (!empty($subscription->getCanceledOn())) {
                 Log::debug("Apple Receipt Successfully Canceled $receiptId");
                 event(new MobileSubscriptionCanceled($subscription, MobileSubscriptionRenewed::ACTOR_SYSTEM));
@@ -390,14 +407,14 @@ class AppleStoreKitService
             if (!empty($subscription)) {
                 $this->userProductService->updateSubscriptionProductsApp($subscription);
             } else {
-//                error_log(
-//                    'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
-//                    print_r($receipt->getId(), true)
-//                );
-//                error_log(
-//                    'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
-//                    print_r($appleResponse, true)
-//                );
+                //                error_log(
+                //                    'Error updating access for an Apple IOS subscription. Could not find or sync subscription for receipt (DB Receipt): ' .
+                //                    print_r($receipt->getId(), true)
+                //                );
+                //                error_log(
+                //                    'Error updating access for Apple IOS subscription. Could not find or sync subscription for receipt (AppleResponse): ' .
+                //                    print_r($appleResponse, true)
+                //                );
             }
         }
     }
@@ -493,7 +510,7 @@ class AppleStoreKitService
                 if ($item->getExpiresDate() >
                     Carbon::now()
                         ->subDays(
-                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 7)
                         ) || is_null($item->getExpiresDate())) {
                     $allActivePurchasedItems[] = $item;
                 }
@@ -779,7 +796,7 @@ class AppleStoreKitService
                 $subscription->setTotalPrice($product->getPrice());
             }
 
-            $subscription->setBrand(config('ecommerce.brand'));
+            $subscription->setBrand($product->getBrand());
             $subscription->setType(Subscription::TYPE_APPLE_SUBSCRIPTION);
             $subscription->setProduct($product);
 
@@ -1010,7 +1027,7 @@ class AppleStoreKitService
 
                 $order->setTaxesDue(0);
                 $order->setShippingDue(0);
-                $order->setBrand(config('ecommerce.brand'));
+                $order->setBrand($product->getBrand());
 
                 $this->entityManager->persist($order);
 
@@ -1111,7 +1128,7 @@ class AppleStoreKitService
             if (($latestPurchaseItem->getExpiresDate() >
                     Carbon::now()
                         ->subDays(
-                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
+                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 7)
                         )) && (is_null($latestPurchaseItem->getCancellationDate()))) {
                 return ($appleReceipt) ? self::SHOULD_LOGIN : self::SHOULD_SIGNUP;
             } else {

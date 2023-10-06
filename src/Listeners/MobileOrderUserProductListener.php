@@ -36,14 +36,13 @@ class MobileOrderUserProductListener
             /** @var $paidUntil Carbon */
             $paidUntil = $subscription->getPaidUntil()
                             ->copy();
+            $paidUntil = $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 7));
 
             if($user && $product) {
                 $this->userProductService->assignUserProduct(
                     $user,
                     $product,
-                    $paidUntil->addDays(
-                            config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 1)
-                        )
+                    $paidUntil
                 );
             }
         }

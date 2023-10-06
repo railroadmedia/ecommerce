@@ -478,10 +478,7 @@ class UserProductService
                 $paidUntil = $subscription->getPaidUntil()
                     ->copy();
 
-                //for trials, we do not add the 'days_before_access_revoked_after_expiry' to paidUntil date
-                if(!$productData['product']->isTrial()){
-                    $paidUntil = $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 5));
-                }
+                $paidUntil = $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry', 7));
 
                 $this->assignUserProduct(
                     $subscription->getUser(),
@@ -510,12 +507,12 @@ class UserProductService
                 $paidUntil = $subscription->getPaidUntil()
                     ->copy();
 
+                $paidUntil = $paidUntil->addDays(config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 7));
+
                 $this->assignUserProduct(
                     $subscription->getUser(),
                     $productData['product'],
-                    $paidUntil->addDays(
-                        config('ecommerce.days_before_access_revoked_after_expiry_in_app_purchases_only', 5)
-                    )
+                    $paidUntil
                 );
             }
         }

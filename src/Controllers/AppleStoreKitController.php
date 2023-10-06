@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\AppleReceipt;
+use Railroad\Ecommerce\Gateways\RevenueCatGateway;
 use Railroad\Ecommerce\Requests\AppleReceiptRequest;
 use Railroad\Ecommerce\Services\AppleStoreKitService;
 use Railroad\Ecommerce\Services\JsonApiHydrator;
@@ -34,6 +35,8 @@ class AppleStoreKitController extends Controller
      */
     private $userProvider;
 
+    private RevenueCatGateway $revenueCatGateway;
+
     /**
      * AppleStoreKitController constructor.
      *
@@ -44,11 +47,13 @@ class AppleStoreKitController extends Controller
     public function __construct(
         AppleStoreKitService $appleStoreKitService,
         JsonApiHydrator $jsonApiHydrator,
-        UserProviderInterface $userProvider
+        UserProviderInterface $userProvider,
+        RevenueCatGateway $revenueCatGateway
     ) {
         $this->appleStoreKitService = $appleStoreKitService;
         $this->jsonApiHydrator = $jsonApiHydrator;
         $this->userProvider = $userProvider;
+        $this->revenueCatGateway = $revenueCatGateway;
     }
 
     /**
@@ -88,6 +93,7 @@ class AppleStoreKitController extends Controller
 
         if($request->has('data.attributes.app')){
             $app = $request->input('data.attributes.app');
+            $receipt->setBrand(lcfirst($app));
             if(config('ecommerce.payment_gateways.apple_store_kit.'.$app.'.shared_secret')) {
                 config()->set(
                     'ecommerce.payment_gateways.apple_store_kit.shared_secret',
@@ -96,7 +102,7 @@ class AppleStoreKitController extends Controller
             }
         }
 
-        $user = $this->appleStoreKitService->processReceipt($receipt); // exception may be thrown
+        $user = $this->appleStoreKitService->processReceipt($receipt, $app ?? 'Musora'); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 

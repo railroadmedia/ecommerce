@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
@@ -109,6 +110,7 @@ class GooglePlayStoreController extends Controller
 
         if ($request->has('data.attributes.app')) {
             $app = $request->input('data.attributes.app');
+            $receipt->setBrand(lcfirst($app));
             if (config('ecommerce.payment_gateways.google_play_store.'.$app.'.credentials')) {
                 config()->set(
                     'ecommerce.payment_gateways.google_play_store.credentials',
@@ -123,7 +125,7 @@ class GooglePlayStoreController extends Controller
             }
         }
 
-        $user = $this->googlePlayStoreService->processReceipt($receipt); // exception may be thrown
+        $user = $this->googlePlayStoreService->processReceipt($receipt,  $app ?? 'Musora'); // exception may be thrown
 
         $userAuthToken = $this->userProvider->getUserAuthToken($user);
 
@@ -139,10 +141,8 @@ class GooglePlayStoreController extends Controller
      */
     public function processNotification(Request $request)
     {
-        error_log(
-            'GooglePlayStoreController processNotification Request Dump --------------------------------------------------'
-        );
-        error_log(var_export($request->input(), true));
+        Log::debug('Processing GooglePlayStoreController processNotification');
+        Log::debug(var_export($request->input(), true));
 
         $message = $request->get('message');
 
@@ -199,6 +199,7 @@ class GooglePlayStoreController extends Controller
                 $receipt->setNotificationType($notificationType);
                 $receipt->setBrand($brand);
 
+                $firstReceipt = null;
                 if (!empty($oldReceipt)) {
                     if ($oldReceipt[0]->getLocalCurrency()) {
                         $receipt->setLocalCurrency($oldReceipt[0]->getLocalCurrency());
@@ -206,6 +207,7 @@ class GooglePlayStoreController extends Controller
                     if ($oldReceipt[0]->getLocalPrice()) {
                         $receipt->setLocalPrice($oldReceipt[0]->getLocalPrice());
                     }
+                    $firstReceipt = $oldReceipt[0];
                 }
 
                 $subscription =
@@ -215,7 +217,7 @@ class GooglePlayStoreController extends Controller
 
                 if ($subscription) {
                     try {
-                        $this->googlePlayStoreService->processNotification($receipt, $subscription);
+                        $this->googlePlayStoreService->processNotification($receipt, $subscription, $firstReceipt);
                     } catch (Exception $e) {
                         error_log($e);
 
