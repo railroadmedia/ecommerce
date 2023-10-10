@@ -165,4 +165,24 @@ class AddressRepository extends RepositoryBase
 
        return $qb;
     }
+
+    /**
+     * @param int $shopifyId
+     * @return Address|null
+     *
+     * @throws \Doctrine\ORM\NonUniqueResultException
+     */
+    public function getByShopifyId(int $shopifyId): ?Address
+    {
+        $qb = $this->createQueryBuilder("a");
+
+        $qb->where(
+            $qb->expr()
+                ->eq("a.shopifyId", ":shopifyId")
+        )->setParameter("shopifyId", $shopifyId);
+
+        return
+            $qb->getQuery()
+                ->getOneOrNullResult();
+    }
 }
