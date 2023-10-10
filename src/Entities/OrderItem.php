@@ -58,6 +58,11 @@ class OrderItem
     protected $orderItemDiscounts;
 
     /**
+     * @ORM\OneToMany(targetEntity="Railroad\Ecommerce\Entities\OrderItemFulfillment", mappedBy="orderItem")
+     */
+    protected $orderItemFulfillments;
+
+    /**
      * @ORM\Column(type="integer")
      *
      * @var int
@@ -250,5 +255,13 @@ class OrderItem
                 $orderDiscount->setOrderItem(null);
             }
         }
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getOrderItemFulfillments(): Collection
+    {
+        return $this->orderItemFulfillments;
     }
 }
