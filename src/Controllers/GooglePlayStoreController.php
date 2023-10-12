@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Railroad\Ecommerce\Contracts\UserProviderInterface;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Railroad\Ecommerce\Exceptions\ReceiptValidationException;
@@ -140,10 +141,8 @@ class GooglePlayStoreController extends Controller
      */
     public function processNotification(Request $request)
     {
-        error_log(
-            'GooglePlayStoreController processNotification Request Dump --------------------------------------------------'
-        );
-        error_log(var_export($request->input(), true));
+        Log::debug('Processing GooglePlayStoreController processNotification');
+        Log::debug(var_export($request->input(), true));
 
         $message = $request->get('message');
 
