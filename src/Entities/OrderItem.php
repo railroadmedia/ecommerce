@@ -40,6 +40,13 @@ class OrderItem
     protected $order;
 
     /**
+     * @ORM\Column(type="integer", name="order_id")
+     *
+     * @var int
+     */
+    protected $orderId;
+
+    /**
      * @ORM\ManyToOne(targetEntity="Railroad\Ecommerce\Entities\Product")
      * @ORM\JoinColumn(name="product_id", referencedColumnName="id")
      */
@@ -49,6 +56,11 @@ class OrderItem
      * @ORM\OneToMany(targetEntity="OrderDiscount", mappedBy="orderItem")
      */
     protected $orderItemDiscounts;
+
+    /**
+     * @ORM\OneToMany(targetEntity="Railroad\Ecommerce\Entities\OrderItemFulfillment", mappedBy="orderItem")
+     */
+    protected $orderItemFulfillments;
 
     /**
      * @ORM\Column(type="integer")
@@ -243,5 +255,13 @@ class OrderItem
                 $orderDiscount->setOrderItem(null);
             }
         }
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getOrderItemFulfillments(): Collection
+    {
+        return $this->orderItemFulfillments;
     }
 }

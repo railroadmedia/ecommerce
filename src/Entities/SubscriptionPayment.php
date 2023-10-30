@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
+use Railroad\Ecommerce\Entities\Traits\ShopifyEntity;
 
 /**
  * @ORM\Entity()
@@ -21,7 +22,7 @@ use Gedmo\Timestampable\Traits\TimestampableEntity;
  */
 class SubscriptionPayment
 {
-    use TimestampableEntity;
+    use TimestampableEntity, ShopifyEntity;
 
     /**
      * @ORM\Id
