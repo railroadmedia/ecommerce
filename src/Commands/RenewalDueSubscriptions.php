@@ -64,6 +64,8 @@ class RenewalDueSubscriptions extends Command
 
             try {
                 $payment = $subscriptionService->renew($dueSubscription);
+                
+                
 
                 if ($payment) {
                     /** @var $payment Payment */
@@ -95,7 +97,7 @@ class RenewalDueSubscriptions extends Command
                     $payment = $throwable->getPayment();
                 }
 
-                event(new CommandSubscriptionRenewFailed($dueSubscription, $oldSubscriptionState, $payment));
+                //event(new CommandSubscriptionRenewFailed($dueSubscription, $oldSubscriptionState, $payment));
 
                 // if its the last attempt configured and it fails, automatically cancel the subscription
                 // The renewal attempted number is the count of the NEXT try. So if its '3', this means 2 payment

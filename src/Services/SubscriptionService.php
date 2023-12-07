@@ -589,6 +589,7 @@ class SubscriptionService
             $subscription->getOrder()->setTotalPaid(
                 $subscription->getOrder()->getTotalPaid() + $payment->getTotalPaid()
             );
+            $subscription->getOrder()->setUpdatedAt(Carbon::now());
 
             $this->entityManager->persist($subscription->getOrder());
         }

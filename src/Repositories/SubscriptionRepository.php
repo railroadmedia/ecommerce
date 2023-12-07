@@ -157,7 +157,6 @@ class SubscriptionRepository extends RepositoryBase
             ->setParameter(
                 'types',
                 [
-                    Subscription::TYPE_SUBSCRIPTION,
                     Subscription::TYPE_PAYMENT_PLAN,
                 ]
             )

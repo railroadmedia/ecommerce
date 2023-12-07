@@ -15,18 +15,25 @@ class ListDueSubscriptions extends Command
     {
         $this->info('------------------ Listing Due Subscriptions ------------------');
 
+        
         $dueSubscriptions = $subscriptionRepository->getSubscriptionsDueToRenew();
 
+        $count = count($dueSubscriptions);
+        $this->info("Found $count due subscriptions.");
+        
         $this->info('------------------------------------------');
         $this->info('Emails:');
         foreach ($dueSubscriptions as $dueSubscription) {
-            $this->info($dueSubscription->getUser()->getEmail());
+            $this->info($dueSubscription?->getUser()?->getEmail() ?? "");
         }
         $this->info('------------------------------------------');
 
         $this->info('------------------------------------------');
         $this->info('Detailed:');
         foreach ($dueSubscriptions as $dueSubscription) {
+            if ($dueSubscription->getUser() == null) {
+                continue;
+            }
             $this->info('User ID: ' . $dueSubscription->getUser()->getId());
             $this->info('User Email: ' . $dueSubscription->getUser()->getEmail());
             $this->info('Subscription ID: ' . $dueSubscription->getId());
