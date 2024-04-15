@@ -1,4 +1,4 @@
-=name: Add Tags
+name: Add Tags
 
 on:
   push:
