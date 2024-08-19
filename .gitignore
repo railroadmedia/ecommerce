@@ -5,3 +5,4 @@ vendor
 /.env.testing
 api.json
 .phpunit*
+.codebuddy

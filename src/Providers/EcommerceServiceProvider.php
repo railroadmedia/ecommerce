@@ -133,7 +133,7 @@ class EcommerceServiceProvider extends ServiceProvider
                 FindDuplicateSubscriptionsAndLifetimesWithSubscriptions::class,
                 FixSerializeErrorInAppPurchaseTables::class,
                 MobileAppGoogleAppleHelper::class,
-                listDueSubscriptions::class,
+                ListDueSubscriptions::class,
                 VerifyAppleNotifications::class,
                 RetentionReportingTool::class,
                 MembershipsReportingTool::class,
@@ -192,7 +192,6 @@ class EcommerceServiceProvider extends ServiceProvider
         $doctrineFileCache = DoctrineProvider::wrap($arrayCacheAdapter);
 
         // annotation reader
-        AnnotationRegistry::registerLoader('class_exists');
         $annotationReader = new IndexedReader(new AnnotationReader());
 
         $cachedAnnotationReader = new PsrCachedReader(
@@ -254,7 +253,7 @@ class EcommerceServiceProvider extends ServiceProvider
             $entityManager = EcommerceEntityManager::create(
                 DriverManager::getConnection(
                     [
-                        'driver' => 'pdo_' . $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME),
+                        'driver' => 'pdo_' . $pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
                         'driverClass' => ExistingPDOSqliteDriver::class,
                         'pdo' => $pdo,
                     ],

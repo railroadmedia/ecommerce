@@ -14,6 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('ecommerce_products', function (Blueprint $table) {
+            $table->dateTime('digital_membership_access_expiration_date')->after('brand')->nullable();
             $table->bigInteger('shopify_id')->after('digital_membership_access_expiration_date')->nullable();
         });
         Schema::table('ecommerce_customers', function (Blueprint $table) {

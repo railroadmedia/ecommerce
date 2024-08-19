@@ -41,7 +41,7 @@ class GooglePlayStoreControllerTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard'])
+                ->onlyMethods(['guard'])
                 ->getMock();
 
         $this->sessionGuardMock =

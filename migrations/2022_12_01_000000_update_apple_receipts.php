@@ -14,7 +14,7 @@ class UpdateAppleReceipts extends Migration
     public function up()
     {
         Schema::table('ecommerce_apple_receipts', function (Blueprint $table) {
-            $table->mediumText('raw_receipt_response')->change();
+            $table->mediumText('raw_receipt_response')->nullable()->change();
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateAppleReceipts extends Migration
     public function down()
     {
         Schema::table('ecommerce_apple_receipts', function (Blueprint $table) {
-            $table->text('raw_receipt_response')->change();
+            $table->text('raw_receipt_response')->nullable()->change();
         });
     }
 }

@@ -590,7 +590,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard'])
+                ->onlyMethods(['guard'])
                 ->getMock();
 
         $this->sessionGuardMock =
@@ -8976,7 +8976,7 @@ class OrderFormJsonControllerTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard', 'id', 'user'])
+                ->onlyMethods(['guard', 'id', 'user'])
                 ->getMock();
 
         $this->sessionGuardMock =

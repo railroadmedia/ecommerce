@@ -3,10 +3,10 @@
 namespace Railroad\Ecommerce\Tests;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Event;
+use PHPUnit\Framework\ExpectationFailedException;
 use Railroad\Ecommerce\Entities\GoogleReceipt;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Database\DatabaseManager;
@@ -35,13 +35,12 @@ use Railroad\Location\Services\CountryListService;
 use Railroad\Permissions\Providers\PermissionsServiceProvider;
 use Railroad\Permissions\Services\PermissionService;
 use Railroad\RemoteStorage\Providers\RemoteStorageServiceProvider;
+use SebastianBergmann\Comparator\ComparisonFailure;
 use Tests\TestCase;
 use Webpatser\Countries\CountriesServiceProvider;
 
 class EcommerceTestCase extends BaseTestCase
 {
-    use ArraySubsetAsserts;
-
     const TABLES = [
         'users' => 'users',
         'products' => 'ecommerce_products',
@@ -1277,4 +1276,79 @@ class EcommerceTestCase extends BaseTestCase
 
         return $products;
     }
+
+    protected function assertArraySubset(array $subset, array $array, bool $strict = false, string $message = '')
+    {
+        $differences = [];
+
+        $findDifferences = function ($subset, $array, $path = '') use (&$findDifferences, $strict, &$differences) {
+            foreach ($subset as $key => $value) {
+                $currentPath = $path ? "{$path}.{$key}" : $key;
+
+                if (!array_key_exists($key, $array)) {
+                    $differences[] = ["path" => $currentPath, "expected" => $value, "actual" => "<<missing>>"];
+                    continue;
+                }
+
+                if (is_array($value)) {
+                    if (!is_array($array[$key])) {
+                        $differences[] = ["path" => $currentPath, "expected" => "array", "actual" => gettype($array[$key])];
+                    } else {
+                        $findDifferences($value, $array[$key], $currentPath);
+                    }
+                } else {
+                    $match = $strict ? $array[$key] === $value : $array[$key] == $value;
+                    if (!$match) {
+                        $differences[] = [
+                            "path" => $currentPath,
+                            "expected" => $value,
+                            "actual" => $array[$key]
+                        ];
+                    }
+                }
+            }
+        };
+
+        $findDifferences($subset, $array);
+
+        $formatValue = function ($value) {
+            if (is_bool($value)) {
+                return $value ? 'true' : 'false';
+            }
+            if (is_null($value)) {
+                return 'null';
+            }
+            if (is_string($value)) {
+                return "'{$value}'";
+            }
+            if (is_array($value)) {
+                return 'array(' . count($value) . ')';
+            }
+            return var_export($value, true);
+        };
+
+        if (!empty($differences)) {
+            $context = $strict ? 'strict' : 'non-strict';
+            $failureDescription = sprintf(
+                "Failed asserting that an array has the subset.\nDifferences found (%s mode):\n%s",
+                $context,
+                implode("\n", array_map(function ($diff) use ($formatValue) {
+                    return sprintf(
+                        "  At path '%s':\n    Expected: %s\n    Actual: %s",
+                        $diff['path'],
+                        $formatValue($diff['expected']),
+                        $formatValue($diff['actual'])
+                    );
+                }, $differences))
+            );
+
+            throw new ExpectationFailedException(
+                $message . "\n" . $failureDescription,
+                new ComparisonFailure($subset, $array, var_export($subset, true), var_export($array, true))
+            );
+        }
+
+        $this->assertEmpty($differences);
+    }
+
 }

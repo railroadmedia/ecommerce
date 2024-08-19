@@ -3,15 +3,12 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Railroad\Ecommerce\Entities\Address;
 use Railroad\Ecommerce\Tests\EcommerceTestCase;
 use Railroad\Location\Services\CountryListService;
 
 class AddressJsonControllerTest extends EcommerceTestCase
 {
-    use ArraySubsetAsserts;
-
     protected function setUp(): void
     {
         parent::setUp();

@@ -14,8 +14,8 @@ class IncreasePaymentTaxesDecimalPlaces extends Migration
     public function up()
     {
         Schema::table('ecommerce_payment_taxes', function (Blueprint $table) {
-            $table->decimal('product_rate', 8, 5)->change();
-            $table->decimal('shipping_rate', 8, 5)->change();
+            $table->decimal('product_rate', 8, 5)->nullable()->change();
+            $table->decimal('shipping_rate', 8, 5)->nullable()->change();
         });
     }
 
@@ -27,8 +27,8 @@ class IncreasePaymentTaxesDecimalPlaces extends Migration
     public function down()
     {
         Schema::table('ecommerce_payment_taxes', function (Blueprint $table) {
-            $table->decimal('product_rate', 8, 2)->change();
-            $table->decimal('shipping_rate', 8, 2)->change();
+            $table->decimal('product_rate', 8, 2)->nullable()->change();
+            $table->decimal('shipping_rate', 8, 2)->nullable()->change();
         });
     }
 }

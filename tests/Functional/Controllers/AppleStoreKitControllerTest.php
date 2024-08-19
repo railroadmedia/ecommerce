@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Auth\Factory;
@@ -26,7 +25,6 @@ use ReceiptValidator\iTunes\SandboxResponse;
 class AppleStoreKitControllerTest extends EcommerceTestCase
 {
     use WithoutMiddleware;
-    use ArraySubsetAsserts;
 
     /**
      * @var MockObject|AuthManager
@@ -45,7 +43,7 @@ class AppleStoreKitControllerTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['guard'])
+                ->onlyMethods(['guard'])
                 ->getMock();
 
         $this->sessionGuardMock =

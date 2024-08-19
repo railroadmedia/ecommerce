@@ -28,7 +28,7 @@ class PurchaserServiceTest extends EcommerceTestCase
         $this->authManagerMock =
             $this->getMockBuilder(AuthManager::class)
                 ->disableOriginalConstructor()
-                ->setMethods(['loginUsingId'])
+                ->onlyMethods(['loginUsingId'])
                 ->getMock();
 
         // for some reason this is auto loaded using the factory name

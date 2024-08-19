@@ -3,7 +3,6 @@
 namespace Railroad\Ecommerce\Tests\Functional\Controllers;
 
 use Carbon\Carbon;
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Illuminate\Session\Store;
 use Railroad\Ecommerce\Entities\Product;
 use Railroad\Ecommerce\Entities\Structures\Address;
@@ -18,8 +17,6 @@ use Railroad\Location\Services\LocationReferenceService;
 
 class CartJsonControllerTotalsTest extends EcommerceTestCase
 {
-    use ArraySubsetAsserts;
-
     /**
      * @var Store
      */
